@@ -1,0 +1,12 @@
+=======================================================
+                 OFFICIAL RETAIL INVOICE
+=======================================================
+Store: Metro Digital Store #402
+Customer: David Sterling
+Invoice Number: INV-CS003
+Purchase Date: 2024-06-01
+
+Item Description: Frostline French Door Refrigerator
+Serial Number: FRL-RF-77100-A
+Policy Number: POL-APPLIANCE-PLUS-03
+=======================================================

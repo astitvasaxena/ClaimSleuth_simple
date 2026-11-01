@@ -1,0 +1,13 @@
+=======================================================
+           AUTHORIZED SERVICE CENTER REPORT
+=======================================================
+Service Provider: FixRight Authorized Care
+Technician ID: TECH-841
+Date of Inspection: 2026-04-20
+Client: Liam Carter
+
+Device: Nimbus X15 256GB
+Serial Number: NMB-X15-551230
+Diagnosis: Battery swelling detected; battery cell failed the capacity test.
+Estimated Cost: ₹6,500.00
+=======================================================

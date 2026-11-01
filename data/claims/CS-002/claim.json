@@ -1,0 +1,23 @@
+{
+  "claim_id": "CS-002",
+  "policy_id": "POL-LAPTOP-STD-02",
+  "claimant_id": "USR-4011",
+  "claimant_name": "Marcus Vance",
+  "device_model": "Corvex Book 14 Laptop",
+  "serial_number": null,
+  "incident_date": "2025-04-12",
+  "reported_issue": "Laptop does not power on. The power light blinks three times and then turns off.",
+  "claimant_statement": "It stopped turning on last week. Receipt and the lab report are attached.",
+  "documents": [
+    {
+      "doc_id": "invoice",
+      "kind": "INVOICE",
+      "filename": "invoice.txt"
+    },
+    {
+      "doc_id": "repair_report",
+      "kind": "DIAGNOSTIC",
+      "filename": "repair_report.txt"
+    }
+  ]
+}

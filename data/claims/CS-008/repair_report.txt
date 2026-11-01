@@ -1,0 +1,13 @@
+=======================================================
+           AUTHORIZED SERVICE CENTER REPORT
+=======================================================
+Service Provider: FixRight Authorized Care
+Technician ID: TECH-841
+Date of Inspection: 2026-10-02
+Client: Sofia Marquez
+
+Device: Corvex Book 13 Laptop
+Serial Number: CVX-LT-731905
+Diagnosis: Keyboard controller failure; several keys unresponsive. No liquid exposure found.
+Estimated Cost: ₹12,500.00
+=======================================================

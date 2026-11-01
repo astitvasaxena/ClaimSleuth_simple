@@ -1,0 +1,13 @@
+=======================================================
+           AUTHORIZED SERVICE CENTER REPORT
+=======================================================
+Service Provider: FixRight Authorized Care
+Technician ID: TECH-841
+Date of Inspection: 2026-05-04
+Client: Tomasz Kowal
+
+Device: Frostline Front-Load Washer
+Serial Number: FRL-WM-302118
+Diagnosis: Drum bearing assembly worn; main drive motor windings failed.
+Estimated Cost: ₹72,000.00
+=======================================================

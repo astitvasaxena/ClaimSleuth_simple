@@ -1,0 +1,12 @@
+=======================================================
+                 OFFICIAL RETAIL INVOICE
+=======================================================
+Store: Metro Digital Store #402
+Customer: Grace Okafor
+Invoice Number: INV-CS009
+Purchase Date: 2025-01-15
+
+Item Description: Frostline 600 Refrigerator
+Serial Number: FRL-RF-600455
+Policy Number: POL-APPLIANCE-PLUS-03
+=======================================================

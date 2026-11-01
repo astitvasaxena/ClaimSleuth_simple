@@ -1,0 +1,12 @@
+=======================================================
+                 OFFICIAL RETAIL INVOICE
+=======================================================
+Store: Metro Digital Store #402
+Customer: Marcus Vance
+Invoice Number: INV-CS002
+Purchase Date: 2024-01-10
+
+Item Description: Corvex Book 14 Laptop
+Serial Number: CVX-LT-554109
+Policy Number: POL-LAPTOP-STD-02
+=======================================================

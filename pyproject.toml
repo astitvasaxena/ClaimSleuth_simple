@@ -1,0 +1,23 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "claimsleuth"
+version = "0.1.0"
+description = "ClaimSleuth Simple: independent multi-agent warranty claim investigation"
+requires-python = ">=3.11,<3.14"
+# pydantic is pinned to a version that both google-adk 2.13.0 (>=2.12) and crewai 1.15.33 (<2.13) accept,
+# so the shared schemas behave identically in both virtual environments.
+dependencies = ["pydantic==2.12.5"]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
+markers = [
+    "live: needs running services and a real LLM key (run with -m live)",
+]
+addopts = "-m 'not live'"

@@ -1,0 +1,23 @@
+{
+  "claim_id": "CS-009",
+  "policy_id": "POL-APPLIANCE-PLUS-03",
+  "claimant_id": "USR-9120",
+  "claimant_name": "Grace Okafor",
+  "device_model": "Frostline 600 Refrigerator",
+  "serial_number": null,
+  "incident_date": "2026-03-20",
+  "reported_issue": "Fridge compartment is warm although the freezer still works.",
+  "claimant_statement": "The fridge part stopped cooling on 20 March. The technician report is attached.",
+  "documents": [
+    {
+      "doc_id": "invoice",
+      "kind": "INVOICE",
+      "filename": "invoice.txt"
+    },
+    {
+      "doc_id": "repair_report",
+      "kind": "DIAGNOSTIC",
+      "filename": "repair_report.txt"
+    }
+  ]
+}

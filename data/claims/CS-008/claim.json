@@ -1,0 +1,23 @@
+{
+  "claim_id": "CS-008",
+  "policy_id": "POL-LAPTOP-STD-02",
+  "claimant_id": "USR-8840",
+  "claimant_name": "Sofia Marquez",
+  "device_model": "Corvex Book 13 Laptop",
+  "serial_number": null,
+  "incident_date": "2026-09-30",
+  "reported_issue": "Several keys on the keyboard stopped responding.",
+  "claimant_statement": "Some keys stopped working on the last day of my warranty. Receipt and report attached.",
+  "documents": [
+    {
+      "doc_id": "invoice",
+      "kind": "INVOICE",
+      "filename": "invoice.txt"
+    },
+    {
+      "doc_id": "repair_report",
+      "kind": "DIAGNOSTIC",
+      "filename": "repair_report.txt"
+    }
+  ]
+}

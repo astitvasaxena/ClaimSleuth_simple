@@ -1,0 +1,76 @@
+%PDF-1.4
+%‚„œ”
+1 0 obj
+<< /Type /Catalog /Pages 2 0 R >>
+endobj
+2 0 obj
+<< /Type /Pages /Kids [5 0 R 7 0 R] /Count 2 >>
+endobj
+3 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>
+endobj
+4 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding >>
+endobj
+5 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 3 0 R /F2 4 0 R >> >> /Contents 6 0 R >>
+endobj
+6 0 obj
+<< /Length 1146 >>
+stream
+BT /F2 15 Tf 56 762 Td (WARRANTY CLAIM FORM) Tj ET
+BT /F1 8 Tf 56 750 Td (Submitted through the customer claim portal) Tj ET
+BT /F1 10 Tf 56 735 Td (Claim ID: WC-2026-0414) Tj ET
+BT /F1 10 Tf 56 720 Td (Claimant Name: Lena Brandt) Tj ET
+BT /F1 10 Tf 56 705 Td (Claimant ID: USR-5521) Tj ET
+BT /F1 10 Tf 56 690 Td (Policy Number: POL-LAPTOP-STD-02) Tj ET
+BT /F1 10 Tf 56 675 Td (Product: Corvex Book 14 Laptop) Tj ET
+BT /F1 10 Tf 56 660 Td (Serial Number: CVX-LT-882041) Tj ET
+BT /F1 10 Tf 56 645 Td (Purchase Date: 2026-03-02) Tj ET
+BT /F1 10 Tf 56 630 Td (Incident Date: 2026-10-20) Tj ET
+BT /F1 10 Tf 56 615 Td (Claimed Repair Amount: INR 21,500.00) Tj ET
+BT /F2 11 Tf 56 595 Td (Details of the problem) Tj ET
+BT /F1 10 Tf 56 580 Td (Problem Description: The laptop shows a black screen after the logo and restarts in a loop.) Tj ET
+BT /F1 10 Tf 56 565 Td (Customer Statement: It started after a normal shutdown. I have not been to a repair shop) Tj ET
+BT /F1 10 Tf 56 550 Td (yet; the invoice is attached.) Tj ET
+BT /F1 8 Tf 56 36 Td (Synthetic sample for the ClaimSleuth demonstration - all names and records are fictional. Page 1 of 2) Tj ET
+endstream
+endobj
+7 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 3 0 R /F2 4 0 R >> >> /Contents 8 0 R >>
+endobj
+8 0 obj
+<< /Length 668 >>
+stream
+BT /F2 15 Tf 56 762 Td (OFFICIAL RETAIL INVOICE) Tj ET
+BT /F1 10 Tf 56 747 Td (Store: Metro Digital Store #402) Tj ET
+BT /F1 10 Tf 56 732 Td (Customer: Lena Brandt) Tj ET
+BT /F1 10 Tf 56 717 Td (Invoice Number: INV-77520) Tj ET
+BT /F1 10 Tf 56 702 Td (Purchase Date: 2026-03-02) Tj ET
+BT /F1 10 Tf 56 687 Td (Item Description: Corvex Book 14 Laptop) Tj ET
+BT /F1 10 Tf 56 672 Td (Serial Number: CVX-LT-882041) Tj ET
+BT /F1 10 Tf 56 657 Td (Policy Number: POL-LAPTOP-STD-02) Tj ET
+BT /F1 10 Tf 56 642 Td (Amount Paid: INR 78,490.00) Tj ET
+BT /F1 8 Tf 56 36 Td (Synthetic sample for the ClaimSleuth demonstration - all names and records are fictional. Page 2 of 2) Tj ET
+endstream
+endobj
+9 0 obj
+<< /Title (Warranty claim WC-2026-0414 \(synthetic\)) /Producer (ClaimSleuth sample generator - synthetic data) >>
+endobj
+xref
+0 10
+0000000000 65535 f 
+0000000015 00000 n 
+0000000064 00000 n 
+0000000127 00000 n 
+0000000224 00000 n 
+0000000326 00000 n 
+0000000462 00000 n 
+0000001660 00000 n 
+0000001796 00000 n 
+0000002515 00000 n 
+trailer
+<< /Size 10 /Root 1 0 R /Info 9 0 R >>
+startxref
+2645
+%%EOF

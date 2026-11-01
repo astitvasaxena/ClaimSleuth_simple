@@ -1,0 +1,9 @@
+# Text files are stored and checked out with LF line endings.
+* text=auto eol=lf
+
+# Binary files: never convert line endings (the sample PDFs contain byte offsets).
+*.pdf binary
+*.png binary
+*.jpg binary
+*.db binary
+*.sqlite binary

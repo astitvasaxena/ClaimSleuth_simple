@@ -1,0 +1,12 @@
+=======================================================
+                 OFFICIAL RETAIL INVOICE
+=======================================================
+Store: Metro Digital Store #402
+Customer: Elena Rostova
+Invoice Number: INV-CS001
+Purchase Date: 2025-03-15
+
+Item Description: Nimbus X15 Pro 256GB
+Serial Number: NMB-X15-998821
+Policy Number: POL-TECH-CARE-01
+=======================================================

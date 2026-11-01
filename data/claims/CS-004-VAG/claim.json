@@ -1,0 +1,18 @@
+{
+  "claim_id": "CS-004-VAG",
+  "policy_id": "POL-LAPTOP-STD-02",
+  "claimant_id": "USR-5120",
+  "claimant_name": "Priya Nair",
+  "device_model": "Corvex Book 15 Laptop",
+  "serial_number": null,
+  "incident_date": "2026-07-05",
+  "reported_issue": "It stopped working properly.",
+  "claimant_statement": "Not sure exactly when it happened. I think the receipt is somewhere.",
+  "documents": [
+    {
+      "doc_id": "invoice",
+      "kind": "INVOICE",
+      "filename": "invoice.txt"
+    }
+  ]
+}

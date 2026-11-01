@@ -1,0 +1,13 @@
+=======================================================
+           AUTHORIZED SERVICE CENTER REPORT
+=======================================================
+Service Provider: FixRight Authorized Care
+Technician ID: TECH-841
+Date of Inspection: 2026-03-12
+Client: Grace Okafor
+
+Device: Frostline 600 Refrigerator
+Serial Number: FRL-RF-600455
+Diagnosis: Thermostat sensor failure; fridge compartment not cooling.
+Estimated Cost: ₹9,800.00
+=======================================================

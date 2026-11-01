@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ClaimSleuth</title>
+  <link rel="stylesheet" href="/static/style.css?v=8">
+</head>
+<body>
+<header class="site-header">
+  <div class="brand">
+    <div class="brand-logo">CS</div>
+    <div>
+      <div class="brand-title">ClaimSleuth</div>
+      <div class="brand-sub">Warranty Claim Investigation</div>
+    </div>
+  </div>
+  <div class="header-meta">
+    <span class="mode-pill" id="mode-pill">Mode: …</span>
+    <span class="status-pill" id="status-pill">READY</span>
+  </div>
+</header>
+
+<!-- ======================= CLAIM INVESTIGATION ======================= -->
+<main class="container" id="view-investigation">
+
+  <section>
+    <div class="section-label">Sample Claims</div>
+    <div class="scenarios-grid" id="samples"></div>
+  </section>
+
+  <section class="toolbar">
+    <label class="dropzone" id="dropzone" for="file-input">
+      <input type="file" id="file-input" accept=".pdf,application/pdf" hidden>
+      <span class="dz-icon" aria-hidden="true">⇪</span>
+      <span class="dz-title">Drop a warranty-claim PDF here</span>
+      <span class="dz-sub">or <span class="link">browse your files</span> · PDF only, up to 5 MB</span>
+      <span class="dz-file" id="dz-file"></span>
+    </label>
+    <div class="claim-side">
+      <div class="active-claim-info" id="claim-chips"></div>
+      <div class="preview" id="preview"></div>
+      <button class="btn-investigate" id="run-btn" disabled>▶&nbsp; Run Investigation</button>
+    </div>
+  </section>
+
+  <div id="message"></div>
+
+  <section class="results-banner" id="results-banner" hidden>
+    <div class="section-label">Investigation Results</div>
+    <div class="results-grid" id="results-grid"></div>
+  </section>
+
+  <div class="main-grid">
+    <div class="panel">
+      <div class="panel-title">Investigation Timeline</div>
+      <ol class="stepper" id="timeline"></ol>
+      <div id="report"></div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">Evidence &amp; Human Review</div>
+      <div class="sub-label">Source Documents</div>
+      <div class="doc-tabs" id="doc-tabs"></div>
+      <div class="doc-preview" id="doc-preview"><span class="muted">Upload a claim PDF to see its documents.</span></div>
+      <div class="sub-label">Extracted Evidence</div>
+      <div class="evidence-list" id="evidence"><p class="muted small">No evidence yet. Run an investigation.</p></div>
+      <div class="hitl-box" id="hitl"></div>
+      <div class="sub-label">Audit Trail</div>
+      <div class="audit-trail" id="audit"><p class="muted small">No investigation yet.</p></div>
+    </div>
+  </div>
+
+  <details class="tech-details" id="details">
+    <summary>Investigation Details <span class="muted">— the three agent reports and the execution mode</span></summary>
+    <div id="details-body"><p class="muted small">Run an investigation to see the agents' separate reports.</p></div>
+  </details>
+</main>
+
+<script src="/static/app.js?v=8"></script>
+</body>
+</html>

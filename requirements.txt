@@ -1,0 +1,7 @@
+# ClaimSleuth Simple uses TWO virtual environments (google-adk and crewai have conflicting dependencies).
+# This file installs the MAIN environment (.venv): core, MCP server, Google ADK agents and the dashboard.
+#   python -m venv .venv
+#   .venv\Scripts\python -m pip install -r requirements.txt
+#   .venv\Scripts\python -m pip install -e .
+# The CrewAI environment (.venv-crew) is installed from requirements/crew.txt; see README.md.
+-r requirements/main.txt

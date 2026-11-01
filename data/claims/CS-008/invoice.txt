@@ -1,0 +1,12 @@
+=======================================================
+                 OFFICIAL RETAIL INVOICE
+=======================================================
+Store: Metro Digital Store #402
+Customer: Sofia Marquez
+Invoice Number: INV-CS008
+Purchase Date: 2025-09-30
+
+Item Description: Corvex Book 13 Laptop
+Serial Number: CVX-LT-731905
+Policy Number: POL-LAPTOP-STD-02
+=======================================================

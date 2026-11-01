@@ -1,0 +1,13 @@
+=======================================================
+           AUTHORIZED SERVICE CENTER REPORT
+=======================================================
+Service Provider: FixRight Authorized Care
+Technician ID: TECH-841
+Date of Inspection: 2026-09-22
+Client: Elena Rostova
+
+Device: Nimbus X15 Pro 256GB
+Serial Number: NMB-X15-998821
+Diagnosis: Cracked front display glass from accidental impact. Internal chassis and logic board intact.
+Estimated Cost: ₹18,500.00
+=======================================================

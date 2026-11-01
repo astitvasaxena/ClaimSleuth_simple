@@ -1,0 +1,48 @@
+# Virtual environments (two are needed; see README)
+.venv/
+.venv-crew/
+venv/
+env/
+
+# Python caches and build output
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Secrets and local configuration (.env.example is the committed template)
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# Runtime output: run records, logs, uploaded PDFs, the dashboard workspace
+runtime/
+*.log
+
+# Databases: only the synthetic demo history database is committed
+# (rebuild it with `python -m claimsleuth.dataset`)
+*.db
+*.sqlite
+*.sqlite3
+!data/claimsleuth.db
+
+# IDE, editor and OS files
+.vscode/
+.idea/
+*.swp
+*~
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Temporary files (e.g. VS Code Code Runner)
+tempCodeRunnerFile*
+*.tmp

@@ -1,0 +1,12 @@
+=======================================================
+                 OFFICIAL RETAIL INVOICE
+=======================================================
+Store: Metro Digital Store #402
+Customer: Priya Nair
+Invoice Number: INV-CS004
+Purchase Date: 2026-02-01
+
+Item Description: Corvex Book 15 Laptop
+Serial Number: CVX-LT-610322
+Policy Number: POL-LAPTOP-STD-02
+=======================================================

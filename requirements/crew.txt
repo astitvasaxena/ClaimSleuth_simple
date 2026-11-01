@@ -1,0 +1,13 @@
+# CrewAI environment (.venv-crew) for the Forensic Agent. Separate from .venv because crewai 1.15.33 requires
+# mcp<2 and opentelemetry-api>=1.45.1, while google-adk 2.13.0 requires opentelemetry-api<=1.44 (and .venv uses mcp 2.3.0).
+# pydantic is pinned to the same version as .venv so the shared claimsleuth schemas behave identically.
+# Python 3.12.10. Install:
+#   python -m venv .venv-crew
+#   .venv-crew\Scripts\python -m pip install -r requirements\crew.txt
+#   .venv-crew\Scripts\python -m pip install -e .
+# Resolved alongside (2026-10-31, pip check clean): crewai-core 1.15.33, mcp 1.30.0, openai 2.54.0, opentelemetry-api 1.45.2.
+crewai==1.15.33
+pydantic==2.12.5
+pytest==8.4.2
+# A2A server side (CrewAI Forensic Agent service). Same a2a-sdk version as .venv so both ends speak A2A 1.0.
+a2a-sdk[http-server]==1.3.0

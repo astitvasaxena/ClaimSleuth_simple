@@ -1,0 +1,52 @@
+{
+  "POL-TECH-CARE-01": {
+    "policy_id": "POL-TECH-CARE-01",
+    "name": "TechGuard Extended Smartphone Care",
+    "product_category": "Smartphones",
+    "duration_months": 24,
+    "max_coverage_limit": "80000.00",
+    "deductible": "2500.00",
+    "depreciation_rate": "0.00",
+    "requires_original_receipt": true,
+    "requires_diagnostic_report": true,
+    "exclusions": [
+      "intentional damage",
+      "unauthorized third-party modification",
+      "liquid submersion beyond IP68 spec",
+      "loss or theft"
+    ]
+  },
+  "POL-LAPTOP-STD-02": {
+    "policy_id": "POL-LAPTOP-STD-02",
+    "name": "Corvex 1-Year Limited Laptop Warranty",
+    "product_category": "Laptops",
+    "duration_months": 12,
+    "max_coverage_limit": "125000.00",
+    "deductible": "4000.00",
+    "depreciation_rate": "0.10",
+    "requires_original_receipt": true,
+    "requires_diagnostic_report": true,
+    "exclusions": [
+      "water damage",
+      "cosmetic scratches",
+      "software viruses",
+      "unauthorized disassembly"
+    ]
+  },
+  "POL-APPLIANCE-PLUS-03": {
+    "policy_id": "POL-APPLIANCE-PLUS-03",
+    "name": "HomeSafe 3-Year Major Appliance Warranty",
+    "product_category": "Appliances",
+    "duration_months": 36,
+    "max_coverage_limit": "60000.00",
+    "deductible": "5000.00",
+    "depreciation_rate": "0.05",
+    "requires_original_receipt": true,
+    "requires_diagnostic_report": true,
+    "exclusions": [
+      "commercial use",
+      "pest infestation",
+      "acts of god / flood"
+    ]
+  }
+}

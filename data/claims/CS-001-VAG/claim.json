@@ -1,0 +1,18 @@
+{
+  "claim_id": "CS-001-VAG",
+  "policy_id": "POL-TECH-CARE-01",
+  "claimant_id": "USR-9921",
+  "claimant_name": "Elena Rostova",
+  "device_model": "Nimbus X15 Pro 256GB",
+  "serial_number": null,
+  "incident_date": "2026-09-20",
+  "reported_issue": "It stopped working properly.",
+  "claimant_statement": "Not sure exactly when it happened. I think the receipt is somewhere.",
+  "documents": [
+    {
+      "doc_id": "invoice",
+      "kind": "INVOICE",
+      "filename": "invoice.txt"
+    }
+  ]
+}

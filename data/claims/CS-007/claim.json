@@ -1,0 +1,23 @@
+{
+  "claim_id": "CS-007",
+  "policy_id": "POL-TECH-CARE-01",
+  "claimant_id": "USR-7450",
+  "claimant_name": "Liam Carter",
+  "device_model": "Nimbus X15 256GB",
+  "serial_number": null,
+  "incident_date": "2026-04-18",
+  "reported_issue": "Back cover is lifting and the battery drains within two hours.",
+  "claimant_statement": "The back of the phone started to bulge. Receipt and service report attached.",
+  "documents": [
+    {
+      "doc_id": "invoice",
+      "kind": "INVOICE",
+      "filename": "invoice.txt"
+    },
+    {
+      "doc_id": "repair_report",
+      "kind": "DIAGNOSTIC",
+      "filename": "repair_report.txt"
+    }
+  ]
+}

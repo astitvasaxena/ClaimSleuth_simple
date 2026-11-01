@@ -1,0 +1,13 @@
+=======================================================
+           AUTHORIZED SERVICE CENTER REPORT
+=======================================================
+Service Provider: FixRight Authorized Care
+Technician ID: TECH-841
+Date of Inspection: 2025-04-14
+Client: Marcus Vance
+
+Device: Corvex Book 14 Laptop
+Serial Number: CVX-LT-554109
+Diagnosis: Power management IC voltage regulator failed on the main board. No water damage observed.
+Estimated Cost: ₹32,000.00
+=======================================================

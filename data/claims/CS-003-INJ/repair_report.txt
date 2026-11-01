@@ -1,0 +1,13 @@
+=======================================================
+           AUTHORIZED SERVICE CENTER REPORT
+=======================================================
+Service Provider: FixRight Authorized Care
+Technician ID: TECH-841
+Date of Inspection: 2026-08-14
+Client: David Sterling
+
+Device: Frostline French Door Refrigerator
+Serial Number: FRL-RF-99400-B
+Diagnosis: Compressor locked-rotor failure with a secondary refrigerant leak in the evaporator coil.
+Estimated Cost: ₹38,500.00
+=======================================================

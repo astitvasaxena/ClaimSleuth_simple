@@ -1,0 +1,23 @@
+{
+  "claim_id": "CS-005",
+  "policy_id": "POL-APPLIANCE-PLUS-03",
+  "claimant_id": "USR-6610",
+  "claimant_name": "Tomasz Kowal",
+  "device_model": "Frostline Front-Load Washer",
+  "serial_number": null,
+  "incident_date": "2026-05-02",
+  "reported_issue": "Washer makes a grinding noise and the drum no longer spins.",
+  "claimant_statement": "The washer started grinding and then stopped spinning. Repair quote attached.",
+  "documents": [
+    {
+      "doc_id": "invoice",
+      "kind": "INVOICE",
+      "filename": "invoice.txt"
+    },
+    {
+      "doc_id": "repair_report",
+      "kind": "DIAGNOSTIC",
+      "filename": "repair_report.txt"
+    }
+  ]
+}

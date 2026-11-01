@@ -1,0 +1,12 @@
+=======================================================
+                 OFFICIAL RETAIL INVOICE
+=======================================================
+Store: Metro Digital Store #402
+Customer: Tomasz Kowal
+Invoice Number: INV-CS005
+Purchase Date: 2024-11-20
+
+Item Description: Frostline Front-Load Washer
+Serial Number: FRL-WM-302118
+Policy Number: POL-APPLIANCE-PLUS-03
+=======================================================

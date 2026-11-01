@@ -1,0 +1,18 @@
+{
+  "claim_id": "CS-006",
+  "policy_id": "POL-TECH-CARE-01",
+  "claimant_id": "USR-7302",
+  "claimant_name": "Aisha Bello",
+  "device_model": "Nimbus X14 128GB",
+  "serial_number": null,
+  "incident_date": "2026-06-15",
+  "reported_issue": "Phone restarts on its own several times a day.",
+  "claimant_statement": "My phone keeps restarting. I have the receipt; I have not been to a repair shop yet.",
+  "documents": [
+    {
+      "doc_id": "invoice",
+      "kind": "INVOICE",
+      "filename": "invoice.txt"
+    }
+  ]
+}
