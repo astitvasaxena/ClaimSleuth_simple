@@ -474,3 +474,89 @@ Live runs:
 | `RUN-dash-7f98ffb3e3` | 0414 | REQUEST_EVIDENCE (Clean) |
 
 Earlier runs and uploads were moved to `runtime/archive/pre-integrity/`.
+
+## Phase 7e: shared coordination blackboard (2026-11-01, branch `feature/blackboard`)
+
+**Design (Option A, approved):** a coordination blackboard, not a collaborative one.
+- The three agents stay independent; none reads another's findings.
+- The deterministic adjudicator still receives its inputs directly and makes the decision.
+- Prompts, agent logic, A2A, MCP, baseline, adjudicator, security, PDF intake, UI, audit formats and data are
+  unchanged.
+
+**New:**
+- `src/claimsleuth/blackboard/`:
+  - `models.py`, `store.py`: SQLite, append-only through triggers, WAL, `BEGIN IMMEDIATE`, run/claim/fingerprint
+    validation, transitions, idempotency;
+  - `controller.py`: `AgentParticipant`, `RunController`, explicit monitoring failures;
+  - `__main__.py`: the viewer;
+- `docs/BLACKBOARD_GUIDE.md`;
+- tests: `tests/test_blackboard.py` (26), `tests/test_blackboard_e2e.py` (8), `tests/crew/test_blackboard_crew.py` (2).
+
+**Integration (minimal):**
+
+| File | Change |
+|---|---|
+| `adk_service/runner.py` | +6 lines: participant, RUNNING after the documents load, publish in `finish()` |
+| `crew_service/runner.py` | +6 lines, same pattern |
+| `integration/run.py` | +5 lines: register, collect, publish the decision |
+| `dashboard/__main__.py` | default `runtime/blackboard.sqlite3` unless `CLAIMSLEUTH_BLACKBOARD_DB` is set; `--no-blackboard` |
+
+Activation is opt-in through `CLAIMSLEUTH_BLACKBOARD_DB`; unset means no change anywhere.
+
+**Evidence:**
+- `.venv` **280 passed, 6 skipped, 1 deselected**. The 6th skip is the new CrewAI-side file, which runs in
+  `.venv-crew`.
+- `.venv-crew` **63 passed, 1 deselected**.
+- Live dashboard runs on `runtime/blackboard.sqlite3`:
+
+  | Run | Sample | Result |
+  |---|---|---|
+  | `RUN-dash-a918eccaf5` | 0411 | APPROVE ₹16,400.00 |
+  | `RUN-dash-34951427ed` | 0412 | ESCALATE |
+  | `RUN-dash-4d725bd079` | 0413 | ESCALATE |
+  | `RUN-dash-0b21553cbf` | 0414 | REQUEST_EVIDENCE |
+
+  These are the same outcomes as before the board.
+- For 0412 the board has 15 entries:
+  - the ADK writes come from the dashboard process (pid 30292, `.venv`);
+  - the CrewAI writes come from the A2A service process (pid 44508, `.venv-crew`);
+  - all three agents are COMPLETED and the reports reconcile;
+  - there are no monitoring failures.
+
+**Limitation:** the ADK agents' reports are published when the ADK workflow finishes, not while it runs.
+
+## Phase 7B: remaining blackboard functionality (2026-11-01, branch `feature/blackboard`)
+
+**Inspection first.** Of the six items:
+- missing: per-agent ADK lifecycle events, late-post handling, a dashboard view, writer authentication, and
+  permanent tests for the dashboard's board settings;
+- partial: failure visibility (stderr and the monitoring log only).
+
+**Implemented:**
+- **ADK lifecycle:** `blackboard/adk_plugin.py`, an ADK plugin on the `App` with `before_agent_callback` and
+  `after_agent_callback`. The agents, instructions and existing callbacks are untouched.
+- **Late posts:** `controller:seal` is written when the adjudicator's inputs are fixed. Later agent entries are
+  kept, flagged `late`, excluded from live posts and reported.
+- **Authentication:** `blackboard/auth.py`. Per-principal keys (orchestrator / ADK / CrewAI), checked on every
+  write, with identity binding, HMAC-signed entries and verification on read. An older database is migrated with
+  two new columns; its old entries show as `unsigned`.
+- **Dashboard:** `GET /api/runs/<id>/blackboard` and a collapsed **Blackboard Monitoring** section.
+- **Failure visibility:** the dashboard shows failures even when the database cannot be opened.
+- **Launcher:** `dashboard/__main__.py` gained `blackboard_setting()`, with permanent tests.
+
+**Test-isolation bug found and fixed.** The launcher test let `CLAIMSLEUTH_BLACKBOARD_DB` leak into later tests in
+the session, so they wrote 10 test runs into the real `runtime/blackboard.sqlite3`. The test now registers the
+variable with `monkeypatch`, so it is restored. The affected runtime files (database, keys, monitoring log) were
+moved, intact, to `runtime/archive/blackboard-before-7b/`. The next full runs left `runtime/` untouched.
+
+**Evidence:**
+- `.venv` **301 passed, 6 skipped, 1 deselected**; `.venv-crew` **64 passed, 1 deselected**.
+- Live dashboard runs: 0411 APPROVE ₹16,400.00, 0412 ESCALATE, 0413 ESCALATE, 0414 REQUEST_EVIDENCE (unchanged).
+- `RUN-dash-8b1b95a293` has 18 entries, all authenticated, with per-agent ADK lifecycle events and the seal before
+  the decision.
+- **Rejections:** a forged key, the CrewAI key used as the Evidence Agent, the ADK key used as the adjudicator, and
+  no writer were all rejected (live; 0 entries added).
+- **Unusable board:** CS-003 still ESCALATE, with failures reported on both sides.
+- **`--no-blackboard`** dashboard on separate ports: APPROVE ₹16,400.00, view disabled, 0 board entries.
+- **Late:** `RUN-late-demo-cs003`, where the live CrewAI service published after the seal, gave 3 LATE entries,
+  0 live posts and 3 monitoring failures.

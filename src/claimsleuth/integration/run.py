@@ -21,6 +21,7 @@ from claimsleuth import config
 from claimsleuth.adk_service.forensic_a2a import request_forensics
 from claimsleuth.adk_service.runner import run_adk_investigation_async
 from claimsleuth.baseline import new_run_id, run_baseline
+from claimsleuth.blackboard import RunController
 from claimsleuth.datastore import load_claim, load_policies
 from claimsleuth.documents import extract_fields
 from claimsleuth.history import lookup_history
@@ -74,6 +75,8 @@ async def run_claim_async(claim_id: str, run_id: str | None = None, mcp_url: str
     audit("run_started", "orchestrator", f"integrated run for {claim_id}", mcp_url=mcp_url, crew_card=crew_card_url)
     claim, documents = load_claim(claim_id, data_dir)
     policy = load_policies(data_dir).get(claim.policy_id)
+    board = RunController(run_id, claim_id)          # shared coordination blackboard; a no-op unless enabled
+    board.register(documents)
 
     audit("workflow_started", "baseline", "deterministic baseline")
     baseline = run_baseline(claim_id, run_id=run_id, data_dir=data_dir, db_path=db_path)
@@ -102,6 +105,7 @@ async def run_claim_async(claim_id: str, run_id: str | None = None, mcp_url: str
     crewai = exchange.result
     audit("workflow_finished", "crewai", f"{crewai.status.value}", ts=crewai.finished_at,
           execution_ms=crewai.execution_ms, model=crewai.model, errors=crewai.errors[:5])
+    board.collect(adk, crewai, exchange.errors)     # completion/failure tracking; never changes the inputs below
 
     mcp = await fetch_mcp_records(mcp_url, run_id, claim_id)
     audit("mcp_records_fetched", "orchestrator", f"{len(mcp.calls)} tool call(s) logged by the MCP server",
@@ -113,6 +117,7 @@ async def run_claim_async(claim_id: str, run_id: str | None = None, mcp_url: str
     serial = normalise_serial(serial or claim.serial_number)
     history = lookup_history(serial, claim.claimant_id, claim.claim_id, db_path).records if serial else []
     final = adjudicate(run_id, claim, documents, policy, history, baseline, adk, crewai, mcp)
+    board.publish_decision(final)
     audit("adjudication", "adjudicator", f"{final.final_decision.value} decided by {final.decided_by}",
           deterministic=final.deterministic_decision.value if final.deterministic_decision else None,
           human_approval=final.requires_human_approval)

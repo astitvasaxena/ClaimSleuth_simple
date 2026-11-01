@@ -177,6 +177,26 @@ The expected outcomes are kept in `data/sample_ground_truth.json`, separate from
 .venv\Scripts\python -m claimsleuth.dashboard.sample_pdf       # rebuild the sample PDFs
 ```
 
+### Shared coordination blackboard
+
+The dashboard keeps a persistent blackboard (SQLite, `runtime/blackboard.sqlite3`) that both agent processes
+share: the ADK side (`.venv`) and the CrewAI A2A service (`.venv-crew`).
+- The orchestrator registers each run with its claim and a fingerprint of its documents.
+- Each side checks the registration, then publishes its own agents' status and validated reports. Each ADK
+  agent's own start and end come from an ADK plugin while the workflow runs; validated reports follow when it ends.
+- The controller seals the run when the adjudicator's inputs are fixed, tracks completion and failures, and records
+  the adjudicator's decision. A late CrewAI report is kept, flagged as late, and never used.
+
+The agents stay independent: none reads another's findings, and the deterministic adjudicator still decides.
+The history is append-only, isolated by run and claim, and safe under concurrent writers. Every write comes from an
+authenticated local writer (orchestrator, ADK or CrewAI), and every entry is signed and verified. Monitoring
+failures are reported without changing any decision. The report page's collapsed **Blackboard Monitoring** section
+shows the run's agent states, recent events, failures and recorded decision.
+
+Set `CLAIMSLEUTH_BLACKBOARD_DB` to choose the file. To disable the board, use `--no-blackboard` or the value
+`off`. To view a run: `.venv\Scripts\python -m claimsleuth.blackboard <run-id>`. Details are in
+`docs/BLACKBOARD_GUIDE.md`.
+
 ## Tests
 
 ```powershell
@@ -185,11 +205,12 @@ The expected outcomes are kept in `data/sample_ground_truth.json`, separate from
 ```
 
 Results on 2026-11-01:
-- `.venv`: **246 passed, 5 skipped, 1 deselected**;
-- `.venv-crew`: **61 passed, 1 deselected**.
+- **Main environment (`.venv`): 301 passed, 6 skipped, 1 deselected.** The 6 skipped tests are the CrewAI test
+  files, which skip themselves here and run in `.venv-crew` instead.
+- **CrewAI environment (`.venv-crew`): 64 passed, 1 deselected.**
 
-The 5 skipped tests in `.venv` are the CrewAI test files, which run in `.venv-crew` instead. The deselected tests are
-marked `live`: they need a real model (a Gemini key or a local Ollama run) and are excluded by default.
+The deselected test in each environment is marked `live`: it needs a real model (a Gemini key or a local Ollama
+run). `live` tests are excluded by default (`-m 'not live'` in `pyproject.toml`) and were not run.
 
 The suites cover:
 - the rules and settlement arithmetic, the schemas and the MCP server and its scope rule;
@@ -212,7 +233,8 @@ The suites cover:
   - the reviewer name is typed in, not authenticated;
   - one investigation runs at a time.
 - **Not built:**
-  - the blackboard / communication-mode comparison;
+  - the communication-mode comparison (the coordination blackboard described above exists; agents do not exchange
+    findings through it);
   - the five-architecture study;
   - the 40-run evaluation;
   - cloud deployment.
@@ -221,9 +243,12 @@ The suites cover:
 
 ## Documentation
 
+- `docs/ARCHITECTURE_GUIDE.md`: start here. The complete architecture, every agent, MCP, A2A, the Blackboard and a
+  full claim walkthrough, for readers new to the project (English with Hinglish explanations).
 - `docs/DASHBOARD_GUIDE.md`: the application, the report and the security section.
 - `docs/MCP_GUIDE.md`, `docs/ADK_GUIDE.md`, `docs/CREWAI_GUIDE.md`: one guide per component.
 - `docs/PHASE5_GUIDE.md`: A2A and the adjudicator.
+- `docs/BLACKBOARD_GUIDE.md`: the shared coordination blackboard.
 - `docs/OLLAMA_GUIDE.md`: the local-model (`ollama-local`) mode, its limits and how to run it.
 - `docs/BUILD_LOG.md`: what was built in each phase, with the test evidence.
 - `docs/CHECKLIST.md`: status of each requirement.

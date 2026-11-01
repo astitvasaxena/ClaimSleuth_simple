@@ -59,7 +59,10 @@ Teacher criteria (C-1 … C-11) are from `ClaimSleuth_Handoff_Gap_Analysis_and_B
 - [x] Deterministic adjudicator: Decimal money, verified evidence only, escalation rules, explanations
 - [x] Audit trail + per-run files in `runtime/runs/<run_id>/` (C-9)
 - [x] Tests: main .venv 182 passed (38 new); .venv-crew 25 passed (6 new)
-- [ ] Blackboard state model and communication-mode comparison (blackboard / peer-to-peer / broadcast) (C-1)
+- [x] Blackboard state model: shared coordination blackboard (SQLite) used by the ADK process and the CrewAI
+      A2A service process; append-only, isolated per run/claim, concurrency-safe (Phase 7e,
+      docs/BLACKBOARD_GUIDE.md). Coordination only: agents do not exchange findings.
+- [ ] Communication-mode comparison (blackboard / peer-to-peer / broadcast) (C-1)
 - [ ] Architectures: sequential · parallel · hierarchical · workflow · event-driven; worker-node on/off (C-4)
 - Check: `python -m claimsleuth.integration CS-003` (MCP :8102 and CrewAI A2A :8103 running)
 

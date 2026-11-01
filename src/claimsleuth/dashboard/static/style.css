@@ -192,6 +192,14 @@ ul.plain { margin: 4px 0; padding-left: 18px; font-size: 13px; }
 .finding .quote { font-family: var(--mono); font-size: 12px; background: var(--red-bg); border-radius: 6px; padding: 4px 8px; color: var(--navy); }
 .finding ul.plain { margin: 0; }
 
+/* ---------- blackboard monitoring (collapsed section) */
+.bb-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+.bb-table th, .bb-table td { text-align: left; padding: 4px 6px; border-bottom: 1px solid var(--border); vertical-align: top; }
+.bb-table th { color: var(--muted); font-weight: 600; }
+.bb-table tr.late td { background: var(--amber-bg); }
+#bb-body .pill { margin-right: 4px; }
+#bb-body { overflow-x: auto; }
+
 @media (max-width: 1000px) {
   .scenarios-grid, .results-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .toolbar, .main-grid { grid-template-columns: 1fr; }

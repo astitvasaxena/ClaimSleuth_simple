@@ -29,6 +29,7 @@ from crewai.events.types.tool_usage_events import ToolUsageErrorEvent, ToolUsage
 from pydantic import ValidationError
 
 from claimsleuth import config
+from claimsleuth.blackboard import AgentParticipant
 from claimsleuth.claim_text import claim_message
 from claimsleuth.crew_service import ollama as ollama_mode
 from claimsleuth.crew_service.crew import MCP_TOOLS, analysis_from_output, build_crew
@@ -150,12 +151,16 @@ def run_forensic_investigation(claim_id: str, run_id: str | None = None, llm: An
     settings: ollama_mode.OllamaSettings | None = None
     llm_info: dict[str, Any] = {}
 
+    board = AgentParticipant(run_id, claim_id, "crewai", (AGENT_NAME,))   # no-op unless the blackboard is enabled
+
     def finish(status: ExecutionStatus, **kw) -> AgentSystemResult:
         label = MODEL_NAME if isinstance(llm, ForensicTestDoubleLLM) else (
             getattr(llm, "model", None) or (settings.model if settings else None))
-        return AgentSystemResult(system="CREWAI", run_id=run_id, claim_id=claim_id, status=status, model=label,
-                                 prompt_variant="standard", started_at=started_at, finished_at=utc_now(),
-                                 execution_ms=round((time.perf_counter() - t0) * 1000, 3), errors=errors, **kw)
+        result = AgentSystemResult(system="CREWAI", run_id=run_id, claim_id=claim_id, status=status, model=label,
+                                   prompt_variant="standard", started_at=started_at, finished_at=utc_now(),
+                                   execution_ms=round((time.perf_counter() - t0) * 1000, 3), errors=errors, **kw)
+        board.finished(result)
+        return result
 
     if llm is None:
         mode = os.environ.get(LLM_MODE_ENV, "test-double")
@@ -187,6 +192,7 @@ def run_forensic_investigation(claim_id: str, run_id: str | None = None, llm: An
     except (FileNotFoundError, ValidationError) as exc:
         errors.append(f"claim could not be loaded: {exc}")
         return finish(ExecutionStatus.FAILED)
+    board.running(documents)
     healthy, detail = mcp_health(mcp_url)
     if not healthy:
         errors.append(f"MCP server not available, CrewAI run not started. {detail}")

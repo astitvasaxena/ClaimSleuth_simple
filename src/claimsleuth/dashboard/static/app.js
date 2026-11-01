@@ -196,6 +196,7 @@ async function openRun(runId) {
   catch (e) { message(`Could not load the report: ${esc(e.message)}`, "bad"); return; }
   S.run = runId;
   renderReport();
+  loadBlackboard(runId);
 }
 const check = (v, name) => (v.final.rule_checks || []).find(c => c.name === name);
 function mcpResults(v, tool) { return v.mcp.calls.filter(c => c.tool === tool && c.status === "ok" && c.returned).map(c => c.returned); }
@@ -365,6 +366,44 @@ function renderDetails() {
     <div class="agent-tabs">${v.agents.map((a, i) => `<button class="doc-tab ${i === S.agentTab ? "active" : ""}" data-i="${i}">${esc(a.title)} · ${esc(a.framework)}</button>`).join("")}</div>
     ${agentReport(v.agents[S.agentTab])}`;
   document.querySelectorAll(".agent-tabs button").forEach(b => b.addEventListener("click", () => { S.agentTab = +b.dataset.i; renderDetails(); }));
+}
+
+// ------------------------------------------------------------------ blackboard monitoring (read-only)
+async function loadBlackboard(runId) {
+  let bb;
+  try { bb = await api(`/api/runs/${encodeURIComponent(runId)}/blackboard`); }
+  catch (e) { $("bb-body").innerHTML = `<p class="small bad">Blackboard view unavailable: ${esc(e.message)}</p>`; return; }
+  if (S.run === runId) renderBlackboard(bb);
+}
+function renderBlackboard(bb) {
+  if (!bb.enabled) {
+    $("bb-body").innerHTML = '<p class="small muted">The blackboard is disabled for this dashboard (--no-blackboard or CLAIMSLEUTH_BLACKBOARD_DB=off).</p>';
+    return;
+  }
+  const failures = (bb.monitoring_failures || []).map(f => `[${f.where}] ${f.error} (${f.environment} pid ${f.pid})`)
+    .concat(bb.findings || []).concat(bb.error ? [bb.error] : []);
+  const failureBlock = `<p class="small"><b>Monitoring failures and findings</b> ${failures.length ? `<span class="pill bad">${failures.length}</span>` : '<span class="pill ok">none</span>'}</p>${failures.length ? list(failures, "") : ""}`;
+  if (!bb.registered) {
+    $("bb-body").innerHTML = `<p class="small">Run <b>${esc(bb.run_id)}</b> is not on the blackboard (${esc(bb.database)}).</p>${failureBlock}`;
+    return;
+  }
+  const auth = bb.authentication || {};
+  const authOk = Object.keys(auth).every(k => k === "valid");
+  const d = bb.decision;
+  const stateCls = s => s === "COMPLETED" ? "ok" : s === "RUNNING" || s === "PENDING" ? "warn" : "bad";
+  $("bb-body").innerHTML = `
+    <dl class="kv small"><dt>Run</dt><dd>${esc(bb.run_id)}</dd><dt>Claim</dt><dd>${esc(bb.claim_id)}</dd>
+      <dt>Database</dt><dd>${esc(bb.database)} · ${bb.entries} entries · sealed at entry ${esc(bb.sealed_at ?? "—")}</dd>
+      <dt>Writers</dt><dd>${authOk ? '<span class="pill ok">all entries authenticated</span>' : `<span class="pill bad">authentication problems: ${esc(JSON.stringify(auth))}</span>`}</dd>
+      <dt>Recorded decision</dt><dd>${d ? `${decisionPill(d.final_decision)} by ${esc(d.decided_by)} ${bb.decision_matches_report === true ? '<span class="pill ok">matches the report</span>' : bb.decision_matches_report === false ? '<span class="pill bad">differs from the report</span>' : ""}` : '<span class="muted">not recorded</span>'}</dd></dl>
+    <p class="small"><b>Agents</b> ${bb.agents.map(a => `<span class="pill ${stateCls(a.state)}">${esc(a.agent)}: ${esc(a.state)}${a.late ? " (late)" : ""}</span>`).join(" ")}</p>
+    ${bb.late.length ? `<p class="small bad">${bb.late.length} late entr${bb.late.length === 1 ? "y" : "ies"} after the adjudicator's inputs were fixed — kept for traceability, not used.</p>` : ""}
+    ${failureBlock}
+    <p class="small"><b>Recent events</b></p>
+    <table class="bb-table"><thead><tr><th>#</th><th>Time</th><th>Kind</th><th>Section</th><th>Writer</th><th>Process</th><th>Event</th></tr></thead><tbody>
+    ${bb.events.map(e => `<tr class="${e.late ? "late" : ""}"><td>${e.run_seq}</td><td>${time(e.ts)}</td><td>${esc(e.kind)}</td><td>${esc(e.section)}</td>
+      <td>${esc(e.author)}${e.auth === "valid" ? "" : ` <span class="bad">(${esc(e.auth)})</span>`}</td><td>${esc(e.process)}</td>
+      <td>${esc(e.what)}${e.late ? ' <span class="bad">late</span>' : ""}</td></tr>`).join("")}</tbody></table>`;
 }
 
 // ------------------------------------------------------------------ start

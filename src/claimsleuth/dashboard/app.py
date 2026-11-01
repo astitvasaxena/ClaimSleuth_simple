@@ -8,6 +8,7 @@
     GET  /api/jobs/<run_id>               progress of a running investigation
     GET  /api/runs/<run_id>               the investigation report (stored run bundle)
     POST /api/runs/<run_id>/review        human review action (recorded separately; never changes the decision)
+    GET  /api/runs/<run_id>/blackboard    read-only blackboard monitoring view of the run
 """
 from __future__ import annotations
 
@@ -27,6 +28,7 @@ from starlette.routing import Mount, Route
 from starlette.staticfiles import StaticFiles
 
 from claimsleuth import config
+from claimsleuth.blackboard.monitor import run_monitor
 from claimsleuth.dashboard.jobs import RUN_ID, JobBusyError, JobManager
 from claimsleuth.dashboard.pdf_intake import MAX_PDF_BYTES, PdfIntakeError
 from claimsleuth.dashboard.reviews import HumanReviewInput, ReviewNotAllowed, load_reviews, record_review
@@ -194,6 +196,14 @@ def create_app(workspace: Workspace | None = None, cfg: ServiceConfig | None = N
                                        load_reviews(runs_dir / run_id))
         return JSONResponse(view)
 
+    async def run_blackboard(request: Request) -> JSONResponse:
+        run_id = request.path_params["run_id"]
+        if not RUN_ID.fullmatch(run_id):
+            return JSONResponse({"error": "unknown run"}, status_code=404)
+        bundle = await asyncio.to_thread(load_bundle, run_id)
+        decision = bundle.final_report.final_decision.value if bundle and bundle.final_report else None
+        return JSONResponse(await asyncio.to_thread(run_monitor, run_id, None, decision))
+
     async def review(request: Request) -> JSONResponse:
         run_id = request.path_params["run_id"]
         bundle = await asyncio.to_thread(load_bundle, run_id)
@@ -217,6 +227,7 @@ def create_app(workspace: Workspace | None = None, cfg: ServiceConfig | None = N
         Route("/api/runs", start_run, methods=["POST"]),
         Route("/api/jobs/{run_id}", job_status),
         Route("/api/runs/{run_id}", get_run), Route("/api/runs/{run_id}/review", review, methods=["POST"]),
+        Route("/api/runs/{run_id}/blackboard", run_blackboard),
         Mount("/static", StaticFiles(directory=STATIC), name="static"),
     ]
     return Starlette(routes=routes, middleware=[Middleware(SecurityHeaders)])

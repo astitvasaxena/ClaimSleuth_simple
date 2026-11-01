@@ -32,6 +32,7 @@ from claimsleuth.adk_service import config as adk_config
 from claimsleuth.adk_service.agents import EVIDENCE_AGENT, INVESTIGATOR_AGENT, build_agents
 from claimsleuth.adk_service.callbacks import ExecutionRecorder
 from claimsleuth.baseline import new_run_id
+from claimsleuth.blackboard import AgentParticipant
 from claimsleuth.claim_text import claim_message
 from claimsleuth.datastore import load_claim
 from claimsleuth.documents import quote_appears
@@ -126,9 +127,13 @@ async def run_adk_investigation_async(claim_id: str, run_id: str | None = None, 
     base = dict(system="GOOGLE_ADK", run_id=run_id, claim_id=claim_id, prompt_variant=prompt_variant,
                 started_at=started_at)
 
+    board = AgentParticipant(run_id, claim_id, "adk", (EVIDENCE_AGENT, INVESTIGATOR_AGENT))   # no-op unless enabled
+
     def finish(status: ExecutionStatus, errors: list[str], **kw) -> AgentSystemResult:
-        return AgentSystemResult(**base, status=status, errors=errors, model=model_label, finished_at=utc_now(),
-                                 execution_ms=round((time.perf_counter() - t0) * 1000, 3), **kw)
+        result = AgentSystemResult(**base, status=status, errors=errors, model=model_label, finished_at=utc_now(),
+                                   execution_ms=round((time.perf_counter() - t0) * 1000, 3), **kw)
+        board.finished(result)            # validated reports: published after the ADK workflow ends
+        return result
 
     if model is None:
         mode = llm_mode or os.environ.get("CLAIMSLEUTH_ADK_LLM", "gemini")
@@ -148,6 +153,7 @@ async def run_adk_investigation_async(claim_id: str, run_id: str | None = None, 
         claim, documents = load_claim(claim_id, data_dir)
     except (FileNotFoundError, ValidationError) as exc:
         return finish(ExecutionStatus.FAILED, [f"claim could not be loaded: {exc}"])
+    board.running(documents, mark_running=False)   # each agent is marked RUNNING when it actually starts
 
     healthy, detail = mcp_health(mcp_url)
     if not healthy:
@@ -155,7 +161,11 @@ async def run_adk_investigation_async(claim_id: str, run_id: str | None = None, 
 
     recorder = ExecutionRecorder(run_id)
     session_service = InMemorySessionService()
-    runner = Runner(app=App(name=APP_NAME, root_agent=build_agents(model, mcp_url, recorder)),
+    plugins = []
+    if board.enabled:                     # each ADK agent's own start/end, via ADK's plugin mechanism
+        from claimsleuth.blackboard.adk_plugin import BlackboardLifecyclePlugin
+        plugins.append(BlackboardLifecyclePlugin(board))
+    runner = Runner(app=App(name=APP_NAME, root_agent=build_agents(model, mcp_url, recorder), plugins=plugins),
                     session_service=session_service)
     session = await session_service.create_session(app_name=APP_NAME, user_id=USER_ID,
                                                    state={"run_id": run_id, "claim_id": claim_id})
