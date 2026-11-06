@@ -22,6 +22,7 @@ from google.adk.models.llm_response import LlmResponse
 from google.genai import types
 
 from claimsleuth.adk_service.callbacks import parse_mcp_response
+from claimsleuth.obedient_double import OUT_OF_SCOPE_CLAIMANT, obey, orders
 from claimsleuth.packet import Packet, cite, iso_date
 from claimsleuth.security import detect_injection
 
@@ -106,11 +107,14 @@ class OfflineAdkLlm(BaseLlm):
                 if part.function_response:
                     responses.append((part.function_response.name, part.function_response.response))
         packet = Packet("\n".join(texts))
+        obeyed = orders("\n".join(texts), self.role)
         plan = self._plan(packet)
+        if "G" in obeyed and self.role == "investigator":        # the obedient double asks for another customer's history
+            plan.append(("claim_history_lookup", {"claimant_id": OUT_OF_SCOPE_CLAIMANT}))
         if own_calls < len(plan):
             name, args = plan[own_calls]
         else:
-            name, args = "set_model_response", self._report(packet, responses)
+            name, args = "set_model_response", obey(self._report(packet, responses), obeyed)
         yield LlmResponse(content=types.Content(role="model", parts=[
             types.Part(function_call=types.FunctionCall(name=name, args=args))]))
 

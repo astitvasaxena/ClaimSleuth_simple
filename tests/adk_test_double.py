@@ -40,6 +40,8 @@ class ScriptedLlm(BaseLlm):
         if not self.script:
             raise RuntimeError("ScriptedLlm script exhausted")
         part = self.script.pop(0)
+        if isinstance(part, BaseException):      # a scripted failure of this model request
+            raise part
         yield LlmResponse(
             content=types.Content(role="model", parts=[part]),
             usage_metadata=types.GenerateContentResponseUsageMetadata(

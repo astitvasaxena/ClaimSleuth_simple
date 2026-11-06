@@ -33,7 +33,7 @@ Every finding cites document lines. It never sees the baseline's or ADK's result
 │        llm=ForensicTestDoubleLLM,           │ ───────▶ │  logs run id from header     │
 │        mcps=[MCPServerHTTP(url, headers=    │ Streamable└──────────────────────────────┘
 │              {X-ClaimSleuth-Run-Id}, filter)])  HTTP
-│  Task(output_pydantic=ForensicsAnalysis,    │
+│  Task(expected_output=compact schema,       │
 │       guardrail=..., guardrail_max_retries=2)
 │  Crew(process=sequential, step_callback,    │
 │       task_callback).kickoff(inputs=packet) │
@@ -68,15 +68,15 @@ The conversation runs like this:
 3. The same again for `{"claimant_id": ...}`.
 4. The double writes `Final Answer: {ForensicsAnalysis JSON}`, computed by fixed rules from the
    packet and the observations in its transcript.
-5. CrewAI converts it with `output_pydantic`. The task guardrail then checks it: valid
-   `ForensicsAnalysis`, correct `claim_id`, every citation quote on the cited document line, and every
+5. The task guardrail checks it: valid `ForensicsAnalysis` (strict Pydantic), correct `claim_id`, every citation quote on the cited document line, and every
    history reference among the `record_sources` that MCP actually returned. On failure CrewAI retries
    (`guardrail_max_retries=2`), then raises; the run is then `FAILED`.
 
 Test-only modes (`invalid_json`, `fabricated_citation`, `wrong_claim`) check that CrewAI rejects bad
 output.
-- Text that isn't JSON fails in CrewAI's **output converter** (`ConverterError`), before the guardrail.
-- A made-up citation or a wrong claim ID fails in the **guardrail**, after 2 retries.
+- Text that isn't JSON, a made-up citation and a wrong claim ID all fail in the **guardrail**, after its retries.
+- `output_pydantic` is not used: it would add an expanded schema to every prompt and send non-JSON output to a
+  converter that makes an extra model call.
 
 **In test-double mode no real LLM is called.** `CLAIMSLEUTH_CREW_LLM` defaults to `test-double`; the only
 other accepted value is `ollama-local` (local Ollama, see `docs/OLLAMA_GUIDE.md`); anything else returns
@@ -161,6 +161,8 @@ Tests:
 
 ## Limitations
 
+- **Live Gemini:** `EXECUTION_MODE=live` runs this agent on `gemini-3.5-flash` (`crew_service/gemini.py`); see the README's
+  execution modes. Most of this guide describes the offline test-double mode.
 - **Test-double mode** has no token counts. Live local inference (`ollama-local`) is described in
   `docs/OLLAMA_GUIDE.md`, including its measured speed and limits.
 - The test double's conclusions are scripted rules. They overlap in spirit with the deterministic

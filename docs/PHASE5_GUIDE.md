@@ -1,5 +1,9 @@
 # Phase 5 — A2A communication and independent adjudication
 
+> **Historical guide.** This is the build log's Phase 5 from 31 October 2026, not the later reliability phase. Its status
+> table and test counts are from that date: live Gemini, the dashboard and the evaluation came later. The current state is in
+> the README and `docs/EVIDENCE.md`. The A2A and adjudicator design below still applies.
+
 ## Status at a glance
 
 | Feature | Status |

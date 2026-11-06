@@ -84,10 +84,13 @@ def test_each_adk_agent_publishes_its_own_start_and_end_during_the_workflow(shar
     entries = Blackboard(shared.db).entries(bundle.run_id, "CS-003")
     events = [(e.author, e.kind, e.payload.get("event") or e.payload.get("state")) for e in entries
               if e.framework == "adk"]
+    # The Evidence report is published as soon as the Evidence Agent finishes, and the Investigator consumes it from
+    # the blackboard (signed receipt) before it starts - not after the whole ADK workflow, as in direct mode.
     assert events == [("evidence_agent", "status", "agent_started"), ("evidence_agent", "monitor", "agent_finished"),
+                      ("evidence_agent", "post", None), ("evidence_agent", "status", "report_published"),
+                      ("investigator_agent", "monitor", "context_consumed"),
                       ("investigator_agent", "status", "agent_started"),
                       ("investigator_agent", "monitor", "agent_finished"),
-                      ("evidence_agent", "post", None), ("evidence_agent", "status", "COMPLETED"),
                       ("investigator_agent", "post", None), ("investigator_agent", "status", "COMPLETED")]
     started = {e.author: e for e in entries if e.payload.get("event") == "agent_started"}
     finished = {e.author: e for e in entries if e.payload.get("event") == "agent_finished"}
@@ -137,14 +140,22 @@ def test_the_blackboard_does_not_change_the_adjudication(shared, claim_id, monke
     assert all("not registered" in f["error"] for f in failures)
 
 
-def test_an_unusable_blackboard_is_reported_and_does_not_change_the_adjudication(shared, monkeypatch, tmp_path, capfd):
+def test_an_unusable_blackboard_is_reported_and_fails_closed(shared, monkeypatch, tmp_path, capfd):
     broken = tmp_path / "not_a_database"
     broken.mkdir()                                       # this side's blackboard cannot be opened at all
     monkeypatch.setenv(ENV_VAR, str(broken))
-    bundle = run(shared, "CS-003", suffix="broken")
-    reference = run(shared, "CS-003")
-    pick = lambda f: (f.final_decision, f.decided_by, f.payout, [(c.name, c.outcome) for c in f.rule_checks])
-    assert pick(bundle.final_report) == pick(reference.final_report)
+    bundle = run(shared, "CS-001", suffix="broken")     # a claim the deterministic rules approve
+    reference = run(shared, "CS-001")
+    assert reference.final_report.final_decision.value == "APPROVE"
+    final = bundle.final_report
+    # Blackboard mode was requested but nothing could be shared or verified: no agent context, no adjudicated
+    # agent review, so the approval is not given silently - the investigation is escalated to a human.
+    assert bundle.context_sharing == "blackboard"
+    assert final.review_status == "NONE" and final.requires_human_approval
+    assert (final.final_decision.value, final.decided_by) == ("ESCALATE", "INSUFFICIENT_REVIEW") and final.payout is None
+    assert [(c.name, c.outcome) for c in final.rule_checks] == [(c.name, c.outcome) for c in reference.final_report.rule_checks]
+    assert bundle.messages == [] and any("Forensic Agent not started" in e for e in bundle.crewai.errors)
+    assert any("investigator_agent was not started" in e for e in bundle.adk.errors)
     assert "BLACKBOARD MONITORING FAILURE [open]" in capfd.readouterr().err
     view = run_monitor(bundle.run_id, path=broken)                # what the dashboard shows
     assert view["enabled"] and "unavailable" in view["error"]

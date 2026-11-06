@@ -3,7 +3,24 @@
 Status legend: `[ ]` not started · `[~]` in progress · `[x]` done **with runtime evidence** (recorded in `docs/BUILD_LOG.md`).
 A box is ticked only after the listed check has actually been run.
 
-Teacher criteria (C-1 … C-11) are from `ClaimSleuth_Handoff_Gap_Analysis_and_Build_Plan.md` §2.1.
+Teacher criteria (C-1 … C-11) are from `ClaimSleuth_Handoff_Gap_Analysis_and_Build_Plan.md` §2.1. That file is not in this
+repository.
+
+## Teacher criteria: status on 2026-11-06
+
+| Criterion | Status | Evidence or gap |
+|---|---|---|
+| C-1 Context sharing; Blackboard mandatory; messaging architectures tried | **Partly met** | The Blackboard carries the Evidence report to both later agents, with A2A messages and MCP calls alongside. No measured comparison of messaging styles exists |
+| C-2 At least two MCP tools | **Met** | `warranty_policy_search`, `claim_history_lookup` on a separate MCP server |
+| C-3 Structured output with Pydantic | **Met** | Validated reports; final report as JSON and Markdown |
+| C-4 Design patterns, evaluated against others | **Partly met** | Hierarchical, sequential and parallel execution are all in one design. They are not evaluated against each other, and worker-node on/off, workflow-based and event-driven variants do not exist |
+| C-5 Callback monitoring and logging; heat map | **Met** | ADK callbacks, CrewAI events, unified trace, heat maps in the evaluation tab |
+| C-6 A2A between ADK and CrewAI | **Met** | a2a-sdk service and ADK `RemoteA2aAgent`, across two environments |
+| C-7 Both CrewAI and ADK, no other framework | **Met** | No other agentic framework is imported in `src` or `tests` |
+| C-8 Security and guardrails; prompt variance; personas | **Mostly met** | Screening, restricted-output checks in callbacks, injection tests, persona claim variants. Prompt variants such as ReAct were not built |
+| C-9 Observability, auditability, provenance | **Met** | Trace, audit trail, Blackboard provenance, page and line citations |
+| C-10 Performance, cost and time over about 40 runs; boxplots | **Partly met** | 40 cases with latency box plots, offline. Gemini requests are counted per live run. There is no 40-run live cost figure and no comparison across architectures or personas |
+| C-11 Deploy on a cloud platform | **Not met** | Local only; every service binds to 127.0.0.1 |
 
 ## Phase 1 — Schemas, dataset, deterministic baseline (no LLM)
 - [x] Pydantic schemas for claim, evidence, findings, baseline, MCP results, comparison, final report, blackboard (C-3)
@@ -35,18 +52,18 @@ Teacher criteria (C-1 … C-11) are from `ClaimSleuth_Handoff_Gap_Analysis_and_B
 - [x] ADK callbacks: agent / model / tool / tool-error records with latency, tokens, arguments, results (C-5)
 - [x] `NOT_CONFIGURED` without a key, `FAILED` without MCP; no deterministic fallback
 - [x] Offline tests (labelled test-double model; real Runner, sessions, McpToolset, MCP server): 16 passed
-- [ ] **Live Gemini run** — blocked: no `GOOGLE_API_KEY` configured. Check: `pytest -m live tests/test_adk_investigation.py`
+- [x] **Live Gemini run**: `RUN-live-adk-cs003`, then the complete runs in `docs/EVIDENCE.md`
 - Check: `python -m claimsleuth.adk_service --check-config`, then `python -m claimsleuth.adk_service CS-007`
 
 ## Phase 4 — CrewAI Forensic Agent (offline, test-double model) — A2A deferred to a later phase
 - [x] Separate `.venv-crew` (crewai 1.15.33, mcp 1.30.0, opentelemetry-api 1.45.2, pydantic 2.12.5); `.venv` unchanged
-- [x] Real CrewAI `Agent` / `Task(output_pydantic=ForensicsAnalysis, guardrail)` / `Crew(sequential)` / `kickoff()` (C-7)
+- [x] Real CrewAI `Agent` / `Task(guardrail validating ForensicsAnalysis)` / `Crew(sequential)` / `kickoff()` (C-7)
 - [x] CrewAI native MCP (`Agent(mcps=[MCPServerHTTP])`) calls `claim_history_lookup` on the MCP server; run id via header (C-2)
 - [x] `ForensicsReport` validated; model / provider / execution_status set by code; no payout field (C-3)
 - [x] Recording via `step_callback`, `task_callback` and the CrewAI event bus (tool and LLM call events) (C-5)
 - [x] Offline only: labelled `ForensicTestDoubleLLM`; loopback-only network guard; `NOT_CONFIGURED` for any other LLM mode
 - [x] Tests in `.venv-crew`: 19 passed; main `.venv`: 144 passed, CrewAI module skipped
-- [ ] Live LLM mode for CrewAI — not implemented (offline phase by the user's choice)
+- [x] Live LLM mode for CrewAI: `crew_service/gemini.py`, `RUN-live-crew-cs003`, then the complete runs in `docs/EVIDENCE.md`
 - [x] A2A server with Agent Card; ADK calls the CrewAI service over A2A (C-6) -- done in Phase 5
 - Check: `.venv-crew\Scripts\python -m claimsleuth.crew_service CS-003` (MCP server running), `pytest tests\crew`
 
@@ -63,7 +80,8 @@ Teacher criteria (C-1 … C-11) are from `ClaimSleuth_Handoff_Gap_Analysis_and_B
       A2A service process; append-only, isolated per run/claim, concurrency-safe (Phase 7e,
       docs/BLACKBOARD_GUIDE.md). Coordination only: agents do not exchange findings.
 - [ ] Communication-mode comparison (blackboard / peer-to-peer / broadcast) (C-1)
-- [ ] Architectures: sequential · parallel · hierarchical · workflow · event-driven; worker-node on/off (C-4)
+- [~] Architectures: sequential, parallel and hierarchical are implemented in one design. Workflow, event-driven, worker-node
+      on/off and any comparison between them are not (C-4)
 - Check: `python -m claimsleuth.integration CS-003` (MCP :8102 and CrewAI A2A :8103 running)
 
 ## Phase 6 — Local LLM (6A audit, 6B ollama-local for CrewAI) · security and personas
@@ -74,8 +92,10 @@ Teacher criteria (C-1 … C-11) are from `ClaimSleuth_Handoff_Gap_Analysis_and_B
 - [~] Live CS-003 run executed (genuine inference, 2 model calls, real tokens) — **FAILED**: Ollama ran the model with a
       4096-token context and truncated the prompt; the model also skipped the MCP tool. Needs a context-length decision.
 - [ ] ADK on a local model (not started; ADK still Gemini or test double)
-- [ ] Guardrails wired into ADK + CrewAI callbacks; tool-output validation; untrusted-document wrapping (C-8)
-- [ ] Personas: honest · vague · abusive · injection; prompt variants: standard · ReAct/evidence-first
+- [x] Guardrails in ADK callbacks and the CrewAI guardrail (`security.restricted_output`); tool-output validation on the MCP
+      server; untrusted-document wrapping (C-8)
+- [~] Personas: honest, vague, abusive and injection claim variants exist in the dataset. Prompt variants (ReAct or
+      evidence-first) were not built
 
 ## Phase 7 — Application and service orchestration (see docs/DASHBOARD_GUIDE.md)
 - [x] One-page application (Claim Investigation) in the original prototype's layout (light theme); the 7-page
@@ -94,20 +114,42 @@ Teacher criteria (C-1 … C-11) are from `ClaimSleuth_Handoff_Gap_Analysis_and_B
 - [x] Sequential (ADK SequentialAgent) and parallel (asyncio.gather ADK ‖ A2A) execution, measured per run
 - [x] All money in INR (₹, Indian digit grouping): dataset, sample PDFs, settlement schema, rules, adjudicator,
       reports and page; human-approval threshold ₹15,000 (Phase 7c)
-- [ ] The 11-section dashboard of the original brief: Blackboard, communication modes, five architectures,
-      heat maps and evaluation sections are not built (their back ends do not exist yet)
-- [ ] Callback-based security validation (deliberately out of scope)
+- [~] The 11-section dashboard of the original brief: Blackboard monitoring, heat maps and evaluation are built. Communication
+      modes and five architectures are not
+- [x] Callback-based security validation: restricted-output checks on agent reports, added with Phase 4.2
+
+## Security & Adversarial Intelligence
+
+- [x] Phase 4.1 Evidence tampering: structured `SecurityEvent`; each check reported on its own; one failed entry withholds
+      every report of the run; signed status required; damaged rows readable; A2A needs a ContextRef on a registered run;
+      controlled test on disposable databases (attacks A-J); Security & Trust section
+- [x] Phase 5 Reliability: run markers and all-or-nothing writes; unfinished runs classified and recovered only by a new investigation;
+      MCP record deadline; idempotency keys; final human review; approvals refused on failed integrity; request census at the SDK boundary
+- [x] Dashboard simplification: investigation and outcome first; Execution Overview, Blackboard & Agent Coordination and
+      Security & Trust as visible summaries; every detailed record kept under Advanced Diagnostics; warnings always visible;
+      front-end files only
+- [x] Phase 4.2 Prompt injection: screen extended and run on a normalised copy; delimiters cannot be closed or opened from
+      inside; agent output checked for credentials, key material and instructions; VERIFIED facts bound to their line; guardrail
+      feedback repeats no model text; `injection_events`; controlled test on disposable PDF copies with an obedient test double
 
 ## Phase 8 — Evaluation (≥ 40 runs)
-- [ ] Resumable harness: 5 architectures × 4 personas × 2 repetitions (C-10)
-- [ ] CSV/JSONL, accuracy, latency boxplots, cost, agent latency/error/evaluation heat maps (C-5, C-10)
+- [~] Built instead of 5 architectures × 4 personas × 2 repetitions: 40 synthetic cases in five categories, four approaches,
+      offline by default, live opt-in (C-10)
+- [x] CSV, JSON and Markdown export, accuracy, latency box plots, heat maps, request counts (C-5, C-10). Live cost over 40 runs is
+      not measured
 
 ## Phase 9 — Cloud deployment (only after explicit approval)
 - [ ] One platform, simple deployment, no exposed credentials (C-11)
 
+## Final hardening and submission (2026-11-06)
+- [x] Documentation audit, stale claims corrected, `docs/DEMO_GUIDE.md` and `docs/EVIDENCE.md` added
+- [x] Fresh-install check in new environments, from the files git would carry
+
 ---
 
 ## Project structure (target)
+
+The original target, kept for the record. The current layout is in the README.
 
 ```
 Claimsleuth_simple/

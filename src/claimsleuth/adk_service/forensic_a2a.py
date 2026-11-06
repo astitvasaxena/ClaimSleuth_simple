@@ -1,10 +1,14 @@
 """ADK -> CrewAI over A2A: Google ADK's RemoteA2aAgent calls the CrewAI Forensic Agent service.
 
 The RemoteA2aAgent runs under its own ADK Runner and session (separate from the Evidence/Investigator
-pipeline, so neither result sees the other). It resolves the service's Agent Card, sends one A2A
+pipeline; the Forensic Agent never sees the Investigator's result). It resolves the service's Agent Card, sends one A2A
 message whose text part is a WorkflowMessage FORENSIC_REQUEST, and receives the FORENSIC_RESPONSE (or
 ERROR) WorkflowMessage. Both messages are validated against the contract; the CrewAI result is returned
 exactly as the service produced it.
+
+Blackboard mode: the request carries ContextRefs to the verified Evidence report (references, not content); the
+service consumes the report from the blackboard itself. When no verified Evidence report exists, no request is
+sent at all (not_sent): the Forensic Agent never runs on unverified context.
 """
 from __future__ import annotations
 
@@ -22,7 +26,7 @@ from google.adk.sessions import InMemorySessionService
 from google.genai import types
 
 from claimsleuth import contract
-from claimsleuth.schemas import (AgentSystemResult, ClaimInput, EvidenceDocument, ExecutionStatus,
+from claimsleuth.schemas import (AgentSystemResult, ClaimInput, ContextRef, EvidenceDocument, ExecutionStatus,
                                  ForensicResponsePayload, WorkflowMessage, utc_now)
 
 # google-adk 2.13.0 flags its A2A components (RemoteA2aAgent, converters) as experimental on every call;
@@ -51,6 +55,8 @@ class ForensicExchange:
     result: AgentSystemResult                      # the CrewAI result, or a FAILED stand-in if none arrived
     errors: list[str] = field(default_factory=list)
     trace: list[dict[str, Any]] = field(default_factory=list)
+    sent: bool = True                              # False: the request was never sent (see not_sent)
+    timed_out: bool = False                        # no answer within the A2A timeout
 
 
 def _failed(request: WorkflowMessage, errors: list[str]) -> AgentSystemResult:
@@ -59,13 +65,22 @@ def _failed(request: WorkflowMessage, errors: list[str]) -> AgentSystemResult:
                              status=ExecutionStatus.FAILED, started_at=now, finished_at=now, errors=errors)
 
 
-async def request_forensics(claim: ClaimInput, documents: list[EvidenceDocument], run_id: str, card_url: str,
-                            timeout: float | None = None) -> ForensicExchange:
-    timeout = a2a_timeout(timeout)
+def not_sent(claim: ClaimInput, documents: list[EvidenceDocument], run_id: str, reason: str) -> ForensicExchange:
+    """The Forensic Agent was not asked (no verified shared context): an explicit FAILED result, no A2A message."""
     request = contract.forensic_request(run_id, claim.claim_id, documents)
+    errors = [f"Forensic Agent not started: {reason}"]
+    return ForensicExchange(request, None, _failed(request, errors), errors,
+                            [{"ts": time.time(), "a2a": "request_not_sent", "reason": reason}], sent=False)
+
+
+async def request_forensics(claim: ClaimInput, documents: list[EvidenceDocument], run_id: str, card_url: str,
+                            timeout: float | None = None, context: list[ContextRef] | None = None) -> ForensicExchange:
+    timeout = a2a_timeout(timeout)
+    request = contract.forensic_request(run_id, claim.claim_id, documents, context or ())
     trace: list[dict[str, Any]] = []
     texts: list[str] = []
     errors: list[str] = []
+    timed_out = False
 
     async def before_agent(callback_context):
         trace.append({"ts": time.time(), "a2a": "request_sent", "agent": callback_context.agent_name,
@@ -94,6 +109,7 @@ async def request_forensics(claim: ClaimInput, documents: list[EvidenceDocument]
                                   "a2a_task_id": str(meta.get("a2a:task_id", "")) or None,
                                   "a2a_context_id": str(meta.get("a2a:context_id", "")) or None})
     except TimeoutError:
+        timed_out = True
         errors.append(f"A2A request timed out after {timeout:.0f} s (CLAIMSLEUTH_A2A_TIMEOUT); no result accepted")
     except Exception as exc:          # unreachable card, HTTP error: recorded, nothing invented
         errors.append(f"A2A call failed: {type(exc).__name__}: {str(exc)[:500]}")
@@ -103,7 +119,7 @@ async def request_forensics(claim: ClaimInput, documents: list[EvidenceDocument]
 
     if not texts:
         errors.append("no A2A response received from the CrewAI service")
-        return ForensicExchange(request, None, _failed(request, errors), errors, trace)
+        return ForensicExchange(request, None, _failed(request, errors), errors, trace, timed_out=timed_out)
     try:
         response = contract.parse(texts[-1])
         contract.check_response(response, request)

@@ -274,10 +274,14 @@ def test_human_review_is_recorded_separately_and_never_changes_the_decision(ws, 
         HumanReviewInput(action="APPROVED", reviewer="   ")
     with pytest.raises(ValidationError):
         HumanReviewInput(action="PAY_OUT", reviewer="X")
-    incomplete = adjudicated_bundle(ws, "CS-006", dataset)            # REQUEST_EVIDENCE: no human approval needed
-    assert not incomplete.final_report.requires_human_approval
+    no_agents = adjudicated_bundle(ws, "CS-006", dataset)             # REQUEST_EVIDENCE, but no agent review at all
+    assert no_agents.final_report.review_status == "NONE" and no_agents.final_report.requires_human_approval
+    # A report that needs no human (complete review, REQUEST_EVIDENCE) cannot be reviewed.
+    not_required = no_agents.model_copy(update={"final_report": no_agents.final_report.model_copy(update={
+        "requires_human_approval": False, "approval_status": "NOT_REQUIRED", "review_status": "COMPLETE",
+        "incomplete_reasons": []})})
     with pytest.raises(ReviewNotAllowed):
-        record_review(tmp_path, incomplete, HumanReviewInput(action="REJECTED", reviewer="A. Reviewer"))
+        record_review(tmp_path, not_required, HumanReviewInput(action="REJECTED", reviewer="A. Reviewer"))
 
 
 # --------------------------------------------------------------------------- security & document integrity (report)

@@ -1,0 +1,98 @@
+Final Phase 5 regression, 2026-11-06, 19:45 to 21:02 local time. Printed by the run script; temporary paths shortened to <scratch>.
+
+=== browser 19:45:52
+flow flow_badge.py
+summary: 18 of 18 passed; failed: []
+js errors: []
+flow flow_d8.py
+summary: 14 of 14 passed; failed: []
+js errors: []
+flow flow_p5.py
+summary: 12 of 12 passed; failed: []
+js errors: []
+flow flow_full.py
+summary: 54 of 54 passed; failed: []
+js errors: []
+flow flow_retry.py
+summary: 25 of 25 passed; failed: []
+js errors: []
+ledger requests in this disposable environment: 0
+flow flow_d8real.py
+summary: 116 of 116 passed; failed: []
+js errors: []
+ledger requests in this disposable environment: 0
+=== main 19:58:26
+cmd: .venv/Scripts/python.exe -m pytest tests --ignore=tests/crew --junitxml=<scratch>\close\main.xml -q -p no:cacheprovider --no-header -p live_guard -rs
+exit 0, wall 2058 s
+801 passed, 1 deselected, 208 warnings in 2053.08s (0:34:13)
+refused: 1130 total, port 443: 0, live ports: 0
+=== crew 20:32:44
+cmd: .venv-crew/Scripts/python.exe -m pytest tests/crew -q -p no:cacheprovider --no-header -p live_guard -rs
+exit 0, wall 521 s
+155 passed, 2 deselected, 1236 warnings in 514.24s (0:08:34)
+refused: 0 total, port 443: 0, live ports: 0
+=== evaluation 20:41:26
+evaluation exit 0
+cases 40 40 same ids True ledger requests 0
+final report fields compared: 10 | differences by field: {}
+payouts: 8 of 40 | total 129240.0
+approval_status: {'PENDING': 28, 'NOT_REQUIRED': 12} | review_status: {'COMPLETE': 40}
+cases 40 40 same ids True fields compared 55
+decision field differences {'combined.final_decision': 0, 'combined.decided_by': 0, 'combined.review_status': 0, 'combined.requires_human_approval': 0, 'evidence.recommendation': 0, 'investigator.reco
+all differences by field []
+expected decision met fresh 40 baseline 40
+decided_by fresh Counter({'DETERMINISTIC_RULES': 35, 'GUARDRAIL_ESCALATION': 5})
+=== mutation s3_off 20:48:12
+FAILED tests/test_reliability.py::test_an_empty_log_with_agent_calls_needs_a_person_and_changes_no_decision
+FAILED tests/test_reliability.py::test_unverified_high_concerns_wait_for_a_person_and_nothing_is_paid
+2 failed, 7 passed, 132 deselected, 9 warnings in 124.84s (0:02:04)
+=== mutation s3_any_empty 20:50:33
+FAILED tests/test_reliability.py::test_an_empty_log_with_no_agent_calls_contradicts_nothing
+1 failed, 8 passed, 132 deselected, 9 warnings in 121.52s (0:02:01)
+=== mutation s3_any_status 20:52:56
+FAILED tests/test_reliability.py::test_a_reported_mcp_failure_keeps_its_own_error_and_wording
+1 failed, 8 passed, 132 deselected, 9 warnings in 133.38s (0:02:13)
+=== mutation records_missing_off 20:55:22
+FAILED tests/test_reliability.py::test_an_empty_log_with_agent_calls_needs_a_person_and_changes_no_decision
+FAILED tests/test_reliability.py::test_unverified_high_concerns_wait_for_a_person_and_nothing_is_paid
+FAILED tests/test_reliability.py::test_a_run_stored_before_the_check_keeps_its_true_wording
+3 failed, 6 passed, 132 deselected, 14 warnings in 130.94s (0:02:10)
+=== mutation retry_label 20:57:38
+FAILED tests/test_provider_reliability.py::test_a_recovered_503_is_shown_as_recovered_and_keeps_its_history
+1 failed, 8 passed, 132 deselected, 14 warnings in 129.95s (0:02:09)
+=== mutation older_incomplete 20:59:53
+FAILED tests/test_reliability.py::test_an_older_finished_run_is_not_called_incomplete
+1 failed, 8 passed, 132 deselected, 14 warnings in 141.28s (0:02:21)
+=== protected files changed 21:02:21
+none
+=== done 21:02:22
+
+Per-suite counts from the main run's JUnit report:
+total {'passed': 801} failed []
+reliability+faults+census {'passed': 77, 'failed': 0, 'skipped': 0}
+provider reliability {'passed': 72, 'failed': 0, 'skipped': 0}
+adjudicator {'passed': 16, 'failed': 0, 'skipped': 0}
+dashboard {'passed': 46, 'failed': 0, 'skipped': 0}
+blackboard {'passed': 85, 'failed': 0, 'skipped': 0}
+evidence integrity (4.1) {'passed': 56, 'failed': 0, 'skipped': 0}
+prompt injection (4.2) {'passed': 150, 'failed': 0, 'skipped': 0}
+manager and orchestration {'passed': 25, 'failed': 0, 'skipped': 0}
+focused D8 Counter({'passed': 12})
+   passed test_an_empty_log_with_agent_calls_needs_a_person_and_changes_no_decision
+   passed test_an_empty_log_with_no_agent_calls_contradicts_nothing
+   passed test_a_log_that_holds_the_calls_is_left_alone
+   passed test_a_reported_mcp_failure_keeps_its_own_error_and_wording
+   passed test_partial_records_are_judged_call_by_call
+   passed test_unverified_high_concerns_wait_for_a_person_and_nothing_is_paid
+   passed test_a_clean_claim_needs_no_review_and_refuses_one
+   passed test_normal_claims_are_not_flagged[CS-001-APPROVE-True]
+   passed test_normal_claims_are_not_flagged[CS-002-REJECT-True]
+   passed test_normal_claims_are_not_flagged[CS-006-REQUEST_EVIDENCE-False]
+   passed test_a_run_stored_before_the_check_keeps_its_true_wording
+   passed test_an_empty_log_on_a_run_with_a_failed_agent_stays_incomplete
+human approval by name Counter({'passed': 53}) in 13 modules
+modules 29
+
+Stored-run totals, RUN-dash-* only, read from runtime/runs:
+retry RUN-dash-bcdbabaf97 [('forensic_agent', 503, 'recovered')]
+{'stored': 37, 'COMPLETED': 3, 'recovered': 1, 'INCOMPLETE': 14, 'not_classified': 13, 'ESCALATED': 20}

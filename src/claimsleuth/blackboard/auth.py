@@ -1,4 +1,4 @@
-"""Local writer authentication for the shared coordination blackboard (standard library only).
+"""Local writer authentication for the shared blackboard (standard library only).
 
 Three writer principals, each with its own secret key in <database>.keys/<principal>.key:
 
@@ -126,3 +126,21 @@ def verify(fields: dict[str, Any], payload_text: str, signature: str | None, key
         return "invalid"
     expected = hmac.new(key, _canonical(fields), hashlib.sha256).hexdigest()
     return "valid" if hmac.compare_digest(expected, signature) else "invalid"
+
+
+def diagnose(fields: dict[str, Any], payload_text: str, signature: str | None,
+             keyring: dict[str, bytes]) -> tuple[str, str]:
+    """Why an entry failed verify(), which stops at the first problem: (payload check, signature check), each run on
+    its own. MATCH / MISMATCH, and VALID / INVALID / UNSIGNED / IDENTITY_MISMATCH / UNKNOWN_KEY. Decides nothing."""
+    digest = hashlib.sha256(payload_text.encode("utf-8")).hexdigest()
+    payload = "MATCH" if digest == fields.get("payload_sha256") else "MISMATCH"
+    principal = fields.get("principal")
+    if not signature or not principal:
+        return payload, "UNSIGNED"
+    if principal not in PRINCIPALS or fields.get("author") not in PRINCIPALS[principal]:
+        return payload, "IDENTITY_MISMATCH"
+    key = keyring.get(principal)
+    if key is None:
+        return payload, "UNKNOWN_KEY"
+    expected = hmac.new(key, _canonical(fields), hashlib.sha256).hexdigest()
+    return payload, "VALID" if hmac.compare_digest(expected, signature) else "INVALID"

@@ -9,6 +9,7 @@ import re
 from dataclasses import dataclass, field
 
 from claimsleuth.schemas import DocumentKind, EvidenceDocument, EvidenceRef, make_evidence_id
+from claimsleuth.security import neutralise_boundary
 
 _LABEL_LINE = re.compile(r"^\s*([A-Za-z][A-Za-z ]{1,40}?)\s*:\s*(.+?)\s*$")
 
@@ -69,9 +70,22 @@ def extract_fields(doc: EvidenceDocument) -> ExtractedFields:
 
 
 def quote_appears(doc: EvidenceDocument, line: int, quote: str) -> bool:
-    """True when the quote appears on that line of the document (whitespace and case normalised)."""
+    """True when the quote appears on that line of the document (whitespace and case normalised). An agent sees the line
+    with any <untrusted> delimiter neutralised, so a quote of it as shown counts as well."""
     lines = doc.text.splitlines()
     if not 1 <= line <= len(lines):
         return False
     norm = lambda s: " ".join(s.lower().split())
-    return norm(quote) in norm(lines[line - 1])
+    return norm(quote) in norm(lines[line - 1]) or norm(quote) in norm(neutralise_boundary(lines[line - 1]))
+
+
+_WORD = re.compile(r"[^\W_]+")
+
+
+def value_on_line(doc: EvidenceDocument, line: int, value: str) -> bool:
+    """True when every word and number of the value is written on that line: "14,500.00 INR" and "INR 14,500.00" agree.
+    An extracted fact can only say what its cited line says, so a report cannot carry other text as a verified value."""
+    lines = doc.text.splitlines()
+    if not 1 <= line <= len(lines):
+        return False
+    return set(_WORD.findall(value.casefold())) <= set(_WORD.findall(neutralise_boundary(lines[line - 1]).casefold()))

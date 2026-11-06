@@ -67,6 +67,8 @@ def evaluate(claim: ClaimInput, documents: list[EvidenceDocument], policy: Polic
     # 1. Screen every piece of untrusted text. Nothing here changes a value used by a rule.
     guardrails += screen_text(claim.claimant_statement, "claim.claimant_statement", run_id)
     guardrails += screen_text(claim.reported_issue, "claim.reported_issue", run_id)
+    guardrails += screen_text(claim.claimant_name, "claim.claimant_name", run_id)
+    guardrails += screen_text(claim.device_model, "claim.device_model", run_id)
     for doc in documents:
         guardrails += screen_text(doc.text, f"doc:{doc.doc_id}", run_id)
     injection = [g for g in guardrails if g.kind == "prompt_injection"]

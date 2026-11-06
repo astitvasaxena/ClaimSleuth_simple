@@ -6,23 +6,34 @@ from __future__ import annotations
 
 import os
 
-from claimsleuth import config
+from claimsleuth import config, execution_mode
 
-DEFAULT_GEMINI_MODEL = "gemini-3.5-flash"     # google-adk 2.13.0's LlmAgent.DEFAULT_MODEL
+DEFAULT_GEMINI_MODEL = execution_mode.DEFAULT_GEMINI_MODEL
 DEFAULT_MCP_URL = "http://127.0.0.1:8102/mcp"
 MAX_LLM_CALLS = 30                            # per run, enforced by ADK RunConfig
+LIVE_MAX_LLM_CALLS = 10                       # live (Gemini): both agents together; normally 4-5 are needed
 RUN_TIMEOUT_SECONDS = 300
+LIVE_RUN_TIMEOUT_SECONDS = 600                # live: requests may wait for the shared per-minute Gemini limit
 MCP_TIMEOUT_SECONDS = 10.0
+GEMINI_RETRY_ATTEMPTS = 1                     # no HTTP-level retry: it would bypass the request ledger. The single
+                                              # retry after a 503 is ExecutionRecorder.on_model_error's, through the ledger
 
 
 def load_env() -> None:
-    """Load D:\\Claimsleuth_simple\\.env if present; values already in the environment win."""
-    from dotenv import load_dotenv
-    load_dotenv(config.PROJECT_ROOT / ".env", override=False)
+    """Load <project>/.env if present; values already in the environment win."""
+    execution_mode.load_env()
 
 
 def gemini_model() -> str:
-    return os.environ.get("CLAIMSLEUTH_GEMINI_MODEL") or os.environ.get("GEMINI_MODEL") or DEFAULT_GEMINI_MODEL
+    return execution_mode.gemini_model()
+
+
+def gemini_llm(model: str):
+    """ADK's own Gemini model class with no HTTP-level retries (the API key is read from the environment). Each
+    request is admitted by the shared request ledger first (ExecutionRecorder.before_request)."""
+    from google.adk.models.google_llm import Gemini
+    from google.genai import types
+    return Gemini(model=model, retry_options=types.HttpRetryOptions(attempts=GEMINI_RETRY_ATTEMPTS, initial_delay=2))
 
 
 def mcp_url() -> str:
@@ -31,10 +42,4 @@ def mcp_url() -> str:
 
 def llm_config_errors() -> list[str]:
     """Empty when a supported Gemini configuration is present. Never includes secret values."""
-    if os.environ.get("GOOGLE_GENAI_USE_VERTEXAI", "").lower() in ("1", "true", "yes"):
-        missing = [v for v in ("GOOGLE_CLOUD_PROJECT", "GOOGLE_CLOUD_LOCATION") if not os.environ.get(v)]
-        return [f"Vertex AI selected but {', '.join(missing)} not set."] if missing else []
-    if os.environ.get("GOOGLE_API_KEY") or os.environ.get("GEMINI_API_KEY"):
-        return []
-    return ["No Gemini credentials configured: set GOOGLE_API_KEY (or GEMINI_API_KEY) in the environment or in "
-            f"{config.PROJECT_ROOT / '.env'}. The ADK investigation does not run without a real model."]
+    return execution_mode.gemini_config_errors()

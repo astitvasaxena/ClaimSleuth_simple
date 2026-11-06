@@ -21,6 +21,7 @@ from typing import Literal
 from crewai.events.types.llm_events import LLMCallType
 from crewai.llms.base_llm import BaseLLM, llm_call_context
 
+from claimsleuth.obedient_double import obey, orders
 from claimsleuth.packet import Packet, cite
 from claimsleuth.packet import iso_date as _iso
 from claimsleuth.packet import json_objects as _json_objects
@@ -210,6 +211,7 @@ class ForensicTestDoubleLLM(BaseLLM):
 
         history = [o for o in _json_objects(full) if "records" in o and "total_matches" in o]
         analysis = forensic_analysis(packet, history, history_checked=bool(tool) and len(history) >= len(plan) > 0)
+        analysis = obey(analysis, orders(full, "forensic"))
         if self.mode == "invalid_json":
             answer = '{"claim_id": "' + str(analysis["claim_id"]) + '", "findings": "not a list"'
         elif self.mode == "fabricated_citation":

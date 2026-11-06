@@ -6,7 +6,9 @@
 #   .venv-crew\Scripts\python -m pip install -r requirements\crew.txt
 #   .venv-crew\Scripts\python -m pip install -e .
 # Resolved alongside (2026-10-31, pip check clean): crewai-core 1.15.33, mcp 1.30.0, openai 2.54.0, opentelemetry-api 1.45.2.
-crewai==1.15.33
+# [google-genai]: CrewAI's native Gemini provider for EXECUTION_MODE=live (installs google-genai~=1.65.0;
+# resolved 2026-11-02 with google-genai 1.65.0, websockets 16.1.1, tenacity 9.1.4, pip check clean).
+crewai[google-genai]==1.15.33
 pydantic==2.12.5
 pytest==8.4.2
 # A2A server side (CrewAI Forensic Agent service). Same a2a-sdk version as .venv so both ends speak A2A 1.0.

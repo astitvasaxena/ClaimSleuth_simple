@@ -1,8 +1,9 @@
 """Background investigation runs started from the dashboard.
 
 A run is exactly the Phase 5 integration (integration.run.run_claim_async): deterministic baseline, Google ADK
-(Evidence + Investigator, test-double model), the CrewAI Forensic Agent requested over A2A, MCP records and the
-deterministic adjudicator, saved with save_bundle under runtime/runs/<run_id>/. One run at a time.
+(Evidence + Investigator), the CrewAI Forensic Agent requested over A2A, MCP records and the deterministic
+adjudicator, saved with save_bundle under runtime/runs/<run_id>/. One run at a time. The agents use genuine Gemini
+inference when the dashboard runs in LIVE mode and the labelled test doubles in OFFLINE mode.
 
 Progress comes only from real signals: the optional progress callback of run_claim_async (baseline, ADK workflow,
 CrewAI request and adjudication actually finished), the MCP server's tool-call log (which agent is calling tools)
@@ -24,7 +25,7 @@ from urllib.parse import quote
 from claimsleuth import config
 from claimsleuth.dashboard.services import ServiceConfig, get_json
 from claimsleuth.dashboard.workspace import Workspace
-from claimsleuth.integration.run import run_claim_async, save_bundle
+from claimsleuth.integration.run import LIVE_A2A_TIMEOUT, atomic_write, run_claim_async, save_bundle
 from claimsleuth.schemas import utc_now
 
 RUN_ID = re.compile(r"^RUN-[A-Za-z0-9_-]{3,60}$")
@@ -47,28 +48,42 @@ class Job:
     finished_at: str | None = None
     error: str | None = None
     events: dict[str, dict[str, Any]] = field(default_factory=dict)   # stage -> {"ts", "status"} from run_claim_async
+    recovers: str | None = None            # the interrupted run this investigation was requested for
 
     def progress(self, stage: str, data: dict[str, Any]) -> None:
         status = data.get("status")
         self.events[stage] = {"ts": utc_now().isoformat(), "status": getattr(status, "value", status)}
 
 
+def write_meta(runtime_dir: Path, job: Job, **extra: Any) -> None:
+    """The run's record on disk. Written before any work starts, so a process that dies leaves evidence of the run."""
+    out = runtime_dir / "runs" / job.run_id
+    out.mkdir(parents=True, exist_ok=True)
+    atomic_write(out / "dashboard_meta.json", json.dumps({**asdict(job), **extra}, indent=2))
+
+
 class JobManager:
-    def __init__(self, workspace: Workspace, cfg: ServiceConfig, runtime_dir: Path = config.RUNTIME_DIR) -> None:
-        self.ws, self.cfg, self.runtime_dir = workspace, cfg, runtime_dir
+    def __init__(self, workspace: Workspace, cfg: ServiceConfig, runtime_dir: Path = config.RUNTIME_DIR,
+                 live: bool = False) -> None:
+        self.ws, self.cfg, self.runtime_dir, self.live_mode = workspace, cfg, runtime_dir, live
+        self.adk_llm_mode = "gemini" if live else "test-double"
         self.jobs: dict[str, Job] = {}
         self._tasks: set[asyncio.Task] = set()
 
     def busy(self) -> Job | None:
         return next((j for j in self.jobs.values() if j.state == "running"), None)
 
-    def start(self, claim_id: str, source: dict[str, Any], crew_mode: str | None) -> Job:
+    def active(self) -> set[str]:
+        return {j.run_id for j in self.jobs.values() if j.state == "running"}
+
+    def start(self, claim_id: str, source: dict[str, Any], crew_mode: str | None, recovers: str | None = None) -> Job:
         running = self.busy()
         if running is not None:
             raise JobBusyError(f"run {running.run_id} for {running.claim_id} is still in progress")
-        timeout = OLLAMA_A2A_TIMEOUT if crew_mode == "ollama-local" else None
+        timeout = LIVE_A2A_TIMEOUT if self.live_mode else OLLAMA_A2A_TIMEOUT if crew_mode == "ollama-local" else None
         job = Job(run_id=f"RUN-dash-{uuid.uuid4().hex[:10]}", claim_id=claim_id, source=source,
-                  crew_mode=crew_mode, a2a_timeout_s=timeout)
+                  crew_mode=crew_mode, a2a_timeout_s=timeout, recovers=recovers)
+        write_meta(self.runtime_dir, job, **self._context(job))
         self.jobs[job.run_id] = job
         task = asyncio.create_task(self._run(job))
         self._tasks.add(task)
@@ -79,21 +94,21 @@ class JobManager:
         try:
             bundle = await run_claim_async(job.claim_id, run_id=job.run_id, mcp_url=self.cfg.mcp_url,
                                            crew_card_url=self.cfg.crew_card, data_dir=self.ws.data_dir,
-                                           db_path=config.DB_PATH, adk_llm_mode="test-double",
+                                           db_path=config.DB_PATH, adk_llm_mode=self.adk_llm_mode,
                                            a2a_timeout=job.a2a_timeout_s, progress=job.progress)
-            out = save_bundle(bundle, self.runtime_dir)
+            save_bundle(bundle, self.runtime_dir)
             job.state = "completed"
         except Exception as exc:      # the run could not produce a bundle: recorded as a failed job, nothing invented
             job.state, job.error = "failed", f"{type(exc).__name__}: {exc}"
             out = self.runtime_dir / "dashboard" / "failed_jobs"
             out.mkdir(parents=True, exist_ok=True)
             (out / f"{job.run_id}.txt").write_text(traceback.format_exc(), encoding="utf-8")
-            out = None
         job.finished_at = utc_now().isoformat()
-        if out is not None:
-            meta = {**asdict(job), "adk_llm_mode": "test-double",
-                    "source_label": job.source.get("label"), "workspace": str(self.ws.data_dir)}
-            (out / "dashboard_meta.json").write_text(json.dumps(meta, indent=2), encoding="utf-8")
+        write_meta(self.runtime_dir, job, **self._context(job))
+
+    def _context(self, job: Job) -> dict[str, Any]:
+        return {"adk_llm_mode": self.adk_llm_mode, "execution_mode": "live" if self.live_mode else "offline",
+                "source_label": job.source.get("label"), "workspace": str(self.ws.data_dir)}
 
     def live(self, run_id: str) -> dict[str, Any] | None:
         job = self.jobs.get(run_id)

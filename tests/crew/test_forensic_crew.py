@@ -54,7 +54,8 @@ def test_agent_task_and_crew_are_real_crewai_objects(dataset):
     assert agent.llm.model == "test-double" and isinstance(agent.llm, ForensicTestDoubleLLM)
     assert agent.mcps[0].url == "http://127.0.0.1:1/mcp" and agent.mcps[0].headers == {"X-ClaimSleuth-Run-Id": "RUN-x", "X-ClaimSleuth-Claim-Id": "CS-003",
                                      "X-ClaimSleuth-Caller": "crewai:forensic_agent"}
-    assert task.output_pydantic.__name__ == "ForensicsAnalysis" and task.guardrail is not None
+    assert "historical_pattern_findings" in task.expected_output and task.guardrail is not None
+    assert task.output_pydantic is None                          # no injected schema, no converter model call
     assert task.agent is agent and crew.process == Process.sequential
     assert (len(crew.agents), len(crew.tasks)) == (1, 1)
 
@@ -128,11 +129,11 @@ def test_report_validates_and_has_no_payout_field(mcp, dataset, tmp_path):
     assert (out / "crewai.md").exists()
 
 
-def test_unparseable_output_is_rejected_by_crewai_output_conversion(mcp, dataset):
-    """Not-JSON output fails in CrewAI's output_pydantic converter, before the guardrail runs."""
+def test_unparseable_output_is_rejected_by_the_guardrail(mcp, dataset):
+    """Not-JSON output is refused by the guardrail's strict validation, without any extra converter model call."""
     result = run(mcp, dataset, "CS-003", llm=double("invalid_json"))
     assert result.status == ExecutionStatus.FAILED and result.report is None
-    assert any("ConverterError" in e for e in result.errors), result.errors
+    assert any("not a valid ForensicsAnalysis JSON object" in e for e in result.errors), result.errors
 
 
 @pytest.mark.parametrize("mode, message", [

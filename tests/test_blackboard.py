@@ -93,6 +93,8 @@ def test_dashboard_sets_the_blackboard_before_starting_the_services(monkeypatch,
     # main() writes os.environ directly; registering the variable with monkeypatch first guarantees it is restored
     # after the test, so later tests never see the dashboard's default (the real runtime database).
     monkeypatch.setenv("CLAIMSLEUTH_BLACKBOARD_DB", "registered-for-restore")
+    monkeypatch.setenv("EXECUTION_MODE", "registered-for-restore")     # main() also sets EXECUTION_MODE
+    monkeypatch.delenv("EXECUTION_MODE")
     if preset is None:
         monkeypatch.delenv("CLAIMSLEUTH_BLACKBOARD_DB", raising=False)
     else:
@@ -323,7 +325,10 @@ def test_concurrent_writers_in_separate_processes(board, db, tmp_path):
         assert {e.process.environment for e in ticks} == {".venv", ".venv-crew"}
     finals = [e for e in entries if e.section == "status:forensic_agent" and e.payload["state"] in ("COMPLETED", "FAILED")]
     assert len(finals) == 1                                                           # one final state only
-    assert sum(o.count("won") for o in outputs) == 1, outputs
+    # Writers that pick the same final state may both see success: an identical repeat is idempotent (no new
+    # entry). What must never happen is a second, contradictory final state.
+    won = [o.split()[1] for o in outputs if o.startswith("won")]
+    assert won and set(won) == {finals[0].payload["state"]}, outputs
     assert board.state("RUN-1", "CS-001").agents["forensic_agent"].state == finals[0].payload["state"]
 
 

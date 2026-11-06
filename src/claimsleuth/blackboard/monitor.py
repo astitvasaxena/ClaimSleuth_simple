@@ -9,7 +9,7 @@ from pathlib import Path
 from typing import Any
 
 from claimsleuth.blackboard.controller import read_monitoring_failures
-from claimsleuth.blackboard.models import BoardEntry
+from claimsleuth.blackboard.models import RECEIPT_PREFIX, BoardEntry
 from claimsleuth.blackboard.store import Blackboard, BlackboardError, configured_path
 
 
@@ -39,7 +39,7 @@ def run_monitor(run_id: str, path: Path | None = None, report_decision: str | No
             return out
         state = board.state(run_id, registration["claim_id"])
         entries = board.entries(run_id, registration["claim_id"])
-    except BlackboardError as exc:
+    except (BlackboardError, ValueError) as exc:         # ValueError: a row too damaged to read as an entry
         out["error"] = str(exc)
         return out
     summary = next((m.payload for m in state.monitor if m.section == "controller:completion"), None)
@@ -52,7 +52,19 @@ def run_monitor(run_id: str, path: Path | None = None, report_decision: str | No
         "events": [_event(e) for e in entries[-recent:]],
         "late": [_event(e) for e in state.late],
         "findings": (summary or {}).get("findings", []),
+        # The orchestration manager's tasks: the latest recorded state of each (manager:task:<id> entries).
+        "tasks": list({m.payload.get("task_id"): {"task_id": m.payload.get("task_id"), "agent": m.payload.get("agent"),
+                                                  "status": m.payload.get("status"), "event": m.payload.get("event"),
+                                                  "run_seq": m.run_seq}
+                       for m in state.monitor if m.section.startswith("manager:task:")}.values()),
+        # Shared context: every report an agent or the adjudicator read from the blackboard (signed receipts).
+        "context": [{"consumer": m.payload.get("consumer"), "source_section": m.payload.get("source_section"),
+                     "source_run_seq": m.payload.get("source_run_seq"), "receipt_run_seq": m.run_seq,
+                     "principal": m.principal, "auth": m.auth}
+                    for m in state.monitor if m.section.startswith(RECEIPT_PREFIX)],
         "authentication": state.authentication,
+        # Refused reads of shared context, from the monitoring log (a refused read writes nothing on the blackboard).
+        "security_events": [f["security_event"] for f in out["monitoring_failures"] if f.get("security_event")],
         "decision": None if decision is None else {**decision.payload, "auth": decision.auth},
         "decision_matches_report": None if decision is None or report_decision is None
         else decision.payload.get("final_decision") == report_decision,

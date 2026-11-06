@@ -5,6 +5,7 @@ them with this run id AND this claim id; anything else is rejected and reported.
 """
 from __future__ import annotations
 
+import asyncio
 import json
 import time
 import urllib.error
@@ -45,9 +46,13 @@ async def fetch_mcp_records(mcp_url: str, run_id: str, claim_id: str) -> MCPResu
     parts = urlsplit(mcp_url)
     log_url = f"{parts.scheme}://{parts.netloc}/tool-calls?run_id={quote(run_id)}&limit=500"
     records: list[dict[str, Any]] = []
-    try:
+
+    def read_log() -> list[dict[str, Any]]:
         with urllib.request.urlopen(log_url, timeout=10) as resp:
-            records = json.loads(resp.read()).get("calls", [])
+            return json.loads(resp.read()).get("calls", [])
+
+    try:
+        records = await asyncio.to_thread(read_log)
     except (urllib.error.URLError, OSError, json.JSONDecodeError) as exc:
         errors.append(f"MCP tool-call log unavailable: {exc}")
     calls, rejected = validate_records(records, run_id, claim_id)

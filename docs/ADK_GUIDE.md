@@ -128,15 +128,12 @@ reports `NOT_CONFIGURED`.
 
 ## Limitations
 
-- **No live Gemini run has been done yet**: no key is configured in this workspace. Whether Gemini
-  accepts the generated `set_model_response` declarations for the nested `EvidenceReport` and
-  `InvestigationReport` schemas, and how well the agents follow the instructions, is **unverified**
-  until `pytest -m live` passes.
-- The default model name `gemini-3.5-flash` is google-adk 2.13.0's default. It has not been checked
-  against a live API.
+- **Live Gemini:** both agents have completed live runs on `gemini-3.5-flash` (`RUN-live-adk-cs003`, and the runs
+  listed in `docs/EVIDENCE.md`). That shows the schemas and tools work on the model. It does not measure how
+  accurate the agents are.
 - `SequentialAgent` is deprecated in google-adk 2.13.0 in favour of `Workflow`. It still works here;
   the architecture phase will build the workflow-based pattern with `Workflow`.
 - No estimated cost yet; token counts come from the provider when it reports them.
-- Guardrail callbacks (injection/abuse screening before the model) are a later phase. For now,
-  untrusted text is only delimited and covered by the instructions.
+- Documents are screened for injection before the agents run, and each report is checked in the callbacks for
+  restricted output (`security.restricted_output`). The screen is a pattern list, not a complete defence.
 - Each run opens new MCP sessions, which add about a second per agent.

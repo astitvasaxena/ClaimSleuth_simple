@@ -1,4 +1,4 @@
-# Shared coordination blackboard
+# Shared blackboard: shared state and context between agents
 
 One persistent blackboard per installation, shared by the two processes that run agents:
 - the **ADK side**: the Evidence and Investigator Agents, which run in the dashboard or integration process
@@ -7,47 +7,101 @@ One persistent blackboard per installation, shared by the two processes that run
 
 Both open the same SQLite file independently.
 
-## What it is, and what it is not
+## What it is
 
-It is a **coordination board**:
-- the orchestrator registers each investigation run;
-- each side reads that registration, checks that it is investigating the same claim and the same documents, and
-  publishes its own agents' lifecycle, status and validated reports;
-- the orchestrator then seals the run, tracks completion and failures, reconciles what was published with what the
-  adjudicator received, and records the adjudicator's decision.
+The blackboard is the run's **shared state** and the channel through which **intermediate output of one agent feeds
+another**:
+- the orchestrator registers each investigation run (one claim, one document fingerprint);
+- the **Evidence Agent's validated report is published to the blackboard as soon as the agent finishes**;
+- the **Investigator Agent** (ADK) and the **Forensic Agent** (CrewAI) each **consume that report from the
+  blackboard**: read access is checked, the exact version and hash are verified, and a signed receipt is recorded;
+- both publish their own validated reports; the orchestrator **seals** the run;
+- the **deterministic adjudicator consumes only reports verified on the sealed blackboard**, then the decision is
+  recorded there.
 
-It is **not** a collaborative workspace:
-- no agent reads another agent's findings, so the three agents stay independent;
-- agent prompts, outputs and the deterministic adjudication are exactly as they are without the board;
-- the adjudicator still receives its inputs directly, as before, and still makes the decision.
+What it does not do:
+- it never decides anything: the deterministic adjudicator remains the only final decision authority;
+- it never hands the Investigator's report to the Forensic Agent, so ADK and CrewAI stay two independent opinions
+  (no anchoring); the Investigator and Forensic reports are read only by the adjudicator;
+- it does not replace the other channels (next section).
+
+### The four ways information moves
+
+| Mechanism | What it carries | Between |
+|---|---|---|
+| **Blackboard** (SQLite, this guide) | Shared state and intermediate context: registrations, statuses, agents' reports, consumption receipts, seal, decision | All agents, the orchestrator and the adjudicator |
+| **A2A** (A2A 1.0 JSON-RPC) | The FORENSIC_REQUEST / FORENSIC_RESPONSE messages; the request carries a **ContextRef** (a reference, never the report content) | The ADK side and the CrewAI service |
+| **MCP** (Streamable HTTP) | Tool calls: `warranty_policy_search`, `claim_history_lookup` | Each agent and the MCP server |
+| **ADK session state** | ADK's own workflow state inside one `SequentialAgent` run | The two ADK agents' execution; in blackboard mode the `evidence_report` key is filled from the verified blackboard copy |
+
+### Read permissions (`models.CONTEXT_READERS`)
+
+| Section | Writer | Authorised readers |
+|---|---|---|
+| `report:evidence_agent` | ADK Evidence Agent (`adk`) | Investigator Agent, Forensic Agent, adjudicator |
+| `report:investigator_agent` | ADK Investigator Agent (`adk`) | adjudicator |
+| `report:forensic_agent` | CrewAI Forensic Agent (`crewai`) | adjudicator |
+
+These permissions are enforced by `Blackboard.consume`, the only way one participant receives another's report.
+They are application-level rules: any program running as the same OS user could still open the database file (see
+Limitations).
 
 ## Turning it on and off
 
 | Setting | Effect |
 |---|---|
-| `CLAIMSLEUTH_BLACKBOARD_DB` unset, or `off` / `0` / `false` / `none` / `disabled` / empty | No blackboard; nothing changes |
-| `CLAIMSLEUTH_BLACKBOARD_DB=<path>` | Both sides use that SQLite file. A service started from this environment inherits the setting. |
+| `CLAIMSLEUTH_BLACKBOARD_DB` unset, or `off` / `0` / `false` / `none` / `disabled` / empty | **Direct mode**: no blackboard. The Investigator reads the Evidence report from ADK session state, ADK and the A2A request start together, and the adjudicator receives the results as returned. Bundles say `context_sharing: "direct"`. |
+| `CLAIMSLEUTH_BLACKBOARD_DB=<path>` | **Blackboard mode** (`context_sharing: "blackboard"`). Both sides use that SQLite file. A service started from this environment inherits the setting. |
 | `python -m claimsleuth.dashboard` | Uses an explicitly set value. If none is set, it uses `runtime/blackboard.sqlite3`. |
-| `python -m claimsleuth.dashboard --no-blackboard` | Disables the board, for the dashboard and the services it starts |
+| `python -m claimsleuth.dashboard --no-blackboard` | Direct mode, for the dashboard and the services it starts |
+| Agent evaluation | Always blackboard mode, with its own file `runtime/evaluation/<id>/blackboard.sqlite3`, shared with its own CrewAI service |
 
 `python -m claimsleuth.integration` uses the board only when `CLAIMSLEUTH_BLACKBOARD_DB` is set. The CrewAI
-service must have the same setting; services started by the dashboard get it automatically.
+service must have the same setting; services started by the dashboard get it automatically. A CrewAI service without
+the blackboard refuses to run on context references (fail closed).
 
 ## A run on the board
 
-Example: `RUN-dash-8b1b95a293`, claim WC-2026-0412, a live dashboard run.
+The entries of one offline run of CS-003 in blackboard mode, in order (asserted by `tests/test_blackboard_e2e.py`
+and `tests/test_blackboard_context.py`). The CrewAI rows interleave with the Investigator's, because the two run
+concurrently:
 
-| # | Kind | Section | Writer (process) | Event |
-|---|---|---|---|---|
-| 1–4 | register, status | run, status:\<agent\> | controller (`.venv`) | run bound to the claim and its documents; all three agents PENDING |
-| 5 | status | status:evidence_agent | ADK (`.venv`) | RUNNING, from the ADK plugin's `before_agent_callback` |
-| 6–8 | status, post, status | status / report:forensic_agent | CrewAI (`.venv-crew`, another pid) | RUNNING, report, COMPLETED, while the ADK workflow is still running |
-| 9 | monitor | lifecycle:evidence_agent | ADK | `agent_finished`, from `after_agent_callback` (report awaiting validation) |
-| 10–11 | status, monitor | investigator_agent | ADK | RUNNING, then `agent_finished` (it starts only after the Evidence Agent finished) |
-| 12–15 | post, status | report / status for both ADK agents | ADK | validated reports, then COMPLETED, published when the ADK workflow ends |
-| 16 | monitor | controller:seal | controller | adjudicator inputs fixed |
-| 17 | monitor | controller:completion | controller | completed / failed / unfinished agents, reconciliation, authentication, monitoring failures |
-| 18 | post | decision:final | adjudicator, recorded by the controller | ESCALATE by GUARDRAIL_ESCALATION, plus the final report's SHA-256 |
+| Kind | Section | Writer (process) | Event |
+|---|---|---|---|
+| register, status | run, status:\<agent\> | controller (`.venv`) | run bound to the claim and its documents; all three agents PENDING |
+| status | status:evidence_agent | ADK (`.venv`) | RUNNING, from the ADK plugin's `before_agent_callback` |
+| monitor | lifecycle:evidence_agent | ADK | `agent_finished`, from `after_agent_callback` |
+| post | report:evidence_agent | ADK | the validated Evidence report, **published during execution**; the orchestrator gets its ContextRef |
+| status | status:evidence_agent | ADK | COMPLETED (`report_published`) |
+| monitor | context:consumed:investigator_agent | ADK | **receipt**: the Investigator read that report from the blackboard |
+| status, monitor, post, status | investigator_agent | ADK | RUNNING, `agent_finished`, its report, COMPLETED |
+| status | status:forensic_agent | CrewAI (`.venv-crew`, another pid) | RUNNING, after the A2A request with the ContextRef arrived |
+| monitor | context:consumed:forensic_agent | CrewAI | **receipt**: the Forensic Agent read the Evidence report with the `crewai` key |
+| post, status | report / status:forensic_agent | CrewAI | its report, COMPLETED |
+| monitor | controller:seal | controller | adjudicator inputs fixed |
+| monitor | controller:completion | controller | completed / failed / unfinished agents, reconciliation, authentication, monitoring failures |
+| monitor ×3 | context:consumed:adjudicator | adjudicator (`orchestrator` key) | **receipts**: each report the adjudicator verified and used |
+| monitor | controller:verification | adjudicator | which reports were verified, by entry and hash |
+| post | decision:final | adjudicator, recorded by the controller | the decision, plus the final report's SHA-256 |
+
+Interleaved with these, the **orchestration manager** (`orchestration/manager.py`) records its plan and every task
+state change as signed `monitor` entries written with the `orchestrator` key (framework `manager`):
+- `manager:plan`: the five tasks, their agents, channels and dependencies, right after registration;
+- `manager:task:<task_id>` (`baseline`, `evidence`, `investigation`, `forensics`, `adjudication`): one entry per
+  event - for example `dependencies_met` (READY), `dispatched` (RUNNING; for the Investigator, the manager's release
+  just before its context receipt), `context_consumed`, `report_published`, `report_verified` (COMPLETED),
+  `blocked`, `failed`, `timed_out`, `blackboard_sealed`, `decided`, `escalated_to_human`;
+- `manager:failure`: only if the manager itself failed (then no `decision:final` is ever written).
+
+They carry identifiers, states and references only, never document text. The dashboard's Blackboard Monitoring
+section shows each task's latest state ("Manager tasks").
+
+The run's **execution trace** (see "Monitoring and observability" in `ARCHITECTURE_GUIDE.md`) turns these entries into
+provenance events: each publication and consumption receipt with producer, consumer, section, `run_seq`, SHA-256 and
+receipt status, plus the seal, verification and decision. Each participant also times its own publish / consume /
+verify / seal operations (`_Participant.operations`), and rejected reads appear as `blackboard.consume_rejected`.
+The Investigator's and Forensic Agent's reports are posted when their runner finishes, after their execution record
+is closed, so their publication is traced from the entry alone, without a latency.
 
 To look at a run:
 
@@ -56,8 +110,8 @@ To look at a run:
 .venv\Scripts\python -m claimsleuth.blackboard RUN-dash-8b1b95a293 [--json] [--db PATH]
 ```
 
-**On the dashboard:** the collapsed **Blackboard Monitoring** section under Investigation Details is filled from
-`GET /api/runs/<run_id>/blackboard`. It is read-only and shows:
+**On the dashboard:** **Blackboard & Agent Coordination** summarises the run, and the **Blackboard Monitoring** section under
+Advanced Diagnostics is filled from `GET /api/runs/<run_id>/blackboard`. It is read-only and shows:
 - the run and claim IDs, the database and the seal point;
 - whether every writer was authenticated;
 - each agent's state, with late states marked;
@@ -65,24 +119,78 @@ To look at a run:
 - monitoring failures and findings;
 - the most recent events, with the writing process.
 
+## Shared context: how one agent's output reaches another
+
+**Evidence → blackboard → Investigator (ADK, `blackboard/adk_plugin.py`).** This uses ADK's supported plugin
+mechanism, `App(plugins=[BlackboardLifecyclePlugin])`:
+- `after_agent_callback` of the Evidence Agent: the raw output is validated (`adk_service/runner.check_evidence`:
+  Pydantic schema, claim id, in live mode its required MCP call, every citation against the documents and every
+  policy reference against this run's MCP results). Only a fully valid report is published (`publish_report`), and
+  the orchestrator is notified at once with its **ContextRef** (run, claim, section, `run_seq`, payload SHA-256,
+  document fingerprint).
+- `before_agent_callback` of the Investigator: the report is **consumed from the blackboard** (`consume_context`).
+  The verified copy, delimited with `wrap_untrusted` as `<untrusted source="blackboard:report:evidence_agent@<run_seq>">`,
+  is written to the session-state key the Investigator's instruction already reads (`{evidence_report?}`). The
+  instruction text is unchanged. Whatever the Evidence Agent left in session state is overwritten and never used;
+  the ADK result's `evidence_report` is the published report.
+- Fail closed: if the report cannot be validated, published or consumed, the plugin returns content from
+  `before_agent_callback`, which ends the ADK invocation. The Investigator does not run and the ADK result is FAILED.
+
+**Evidence → blackboard → A2A reference → Forensic (CrewAI).** The orchestrator (`integration/run.py`) starts the
+A2A request only when the Evidence report is published, so the Investigator and the Forensic Agent run concurrently
+after it. The FORENSIC_REQUEST carries the ContextRef, not the report. The CrewAI service:
+- checks the reference in the contract (`contract.check_request`: same run and claim, same documents, a section the
+  Forensic Agent may read; otherwise `ERROR CONTEXT_REJECTED`);
+- consumes the report from the blackboard with its **own `crewai` key** (`crew_service/runner.py`), leaving a signed
+  receipt;
+- appends the verified copy to the `claim_packet` input as an untrusted block under a one-line header
+  (`claim_text.shared_context`); the CrewAI task description is unchanged;
+- refuses to run the crew if any reference cannot be consumed (FAILED, no model call).
+
+If no verified Evidence report exists, the orchestrator sends no FORENSIC_REQUEST at all (`forensic_a2a.not_sent`).
+
+**Consumption (`Blackboard.consume`).** Everything is checked and recorded in **one** `BEGIN IMMEDIATE`
+transaction, so nothing can change between the check and the recorded read:
+1. the run is registered, the claim matches and the document fingerprint matches;
+2. the consumer belongs to the writer's principal (`auth.PRINCIPALS`) and may read the section (`CONTEXT_READERS`);
+3. the entry at the expected `run_seq` is a post of that section, and its stored payload has the expected SHA-256;
+4. its HMAC signature verifies;
+5. it is not retracted, not superseded by a newer post (stale), and not late;
+6. its producer's status (before any seal) is COMPLETED;
+7. agents read only **before** the seal; the adjudicator reads only **after** it;
+8. the report validates against its schema, belongs to the claim and matches its recorded `report_sha256`;
+9. a signed receipt is appended: a `monitor` entry `context:consumed:<consumer>` whose `ref_seq` points at the post,
+   with the source section, version, author, principal and hashes.
+
+Any failure writes nothing and is reported as a monitoring failure. Receipts reuse the existing `monitor` kind, so
+**no table or schema change** was made; existing databases and records are read unchanged.
+
+**Adjudicator inputs (`RunController.verified_inputs`).** After the seal, for each report a completed system
+delivered, the adjudicator consumes the live post of that agent, and the post must hold exactly the delivered
+report. The adjudicator receives the blackboard copies. If any report of a system cannot be verified (mismatch,
+retracted, late, unsigned, missing, or the board is unusable), that system is handed to the adjudicator as FAILED
+without reports. Its review is then unavailable, so the investigation is PARTIAL or NONE and needs a human, by the
+adjudicator's existing rules. The results as executed are stored unchanged in the bundle.
+
 ## ADK agent lifecycle
 
-Each ADK agent's own start and end are published **while the ADK workflow runs**. This uses ADK's supported plugin
-mechanism, `App(plugins=[BlackboardLifecyclePlugin])` (`blackboard/adk_plugin.py`):
-- `before_agent_callback` marks the agent RUNNING;
+Each ADK agent's own start and end are published **while the ADK workflow runs**, by the same plugin:
+- `before_agent_callback` marks the agent RUNNING (for the Investigator, after it consumed its context);
 - `after_agent_callback` records `agent_finished`;
-- both return `None`, so ADK continues normally;
 - the agents, their instructions and the existing callbacks (`adk_service/callbacks.py`) are unchanged;
-- the plugin is attached only when the board is enabled.
+- the plugin is attached only in blackboard mode.
 
-An agent's **validated report**, and its COMPLETED or FAILED status, still follow when the workflow ends. Reports
-are validated only after the whole ADK workflow has finished, so the board never shows an unvalidated report as a
-result.
+The Evidence Agent's report and COMPLETED status are published during execution; the Investigator's follow when the
+ADK workflow ends. An agent published during execution keeps that status even if a later agent fails, so the history
+shows what really happened.
 
 ## Guarantees
 
 - **Append-only history.** Database triggers refuse every `UPDATE` and `DELETE`. A retraction is a new entry
   pointing at the retracted post and giving a reason; the post itself stays.
+- **A later failure does not retract a valid report.** If the Investigator fails after the Evidence report was
+  published, that report stays live and with the ADK result. The adjudicator still ignores it, because it uses nothing
+  from a system that did not complete.
 - **Isolation.** Each run is bound to one claim and one document fingerprint when it is registered. Reading or
   writing a run under another claim is refused, and so is posting with other documents.
 - **Validation before acceptance:**
@@ -156,24 +264,76 @@ does not occur in test-double mode. The late path is exercised in two ways:
 - **Live demonstration:** the controller seals the run, then a real A2A request goes to the running CrewAI
   service; that service's three entries arrive flagged LATE.
 
-## Blackboard monitoring failures
+## Blackboard monitoring failures and fail-closed behaviour
 
-A blackboard problem never changes an investigation. Examples: the database is unusable or locked too long, a
-write is rejected, a run is unregistered, or an entry is late. Each one is reported explicitly as a **Blackboard
-monitoring failure**:
+Every blackboard problem is reported explicitly as a **Blackboard monitoring failure**. Examples: the database is
+unusable or locked too long, a write or read is rejected, a run is unregistered, or an entry is late. It appears:
 - on stderr (`BLACKBOARD MONITORING FAILURE [where] run/claim: error`);
 - in `<database>.monitoring.jsonl`, with the process and environment that hit it;
 - in the controller's `controller:completion` entry for the run, when the database is usable;
 - in the dashboard's Blackboard Monitoring section. This works even when the database cannot be opened, because the
   monitoring log is a separate file.
 
+In blackboard mode a problem is also **fail closed** wherever context or adjudicator inputs depend on it:
+
+| Situation | Outcome |
+|---|---|
+| Evidence report invalid, unsupported or not publishable | Investigator not started; no FORENSIC_REQUEST; both reviews unavailable: review NONE, human approval |
+| Investigator fails after the Evidence report was published | Evidence stays COMPLETED (and consumed by Forensic), Investigator FAILED; the Evidence post is retracted at the seal (the ADK result is not adjudicated); review PARTIAL, human approval |
+| Forensic fails or is unreachable | ADK reports verified and used; review PARTIAL, human approval |
+| A delivered report differs from, or is missing on, the blackboard | that system is not adjudicated; review PARTIAL or NONE, human approval |
+| Any entry of the run fails verification (altered, forged, unsigned) | no report of the run is adjudicated, even one read before the change: review NONE, human approval (an approval by the rules becomes ESCALATE, INSUFFICIENT_REVIEW) |
+| The blackboard cannot be opened at all | nothing is shared or verified: review NONE, human approval (an approval by the rules becomes ESCALATE, INSUFFICIENT_REVIEW) |
+
+An incomplete investigation never becomes a silent approval.
+
+## Evidence integrity
+
+**How tampering is detected.** The HMAC signature covers the stored `payload_sha256`, not the payload text, so the two
+checks do different jobs. Changing a payload and keeping its hash leaves the signature valid: the payload-hash check
+catches it. Changing the hash too breaks the signature. `auth.diagnose` reports each check on its own.
+
+| What was changed | Payload check | Signature check | `attack_type` |
+|---|---|---|---|
+| Payload only | MISMATCH | VALID | `PAYLOAD_TAMPERING` |
+| Payload and its hash | MATCH | INVALID | `HASH_AND_PAYLOAD_TAMPERING` (or `SIGNATURE_FORGERY` if the ContextRef was changed too) |
+| Signature | MATCH | INVALID | `SIGNATURE_FORGERY` |
+| Nothing: the reference is wrong | MATCH | VALID | `REFERENCE_MISMATCH` |
+
+**A refused read is a security event.** `consume()` raises `BlackboardSecurityError`, which names what was found. The
+participant that refused the read turns it into a `SecurityEvent` (`schemas.py`). Its text comes from the fixed table
+`models.SECURITY_RESPONSES`, never from the exception, so nothing from a stored entry reaches monitoring. A refused read
+still writes nothing on the blackboard: the event goes to `<database>.monitoring.jsonl`, the agent system's result, the
+run bundle, the trace (`security.event`, category `security`) and, once the run ends, one signed `manager:security` entry.
+
+**One bad entry stops the whole run's agent reports.** `verified_inputs` looks at every entry of the sealed run. If any
+failed verification, nothing is adjudicated, whichever entry it was and whenever it changed. An agent may have read a
+report while it was still sound, but the run's record is no longer trustworthy, so it is not trusted in part. Without
+this, a report altered after both agents read it left the other system's review standing, and a claim the rules approve
+stayed APPROVE with a payout.
+
+**Other rules:** a status row must verify before it can make a report final; a payload that is not a JSON object reads as
+empty (and then fails verification) instead of stopping the run being read; the CrewAI service refuses an A2A request
+without a ContextRef for a run registered on the blackboard (`contract.check_context_required`).
+
+**Controlled test:** `python -m claimsleuth.dashboard.evidence_integrity_lab`. See `docs/DASHBOARD_GUIDE.md`.
+
 ## Limitations
 
-- **Agents do not exchange findings.** This is by design, to keep their independence.
-- **ADK report timing:** the validated ADK reports appear when the ADK workflow ends; only the lifecycle events
-  appear while it runs.
-- **Same OS user:** writer authentication does not protect against a malicious process running as the same user
-  (see above).
+- **Same OS user:** writer authentication and read permissions are enforced by the ClaimSleuth code. They do not
+  stop a malicious program running as the same OS user, which could read the key files or the database itself;
+  that would need separate OS accounts. Someone holding the keys can re-sign a changed entry. The agents' ContextRef
+  and the adjudicator's comparison with the delivered report still refuse it, but only for that system's report.
+- **Whole-file rollback:** restoring an older copy of the database and keys is not detected by signatures. A run already
+  holding a ContextRef refuses it, because that entry is then missing. Nothing outside the file records its latest state.
+- **Shared ADK key:** the Evidence and Investigator Agents run in one process and share the `adk` key; they are told
+  apart by author binding, not cryptographically.
+- **A forged row is fail closed, not ignored:** a raw-SQL row in a report section fails authentication, and it also
+  makes the genuine report no longer the current one, so that report is no longer consumed either.
+- **Strict Evidence validation:** one unsupported citation in the Evidence report stops the Investigator and the
+  Forensic Agent for that run. A live model that cites carelessly gives an incomplete investigation, never a silent
+  one.
+- **Latency:** the Forensic Agent now starts after the Evidence Agent instead of at the same time.
 - **Machine scope:** SQLite in WAL mode needs all writers on one machine and a local disk, which fits the
   127.0.0.1-only services.
 - **A real A2A time-out is not reproducible with the test double.** The late path is tested with the real CrewAI
@@ -182,24 +342,38 @@ monitoring failure**:
 ## Code and tests
 
 - `src/claimsleuth/blackboard/`:
-  - `models.py`: entries and states;
-  - `store.py`: SQLite store, migration, seal and late flags;
-  - `auth.py`: keys, signatures, verification;
-  - `controller.py`: `AgentParticipant`, `RunController`, monitoring failures;
-  - `adk_plugin.py`: ADK lifecycle plugin;
-  - `monitor.py`: dashboard and viewer summary;
+  - `models.py`: entries and states, `CONTEXT_READERS`, `ContextRef` (defined in `schemas.py`);
+  - `store.py`: SQLite store, migration, seal and late flags, `consume()`;
+  - `auth.py`: keys, signatures, verification, `diagnose`;
+  - `controller.py`: `AgentParticipant` (`publish_report`, `consume_context`), `RunController`
+    (`verified_inputs`), `context_block`, monitoring failures;
+  - `adk_plugin.py`: ADK lifecycle plugin and `EvidenceContext` (Evidence → Investigator);
+  - `monitor.py`: dashboard and viewer summary, including the consumption receipts (`context`) and the
+    manager's task states (`tasks`);
   - `__main__.py`: the viewer.
 - **Integration points:**
-  - `adk_service/runner.py`: registration check, the plugin, publishing in `finish()`;
-  - `crew_service/runner.py`: the same, without the plugin;
-  - `integration/run.py`: register, collect (seal), publish the decision;
+  - `adk_service/runner.py`: `check_evidence`, the plugin, the published Evidence report as the run's report;
+  - `adk_service/forensic_a2a.py`, `contract.py`: ContextRefs in the FORENSIC_REQUEST, `not_sent`;
+  - `crew_service/a2a_server.py`, `crew_service/runner.py`: consumption with the `crewai` key, the claim packet;
+  - `orchestration/manager.py`: register, the plan, release the Investigator, dispatch Forensic on the published
+    Evidence report, collect (seal), `verified_inputs`, publish the decision, the `manager:*` entries;
+  - `integration/run.py`: the entry point, which hands the run to the manager;
+  - `evaluation/runner.py`: one blackboard per evaluation;
   - `dashboard/__main__.py`: default path and `--no-blackboard`, through `blackboard_setting()`;
   - `dashboard/app.py`: the `/api/runs/<id>/blackboard` route;
-  - `dashboard/static/`: the collapsed Blackboard Monitoring section.
+  - `dashboard/static/`: the collapsed Blackboard Monitoring section (unchanged; it lists the receipts as events).
 - **Tests:**
-  - `tests/test_blackboard.py` (44): store, authentication and tampering, migration, late entries, real
-    multi-process concurrency including a `.venv-crew` writer, crash mid-write, contention, the controller, the ADK
-    plugin, the monitoring view, the dashboard route and the launcher's board settings;
-  - `tests/test_blackboard_e2e.py` (11): real MCP and CrewAI A2A service processes, per-agent ADK lifecycle,
-    authentication, an unusable board with an unchanged adjudication, and the dashboard view of a real run;
-  - `tests/crew/test_blackboard_crew.py` (3): the CrewAI side, including a late report from the real CrewAI runner.
+  - `tests/test_blackboard_context.py`: publication during execution, consumption and receipts, cross-run and
+    cross-claim, permissions, forged, unsigned, mismatched, retracted, stale, unfinished and late context, the seal,
+    real multi-process publication and consumption, adjudicator inputs, the Investigator's actual model instruction,
+    a tampered raw session state, unsupported Evidence, the real A2A + CrewAI path with the ContextRef, Forensic
+    independence, Forensic and Investigator failures, direct mode, the 40-case offline evaluation and the dashboard
+    and evaluation endpoints;
+  - `tests/crew/test_blackboard_context_crew.py`: the Forensic model's actual prompt, injected text in the shared
+    report, unverifiable or unauthorised context and a service without the blackboard;
+  - `tests/test_blackboard.py`: store, authentication and tampering, migration, late entries, real multi-process
+    concurrency including a `.venv-crew` writer, crash mid-write, contention, the controller, the ADK plugin, the
+    monitoring view, the dashboard route and the launcher's board settings;
+  - `tests/test_blackboard_e2e.py`: real MCP and CrewAI A2A service processes, the per-agent ADK lifecycle with the
+    context receipt, authentication, an unusable board (fail closed), and the dashboard view of a real run;
+  - `tests/crew/test_blackboard_crew.py`: the CrewAI side, including a late report from the real CrewAI runner.

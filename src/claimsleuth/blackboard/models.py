@@ -1,7 +1,10 @@
-"""Records of the shared coordination blackboard (shared by both virtual environments).
+"""Records of the shared blackboard (shared by both virtual environments).
 
-The blackboard coordinates and records an investigation run; it never carries reasoning from one agent to another.
-The three agents stay independent: each publishes only its own status and its own validated report.
+The blackboard is the run's shared state: it coordinates and records the investigation, and it is the channel
+through which intermediate context passes between agents. Each agent writes only its own status and its own
+validated report; a report is read by another agent only through Blackboard.consume, under CONTEXT_READERS, and
+every such read leaves a signed receipt. The Forensic Agent reads only the Evidence report, never the
+Investigator's, so ADK and CrewAI stay two independent opinions.
 """
 from __future__ import annotations
 
@@ -11,7 +14,7 @@ from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from claimsleuth.schemas import EvidenceDocument
+from claimsleuth.schemas import ConsumedContext, ContextRef, EvidenceDocument  # noqa: F401  (re-exported)
 
 EntryKind = Literal["register", "status", "post", "retract", "monitor"]
 AgentState = Literal["PENDING", "RUNNING", "COMPLETED", "FAILED", "NOT_CONFIGURED"]
@@ -24,6 +27,27 @@ TRANSITIONS: dict[str, frozenset[str]] = {
 }
 # The agents a run expects, and the framework each belongs to.
 EXPECTED_AGENTS: dict[str, str] = {"evidence_agent": "adk", "investigator_agent": "adk", "forensic_agent": "crewai"}
+# Read access to shared context: which consumer may read which report section (writers: see auth.PRINCIPALS).
+# Enforced by Blackboard.consume; nothing else hands one agent's report to another.
+CONTEXT_READERS: dict[str, frozenset[str]] = {
+    "report:evidence_agent": frozenset({"investigator_agent", "forensic_agent", "adjudicator"}),
+    "report:investigator_agent": frozenset({"adjudicator"}),
+    "report:forensic_agent": frozenset({"adjudicator"}),
+}
+RECEIPT_PREFIX = "context:consumed:"     # monitor section of a consumption receipt: context:consumed:<consumer>
+# Every way a read can be refused for a security reason: attack_type -> (event type, severity, rejection reason).
+# Events carry these fixed texts, never an exception's text, so nothing from a stored entry can reach monitoring.
+_INTEGRITY = "EVIDENCE_INTEGRITY_VIOLATION"
+SECURITY_RESPONSES: dict[str, tuple[str, str, str]] = {
+    "PAYLOAD_TAMPERING": (_INTEGRITY, "CRITICAL", "The stored payload does not match the hash signed at publication."),
+    "HASH_AND_PAYLOAD_TAMPERING": (_INTEGRITY, "CRITICAL", "The stored hash was changed and has no valid HMAC signature."),
+    "SIGNATURE_FORGERY": (_INTEGRITY, "CRITICAL", "The entry's HMAC-SHA256 signature is missing or does not verify."),
+    "CROSS_CLAIM_SUBSTITUTION": (_INTEGRITY, "CRITICAL", "The report is bound to another claim or to other documents."),
+    "REPLAY": (_INTEGRITY, "HIGH", "The report was retracted, superseded or referenced from another run."),
+    "REFERENCE_MISMATCH": (_INTEGRITY, "HIGH", "The context reference does not match a current report entry."),
+    "MALFORMED_REPORT": (_INTEGRITY, "HIGH", "The report failed its schema or does not match its recorded report hash."),
+    "UNAUTHORISED_ACCESS": ("UNAUTHORISED_ACCESS", "HIGH", "The reader is not authorised to read this section."),
+}
 
 
 class BoardModel(BaseModel):
@@ -80,6 +104,7 @@ class RunState(BoardModel):
     sealed_at: int | None = None        # run_seq of the controller's seal (adjudicator inputs fixed)
     late: list[BoardEntry] = Field(default_factory=list)
     authentication: dict[str, int] = Field(default_factory=dict)
+    unverified: list[str] = Field(default_factory=list)       # section@run_seq of every entry that failed verification
 
 
 def document_fingerprint(documents: list[EvidenceDocument]) -> str:

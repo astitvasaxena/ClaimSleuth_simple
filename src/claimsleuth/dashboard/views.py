@@ -11,10 +11,15 @@ import re
 from datetime import datetime
 from typing import Any
 
+from claimsleuth import config
+from claimsleuth.dashboard.recovery import final_review
 from claimsleuth.claim_text import claim_message
 from claimsleuth.documents import quote_appears
-from claimsleuth.schemas import (AgentSystemResult, ClaimInput, ClaimRunBundle, EvidenceDocument, ExecutionStatus)
-from claimsleuth.security import DATA_ACCESS_PATTERNS, detect_injection, screen_text
+from claimsleuth.observability.outcome import incomplete_text, outcome_of, records_missing, records_only, records_unconfirmed
+from claimsleuth.observability.provider_errors import AGENT_TASK, redact
+from claimsleuth.schemas import (MCP_LOG_EMPTY, MCP_RECORDS_UNAVAILABLE, AgentSystemResult, ClaimInput, ClaimRunBundle, EvidenceDocument, ExecutionStatus,
+                                 RunOutcome)
+from claimsleuth.security import DATA_ACCESS_PATTERNS, detect_injection, restricted_output, screen_text
 
 AGENTS = {
     "evidence_agent": {"title": "Evidence Agent", "framework": "Google ADK", "class": "google.adk.agents.LlmAgent",
@@ -73,6 +78,14 @@ def _agent_status(result: AgentSystemResult | None) -> str:
     return result.status.value if result is not None else "NOT RUN"
 
 
+def _task_status(bundle: ClaimRunBundle, agent: str, result: AgentSystemResult | None) -> str:
+    """One agent's own status: its task in the plan (one failed agent does not make the others failed, and a blocked
+    agent did not fail). Runs stored without a plan show their system's status."""
+    plan = bundle.execution_plan
+    task = next((t for t in plan.tasks if t.task_id == AGENT_TASK[agent]), None) if plan else None
+    return task.status.value if task is not None else _agent_status(result)
+
+
 def agent_cards(bundle: ClaimRunBundle, claim: ClaimInput | None, docs: list[EvidenceDocument]) -> list[dict]:
     doc_map = {d.doc_id: d for d in docs}
     adk, crew = bundle.adk, bundle.crewai
@@ -86,12 +99,16 @@ def agent_cards(bundle: ClaimRunBundle, claim: ClaimInput | None, docs: list[Evi
                         ("investigator_agent", adk.report if adk else None)):
         run = adk_runs.get(key)
         errors = [e for e in (adk.errors if adk else []) if key in e] + (run.errors if run else [])
-        if adk is not None and adk.status != ExecutionStatus.COMPLETED and not errors:
+        status = _task_status(bundle, key, adk)
+        if adk is not None and status != "COMPLETED" and not errors:
             errors = list(adk.errors)
         out = report.model_dump(mode="json") if report is not None else None
+        adk_meta = bundle.workflow_metadata.get("adk")
         cards.append({
-            "key": key, **AGENTS[key], "status": _agent_status(adk),
+            "key": key, **AGENTS[key], "status": status,
             "model": adk.model if adk else None,
+            "provider": adk_meta.provider if adk_meta else None,
+            "llm_mode": adk_meta.llm_mode if adk_meta else None,
             "genuine_inference": bool(adk and adk.model and adk.model != "test-double"),
             "session_id": adk.session_id if adk else None,
             "started_at": _iso(run.started_at) if run else None, "finished_at": _iso(run.finished_at) if run else None,
@@ -119,10 +136,10 @@ def agent_cards(bundle: ClaimRunBundle, claim: ClaimInput | None, docs: list[Evi
         tokens = (sum(m.get("prompt_tokens") or 0 for m in reported),
                   sum(m.get("completion_tokens") or 0 for m in reported), "sum of per-call usage reported by the provider")
     cards.append({
-        "key": "forensic_agent", **AGENTS["forensic_agent"], "status": _agent_status(crew),
+        "key": "forensic_agent", **AGENTS["forensic_agent"], "status": _task_status(bundle, "forensic_agent", crew),
         "model": crew.model if crew else None,
         "provider": (report.provider if report else None) or (meta.provider if meta else None)
-                    or ("ollama-local" if meta and meta.llm_mode == "live" else None),
+                    or next((t["llm"].get("provider") or t["llm"].get("mode") for t in trace if "llm" in t), None),
         "llm_mode": meta.llm_mode if meta else None,
         "genuine_inference": bool(meta and meta.llm_mode == "live"),
         "started_at": _iso(crew_run.started_at) if crew_run else None,
@@ -240,6 +257,10 @@ def timeline(bundle: ClaimRunBundle, submitted_at: str | None = None) -> list[di
                 "ok" if bundle.crewai.status == ExecutionStatus.COMPLETED else "error", run.latency_ms)
     for t in (bundle.crewai.trace if bundle.crewai else []):
         for mc in t.get("model_calls", []):
+            if mc.get("status") == "error":
+                add(mc.get("finished_at"), "forensic_agent", f"Model call FAILED ({mc.get('model')})",
+                    mc.get("error_code") or mc.get("error") or "", "error", mc.get("latency_ms"))
+                continue
             add(mc.get("finished_at"), "forensic_agent", f"Model call completed ({mc.get('model')})",
                 f"{mc.get('prompt_tokens')} prompt / {mc.get('completion_tokens')} completion tokens, "
                 f"finish_reason={mc.get('finish_reason')}", "error" if mc.get("finish_reason") == "length" else "ok",
@@ -273,13 +294,22 @@ def execution_pattern(bundle: ClaimRunBundle) -> dict[str, Any]:
     overlap = None
     if adk_start and adk_end and sent and crew_end:
         overlap = max(0.0, min(_ts(adk_end), _ts(crew_end)) - max(_ts(adk_start), _ts(sent)))
+    if bundle.context_sharing == "blackboard":
+        sequential = ("Inside Google ADK, a SequentialAgent runs the Evidence Agent and then the Investigator Agent. "
+                      "The Evidence report is published to the shared blackboard as soon as it is validated, and the "
+                      "Investigator reads it from the blackboard.")
+        parallel = ("Once the Evidence report is published, the orchestrator sends the A2A request to the CrewAI "
+                    "Forensic Agent with a reference to it; the Forensic Agent reads it from the blackboard and runs "
+                    "concurrently with the Investigator. Neither sees the other's report.")
+    else:
+        sequential = ("Inside Google ADK, a SequentialAgent runs the Evidence Agent and then the Investigator Agent, "
+                      "which reads the evidence report from session state (blackboard disabled).")
+        parallel = ("The orchestrator runs the ADK workflow and the A2A request to the CrewAI Forensic Agent "
+                    "concurrently (asyncio.gather); neither sees the other's output.")
     return {
-        "sequential": {"description": "Inside Google ADK, a SequentialAgent runs the Evidence Agent and then the "
-                                      "Investigator Agent, which reads the evidence report from session state.",
+        "sequential": {"description": sequential,
                        "verified": bool(ev and inv and ev.finished_at and inv.started_at >= ev.finished_at)},
-        "parallel": {"description": "The orchestrator runs the ADK workflow and the A2A request to the CrewAI "
-                                    "Forensic Agent concurrently (asyncio.gather); neither sees the other's output.",
-                     "overlap_s": round(overlap, 3) if overlap is not None else None},
+        "parallel": {"description": parallel, "overlap_s": round(overlap, 3) if overlap is not None else None},
         "bars": [{"label": label, "start_s": round(_ts(s) - t0, 3), "end_s": round(_ts(e) - t0, 3)}
                  for label, s, e in bars if s and e and t0 is not None],
         "span_s": round(t1 - t0, 3) if t0 is not None else None,
@@ -377,13 +407,16 @@ def security_events(bundle: ClaimRunBundle, cards: list[dict]) -> list[dict[str,
 _LABELLED = re.compile(r"^\s*[A-Za-z][A-Za-z ]{1,40}?\s*:")
 _DOC_TITLES = {"invoice": "Invoice", "repair_report": "Repair report", "other_text": "Other text"}
 _CLAIM_FIELDS = {"claim.claimant_statement": ("claimant_statement", "Customer statement"),
-                 "claim.reported_issue": ("reported_issue", "Problem description")}
+                 "claim.reported_issue": ("reported_issue", "Problem description"),
+                 "claim.claimant_name": ("claimant_name", "Claimant name"),
+                 "claim.device_model": ("device_model", "Product")}
 
 
 def _instruction_spans(lines: list[str], pages: list[list[int]] | None) -> list[list[int]]:
     """1-based line spans: each line the screen flags, plus the wrapped continuation lines that follow it
     (same page, no `Label:` of their own, containing words), so the whole instruction is quoted."""
-    flagged = {n for n, text in enumerate(lines, 1) if detect_injection(text)}
+    flagged = {n for n, text in enumerate(lines, 1) if detect_injection(text) or (
+        n < len(lines) and detect_injection(f"{text}\n{lines[n]}") and not detect_injection(lines[n]))}   # wrapped over two
     spans, seen = [], set()
     for n in sorted(flagged):
         if n in seen:
@@ -437,7 +470,7 @@ def document_integrity(bundle: ClaimRunBundle, claim: ClaimInput | None, docs: l
                     + (f" of {origin['filename']}" if origin and origin.get("filename") else f" ({doc.filename})"),
                     "lines": span, "pdf": [pages[n - 1] for n in span] if pages else [],
                     "text": " ".join(lines[n - 1] for n in span),
-                    "matched": sorted({p for n in span for p in detect_injection(lines[n - 1])}),
+                    "matched": sorted(detect_injection("\n".join(lines[n - 1] for n in span))),
                     "reported_by": _reported_by(cards, doc.doc_id, span)})
         elif g.source in _CLAIM_FIELDS and claim is not None:
             name, title = _CLAIM_FIELDS[g.source]
@@ -513,20 +546,178 @@ def audit_trail(bundle: ClaimRunBundle, reviews: list | None = None) -> list[dic
     for r in reviews or []:
         out.append({"ts": _iso(r.ts), "kind": "human", "text": f"Human review: {r.action} by {r.reviewer}",
                     "detail": r.notes, "action": r.action, "reviewer": r.reviewer,
-                    "automated_decision": r.automated_decision})
+                    "automated_decision": r.automated_decision, "effect": r.effect})
     return sorted(out, key=lambda x: x["ts"] or "")
+
+
+def request_accounting(bundle: ClaimRunBundle) -> dict[str, Any] | None:
+    """The ledger's count for this run against the model calls the agents recorded; None when no request was recorded.
+    A difference means a request one side did not see."""
+    finished = next((e for e in bundle.audit if e.event == "run_finished"), None)
+    ledger = sum(((finished.data.get("gemini_requests") if finished else None) or {}).values())
+    if not ledger:
+        return None
+    recorded = sum(r.llm_calls or 0 for result in (bundle.adk, bundle.crewai) if result for r in result.agent_runs)
+    return {"ledger": ledger, "recorded": recorded, "match": ledger == recorded}
+
+
+def execution_summary(bundle: ClaimRunBundle, cards: list[dict]) -> dict[str, Any]:
+    """LIVE / OFFLINE / MIXED for this run, and per agent: status, model, provider, model calls, MCP calls.
+    Every value comes from the stored run records; nothing here is inferred from configuration."""
+    rows = []
+    for c in cards:
+        mcp = [t for t in c["tool_calls"] if t.get("protocol") == "mcp"]
+        rows.append({"agent": c["title"], "framework": c["framework"], "status": c["status"], "retry": c.get("retry"), "model": c["model"],
+                     "provider": c.get("provider"), "genuine_inference": c["genuine_inference"],
+                     "llm_calls": c.get("llm_calls"),
+                     "mcp_ok": sorted({t["tool"] for t in mcp if t.get("status") == "ok"}),
+                     "mcp_errors": sum(1 for t in mcp if t.get("status") != "ok")})
+    live = [r["genuine_inference"] for r in rows]
+    orchestrator = bundle.workflow_metadata.get("orchestrator")
+    mode = "LIVE" if all(live) else "OFFLINE" if not any(live) else "MIXED"
+    response = next((m for m in bundle.messages if m.message_type != "FORENSIC_REQUEST"), None)
+    final = bundle.final_report
+    finished = next((e for e in bundle.audit if e.event == "run_finished"), None)
+    requests = (finished.data.get("gemini_requests") if finished else None) or {}
+    return {
+        "mode": mode, "requested_live": bool(orchestrator and orchestrator.llm_mode == "live"),
+        "agents": rows,
+        "mcp_server_calls": len(bundle.mcp.calls) if bundle.mcp else 0,
+        "a2a": {"request_sent": any(m.message_type == "FORENSIC_REQUEST" for m in bundle.messages),
+                "response": response.message_type if response else None},
+        "final_decision": _decision(final.final_decision) if final else None,
+        "decided_by": final.decided_by if final else None,
+        "requires_human_approval": final.requires_human_approval if final else None,
+        "review_status": final.review_status if final else None,
+        "incomplete_reasons": list(final.incomplete_reasons) if final else [],
+        "gemini_requests": requests, "gemini_requests_total": sum(requests.values()),
+        "request_accounting": request_accounting(bundle),
+    }
+
+
+WITHHELD = "[wording withheld: it repeats an instruction found in the documents. See Security & Document Integrity.]"
+REPORTS = (("GOOGLE_ADK", "Evidence Agent", "adk", "evidence_report"), ("GOOGLE_ADK", "Investigator Agent", "adk", "report"),
+           ("CREWAI", "Forensic Agent", "crewai", "report"))
+SYSTEMS = {"GOOGLE_ADK": "Evidence and Investigator Agents", "CREWAI": "Forensic Agent"}
+RETRY_RESULT = {"recovered": "RECOVERED AFTER RETRY", "failed": "RETRY FAILED", "refused": "RETRY NOT SENT"}
+
+
+def provider_retries(outcome: RunOutcome) -> list[dict[str, Any]]:
+    """Each automatic retry and what became of it. The failed request behind it stays in the run's trace."""
+    return [{**r.model_dump(mode="json"), "result": RETRY_RESULT[r.outcome]} for r in outcome.retries]
+
+
+def _shown(text: str, docs: list[EvidenceDocument]) -> str:
+    """An agent's own words for the reviewer, unless they repeat a document's instruction or carry something restricted."""
+    if detect_injection(text) or set(restricted_output(text, docs)) - {"credential"}:
+        return WITHHELD
+    return redact(text, 600)
+
+
+def _concern(system: str, agent: str, finding: Any, report: Any, final: Any, records: bool, ignored: bool,
+             docs: list[EvidenceDocument]) -> dict[str, Any]:
+    advised = getattr(report, "recommended_decision", None) or getattr(report, "recommended_outcome", None)
+    decided = final.final_decision.value
+    row = {"agent": agent, "severity": finding.severity.value, "category": finding.category,
+           "description": _shown(finding.description, docs), "recommended": advised.value if advised else None}
+    if not ignored:
+        return {**row, "effect": "Used: this verified concern escalated the claim." if final.decided_by == "CONFLICT_ESCALATION"
+                else f"Recorded. The automated decision is {decided}, by {final.decided_by}."}
+    if finding.category == "CLAIM_HISTORY_PATTERN":
+        why = ("The MCP server's records were unavailable, so the history lookup behind this finding could not be confirmed."
+               if records else "No MCP server record confirms the history lookup behind this finding.")
+    else:
+        why = "Its citations do not match the documents." if finding.citations else "It cites no line in the documents."
+    return {**row, "why_unverified": why,
+            "effect": f"Not used. A finding counts only with verified evidence, so the automated decision stays {decided}. "
+                      f"The {agent} recommended {row['recommended']}."}
+
+
+def reviewer_view(bundle: ClaimRunBundle, docs: list[EvidenceDocument]) -> dict[str, Any]:
+    """What a reviewer needs to act: which reviews finished, why a person is needed, and every agent concern, verified or not.
+    It reads the stored reports and decides nothing."""
+    final = bundle.final_report
+    if final is None:
+        return {"records_only": False, "agent_reviews": [], "human_reasons": [], "verified_concerns": [], "unverified_concerns": [],
+                "other_unverified": []}
+    missing = {system for system in SYSTEMS if any(r.startswith(f"{system} review unavailable") for r in final.incomplete_reasons)}
+    if final.review_status is None:                 # stored before these fields existed: the agents' own statuses are the record
+        missing = {system for system, result in (("GOOGLE_ADK", bundle.adk), ("CREWAI", bundle.crewai))
+                   if result is None or result.status != ExecutionStatus.COMPLETED}
+    lost = MCP_RECORDS_UNAVAILABLE in final.incomplete_reasons
+    only = records_only(final)
+    empty = records_missing(bundle)
+    unsupported, verified, unverified = list(final.unsupported_claims), [], []
+    for system, agent, side, field in REPORTS:
+        report = getattr(getattr(bundle, side), field, None) if getattr(bundle, side) else None
+        if report is None or system in missing:
+            continue
+        for finding in report.findings:
+            if finding.severity.value != "HIGH":
+                continue
+            line = f"{system}: HIGH finding without verified evidence ignored: {finding.description[:80]}"
+            ignored = line in unsupported
+            if ignored:
+                unsupported.remove(line)
+            (unverified if ignored else verified).append(_concern(system, agent, finding, report, final, lost, ignored, docs))
+    other = [{"agent": SYSTEMS.get(text.split(":", 1)[0], "Agent"), "text": _shown(text.split(":", 1)[-1].strip(), docs)}
+             for text in unsupported]
+    reasons = []
+    if empty:
+        reasons.append(f"The {MCP_LOG_EMPTY}.")
+    elif lost:
+        reasons.append("The MCP server's records could not confirm the agents' tool calls.")
+    reasons += [f"The {SYSTEMS[system]} did not finish a review." for system in SYSTEMS if system in missing]
+    if unverified:
+        reasons.append(f"{len(unverified)} HIGH agent concern(s) could not be verified.")
+    if final.final_decision.value in ("REJECT", "ESCALATE"):
+        reasons.append(f"Every {final.final_decision.value} needs a reviewer.")
+    if final.payout is not None and final.payout.payout >= config.HUMAN_APPROVAL_THRESHOLD:
+        reasons.append("The payout is at or above the sign-off threshold.")
+    gaps = len(missing)
+    headline = detail = title = banner = None
+    if only:
+        title = "SUPPORTING RECORDS UNAVAILABLE"
+        headline = ("Both agent reviews finished, but the MCP server's log holds no record of their tool calls." if empty else
+                    "Both agent reviews finished, but the MCP server's records could not confirm their tool calls.")
+        detail = "The automated decision is unchanged. Anything that depended on those records is listed as unverified, and a person must review this run."
+        banner = incomplete_text(final)
+    elif empty and not gaps:
+        title = "SUPPORTING RECORDS UNAVAILABLE"
+        headline = "Both agent reviews finished, but the MCP server's log holds no record of their tool calls."
+        detail = ("The server reported no fault, so this did not send the run to a person and the automated decision stands. "
+                  "Anything that depended on those records is listed as unverified.")
+        banner = f"{title} (both agent reviews finished)"
+    elif gaps:
+        title = "INCOMPLETE INVESTIGATION"
+        headline = ("No agent review finished." if gaps == len(SYSTEMS) else "One agent review did not finish.") + (
+            " The MCP server's records could not be confirmed either." if lost or empty else "")
+        detail = "The decision below comes from the deterministic rules alone and needs a human reviewer."
+        banner = incomplete_text(final)
+    return {"records_only": only, "records_missing": empty, "title": title, "headline": headline, "detail": detail, "banner": banner,
+            "agent_reviews": [{"agent": label, "state": "did not finish" if system in missing else "finished"}
+                              for system, label in SYSTEMS.items()],
+            "human_reasons": reasons if final.requires_human_approval else [],
+            "verified_concerns": verified, "unverified_concerns": unverified, "other_unverified": other}
 
 
 def run_view(bundle: ClaimRunBundle, claim: ClaimInput | None, docs: list[EvidenceDocument],
              origin: dict | None = None, meta: dict | None = None, crew_log: list[dict] | None = None,
              reviews: list | None = None) -> dict[str, Any]:
+    stands = final_review(reviews or [])
     cards = agent_cards(bundle, claim, docs)
     final = bundle.final_report
+    outcome = outcome_of(bundle)
+    retries = provider_retries(outcome)
+    for card in cards:
+        card["retry"] = next((r["result"] for r in retries if r["agent"] == card["key"]), None)
     request_docs = next(({d.doc_id: d.sha256 for d in m.payload.documents} for m in bundle.messages
                          if m.message_type == "FORENSIC_REQUEST"), {})
     docs_changed = bool(request_docs) and request_docs != {d.doc_id: d.sha256 for d in docs}
     return {
         "run_id": bundle.run_id, "claim_id": bundle.claim_id,
+        "run_status": outcome.run_status.value, "outcome": outcome.model_dump(mode="json"),
+        "status_badge": "SUPPORTING RECORDS UNAVAILABLE" if records_unconfirmed(bundle) else outcome.run_status.value,
         "claim": claim.model_dump(mode="json") if claim else None,
         "documents": [{"doc_id": d.doc_id, "kind": d.kind.value, "filename": d.filename, "sha256": d.sha256,
                        "lines": d.text.splitlines()} for d in docs],
@@ -538,6 +729,8 @@ def run_view(bundle: ClaimRunBundle, claim: ClaimInput | None, docs: list[Eviden
         "comparison": comparison(bundle, cards),
         "disagreements": disagreements(cards, bundle),
         "modes": modes(bundle, cards),
+        "execution": execution_summary(bundle, cards),
+        "provider_retries": retries,
         "mcp": mcp_view(bundle),
         "a2a": {"messages": [m.model_dump(mode="json") for m in bundle.messages],
                 "service_log": crew_log, "errors": [e.detail for e in bundle.audit if e.event == "validation_failure"]},
@@ -548,8 +741,12 @@ def run_view(bundle: ClaimRunBundle, claim: ClaimInput | None, docs: list[Eviden
                           for n, text in d.numbered_lines() for e in screen_text(text, f"doc:{d.doc_id}#L{n}")
                           if e.kind == "prompt_injection"],
         "integrity": document_integrity(bundle, claim, docs, origin, cards),
+        "evidence_integrity": [e.model_dump(mode="json") for e in bundle.security_events],
         "audit_trail": audit_trail(bundle, reviews),
         "human_reviews": [r.model_dump(mode="json") for r in reviews or []],
+        "final_review": stands.model_dump(mode="json") if stands else None,
+        "reviewer": reviewer_view(bundle, docs),
+        "reviews_unreadable": getattr(reviews, "unreadable", 0),
     }
 
 
@@ -558,9 +755,12 @@ def run_summary(bundle: ClaimRunBundle, meta: dict | None = None) -> dict[str, A
     crew_meta = bundle.workflow_metadata.get("crewai")
     started = next((e.ts for e in bundle.audit if e.event == "run_started"), None)
     return {"run_id": bundle.run_id, "claim_id": bundle.claim_id, "started_at": _iso(started),
+            "run_status": outcome_of(bundle).run_status.value,
             "final_decision": _decision(final.final_decision) if final else None,
             "decided_by": final.decided_by if final else None,
+            "review_status": final.review_status if final else None,
             "adk_status": _agent_status(bundle.adk), "adk_model": bundle.adk.model if bundle.adk else None,
             "crewai_status": _agent_status(bundle.crewai), "crewai_model": bundle.crewai.model if bundle.crewai else None,
             "crewai_mode": crew_meta.llm_mode if crew_meta else None,
+            "crewai_provider": crew_meta.provider if crew_meta else None,
             "source": (meta or {}).get("source", "command line / earlier phase")}

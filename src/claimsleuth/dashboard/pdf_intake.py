@@ -267,7 +267,7 @@ def parse_claim_pdf(data: bytes, filename: str | None = None, known_policies: se
         draft.warnings.append(f"policy {draft.claim.policy_id} is not in the policy register; the deterministic "
                               "rules will escalate the claim")
 
-    for name in ("claimant_statement", "reported_issue"):
+    for name in ("claimant_statement", "reported_issue", "claimant_name", "device_model"):
         if name in fields:
             v = fields[name]
             draft.guardrail_events += screen_text(v.value, f"claim.{name} (PDF p.{v.page} L{v.line})")

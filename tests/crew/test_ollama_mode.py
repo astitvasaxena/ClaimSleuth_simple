@@ -128,7 +128,7 @@ def test_ollama_unavailable_fails_without_fallback(monkeypatch, dataset):
 
 
 def test_unknown_mode_does_not_fall_back(monkeypatch, dataset):
-    monkeypatch.setenv("CLAIMSLEUTH_CREW_LLM", "gemini")
+    monkeypatch.setenv("CLAIMSLEUTH_CREW_LLM", "openai")
     result = run_forensic_investigation("CS-003", data_dir=dataset[0])
     assert result.status == ExecutionStatus.NOT_CONFIGURED and "no fallback" in result.errors[0]
     assert result.model is None

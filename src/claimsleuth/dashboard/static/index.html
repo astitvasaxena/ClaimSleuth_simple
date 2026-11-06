@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>ClaimSleuth</title>
-  <link rel="stylesheet" href="/static/style.css?v=9">
+  <link rel="stylesheet" href="/static/style.css?v=21">
 </head>
 <body>
 <header class="site-header">
@@ -20,6 +20,10 @@
     <span class="status-pill" id="status-pill">READY</span>
   </div>
 </header>
+<nav class="view-nav" aria-label="Views">
+  <a href="#investigation" id="nav-investigation" class="active">Claim Investigation</a>
+  <a href="#evaluation" id="nav-evaluation">Agent Evaluation &amp; Performance Analytics</a>
+</nav>
 
 <!-- ======================= CLAIM INVESTIGATION ======================= -->
 <main class="container" id="view-investigation">
@@ -32,7 +36,6 @@
   <section class="toolbar">
     <label class="dropzone" id="dropzone" for="file-input">
       <input type="file" id="file-input" accept=".pdf,application/pdf" hidden>
-      <span class="dz-icon" aria-hidden="true">⇪</span>
       <span class="dz-title">Drop a warranty-claim PDF here</span>
       <span class="dz-sub">or <span class="link">browse your files</span> · PDF only, up to 5 MB</span>
       <span class="dz-file" id="dz-file"></span>
@@ -40,48 +43,105 @@
     <div class="claim-side">
       <div class="active-claim-info" id="claim-chips"></div>
       <div class="preview" id="preview"></div>
-      <button class="btn-investigate" id="run-btn" disabled>▶&nbsp; Run Investigation</button>
+      <button class="btn-investigate" id="run-btn" disabled>Run Investigation</button>
     </div>
   </section>
 
   <div id="message"></div>
 
+  <section class="status-strip" aria-label="Investigation status">
+    <ol class="stepper" id="timeline"></ol>
+  </section>
+
   <section class="results-banner" id="results-banner" hidden>
-    <div class="section-label">Investigation Results</div>
     <div class="results-grid" id="results-grid"></div>
+    <div id="alerts"></div>
+  </section>
+
+  <section class="panel">
+    <div class="panel-title">Agent Reports <span class="panel-note">Each agent only recommends; the deterministic adjudicator decides</span></div>
+    <div class="agent-grid" id="agents-body"><p class="muted small">Run an investigation to see the three agent reports.</p></div>
   </section>
 
   <div class="main-grid">
     <div class="panel">
-      <div class="panel-title">Investigation Timeline</div>
-      <ol class="stepper" id="timeline"></ol>
-      <div id="report"></div>
+      <div class="panel-title">Investigation Findings</div>
+      <div id="report"><p class="muted small">Run an investigation to see its findings.</p></div>
     </div>
 
     <div class="panel">
-      <div class="panel-title">Evidence &amp; Human Review</div>
+      <div class="panel-title">Human Review &amp; Evidence</div>
+      <div class="hitl-box" id="hitl"></div>
       <div class="sub-label">Source Documents</div>
       <div class="doc-tabs" id="doc-tabs"></div>
       <div class="doc-preview" id="doc-preview"><span class="muted">Upload a claim PDF to see its documents.</span></div>
       <div class="sub-label">Extracted Evidence</div>
       <div class="evidence-list" id="evidence"><p class="muted small">No evidence yet. Run an investigation.</p></div>
-      <div class="hitl-box" id="hitl"></div>
-      <div class="sub-label">Audit Trail</div>
-      <div class="audit-trail" id="audit"><p class="muted small">No investigation yet.</p></div>
+      <details class="diag" id="audit-details">
+        <summary>Audit Trail <span class="muted" id="audit-count"></span></summary>
+        <div class="audit-trail" id="audit"><p class="muted small">No investigation yet.</p></div>
+      </details>
     </div>
   </div>
 
-  <details class="tech-details" id="details">
-    <summary>Investigation Details <span class="muted">— the three agent reports and the execution mode</span></summary>
-    <div id="details-body"><p class="muted small">Run an investigation to see the agents' separate reports.</p></div>
-  </details>
+  <div class="main-grid overview-grid">
+    <section class="panel">
+      <div class="panel-title">Execution Overview</div>
+      <div id="overview-body"><p class="muted small">Run an investigation to see how it executed.</p></div>
+      <p class="small reliability-line" id="reliability-line"></p>
+    </section>
+    <section class="panel">
+      <div class="panel-title">Blackboard &amp; Agent Coordination</div>
+      <div id="coordination-body"><p class="muted small">Run an investigation to see its blackboard.</p></div>
+    </section>
+  </div>
 
-  <details class="tech-details" id="bb-details">
-    <summary>Blackboard Monitoring <span class="muted">— shared run state, agent events, failures and the recorded decision</span></summary>
-    <div id="bb-body"><p class="muted small">Run an investigation to see its blackboard.</p></div>
+  <section class="panel" id="integrity-details">
+    <div class="panel-title">Security &amp; Trust <span class="panel-note">Results come from labelled test doubles and show how the safeguards behave; they are not evidence of how a live Gemini model behaves</span></div>
+    <div id="integrity-body"><p class="muted small">Loading…</p></div>
+    <div id="injection-body"><p class="muted small">Loading…</p></div>
+  </section>
+
+  <details class="tech-details" id="advanced">
+    <summary>Advanced Diagnostics <span id="advanced-flags"></span> <span class="muted">— callback, MCP and A2A records, Blackboard provenance, provider failures, timings and model usage</span></summary>
+    <div class="advanced-body">
+      <details class="diag" id="unfinished-details">
+        <summary>Unfinished Runs <span class="muted" id="unfinished-count"></span> <span class="muted">— interrupted, failed, damaged or recovered runs with no usable report</span></summary>
+        <div class="diag-body" id="unfinished-body"><p class="muted small">Loading…</p></div>
+      </details>
+      <details class="diag" id="details">
+        <summary>Agent Execution Record <span class="muted">— mode, model, calls and MCP tools for each agent</span></summary>
+        <div class="diag-body" id="details-body"><p class="muted small">Run an investigation to see its execution record.</p></div>
+      </details>
+      <details class="diag" id="trace-details">
+        <summary>Execution Monitoring <span class="muted">— recorded trace: task timings, tool and A2A calls, blackboard provenance, errors, model usage</span></summary>
+        <div class="diag-body" id="trace-body"><p class="muted small">Run an investigation to see its execution trace.</p></div>
+      </details>
+      <details class="diag" id="bb-details">
+        <summary>Blackboard Monitoring <span class="muted">— shared run state, agent events, failures and the recorded decision</span></summary>
+        <div class="diag-body" id="bb-body"><p class="muted small">Run an investigation to see its blackboard.</p></div>
+      </details>
+    </div>
   </details>
 </main>
 
-<script src="/static/app.js?v=9"></script>
+<!-- ======================= AGENT EVALUATION & PERFORMANCE ANALYTICS ======================= -->
+<main class="container" id="view-evaluation" hidden>
+  <section class="eval-section">
+    <h1>Agent Evaluation &amp; Performance Analytics</h1>
+    <p class="muted">Each evaluation case runs once through the existing workflow (Evidence and Investigator Agents in
+      Google ADK, the Forensic Agent in CrewAI over A2A, MCP tools and the deterministic adjudicator). Every agent is
+      scored on its own task against fixed ground truth; the combined system on its final decision. Values that
+      cannot be computed are shown as N/A, never as 0.</p>
+    <div id="eval-overview"></div>
+  </section>
+  <section class="eval-section" id="eval-dataset"></section>
+  <section class="eval-section" id="eval-controls"></section>
+  <div id="eval-message"></div>
+  <div id="eval-results"></div>
+</main>
+
+<script src="/static/app.js?v=21"></script>
+<script src="/static/eval.js?v=3"></script>
 </body>
 </html>

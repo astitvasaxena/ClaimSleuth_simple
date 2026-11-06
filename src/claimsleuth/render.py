@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import json
 
+from claimsleuth.observability.outcome import incomplete_text, outcome_of
 from claimsleuth.rules import format_inr
 from claimsleuth.schemas import AgentSystemResult, BaselineResult
 
@@ -153,7 +154,10 @@ def final_markdown(bundle) -> str:
               f"- **Final decision: {f.final_decision.value}** (decided by {f.decided_by}; deterministic rules: "
               f"{f.deterministic_decision.value if f.deterministic_decision else '—'})",
               f"- Payout: **{format_inr(f.payout.payout)} ({f.payout.currency})**" if f.payout else "- Payout: none",
+              f"- Run status: **{outcome_of(bundle).run_status.value}**",
               f"- Human approval required: {'yes' if f.requires_human_approval else 'no'} ({f.approval_status})",
+              *([f"- **{incomplete_text(f)}:** " + "; ".join(f.incomplete_reasons)]
+                if f.review_status in ("PARTIAL", "NONE") else []),
               "", "Rationale:", *[f"- {x}" for x in f.rationale]]
     for title, items in (("Agreements", f.agreements), ("Disagreements", f.disagreements),
                          ("Unsupported claims (ignored)", f.unsupported_claims), ("Policy references", f.policy_references)):

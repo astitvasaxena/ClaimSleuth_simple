@@ -366,7 +366,7 @@ class SecurityLab:
                             ("fabricated_citation_every_attempt", "Persistent fabricated citation: run FAILED after retries")):
             x = by_name[name]
             rejected = [v for v in x["guardrail_verdicts"] if not v["accepted"]]
-            checks.append(_check(label, "crew.make_guardrail / output_pydantic", HARNESS,
+            checks.append(_check(label, "crew.make_guardrail", HARNESS,
                                  x["status"] == "FAILED" and bool(rejected) and x["report_claim_id"] is None,
                                  f"{len(rejected)} rejection(s); run {x['status']}; "
                                  f"{(x['errors'] or [''])[0].splitlines()[0][:200]}"))

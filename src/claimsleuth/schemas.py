@@ -12,7 +12,7 @@ from decimal import Decimal
 from enum import Enum
 from typing import Annotated, Any, Literal
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
+from pydantic import AwareDatetime, BaseModel, ConfigDict, Field, field_validator, model_validator
 
 ID_PATTERN = r"^[A-Z0-9][A-Z0-9-]{2,39}$"
 
@@ -317,7 +317,7 @@ class HistoryPatternFinding(StrictModel):
 
 
 class ForensicsAnalysis(StrictModel):
-    """What the CrewAI Forensic Agent's task must return (Task.output_pydantic). Written by the model."""
+    """What the CrewAI Forensic Agent's task must return (validated by its guardrail). Written by the model."""
     claim_id: str
     findings: list[AgentFinding] = Field(max_length=20)
     evidence_references: list[Citation] = Field(max_length=30)
@@ -337,6 +337,29 @@ class ForensicsReport(ForensicsAnalysis):
     model: str                         # "test-double" for offline runs
     provider: str                      # e.g. "offline-test-double"
     execution_status: ExecutionStatus
+
+
+HEX64 = r"^[0-9a-f]{64}$"
+ReportSection = Literal["report:evidence_agent", "report:investigator_agent", "report:forensic_agent"]
+
+
+class ContextRef(StrictModel):
+    """A versioned pointer to one agent report on the shared blackboard: the post's run_seq and the SHA-256 of its
+    stored payload, bound to one run, claim and document fingerprint. It carries no report content; a reader
+    fetches and verifies the report through the blackboard (Blackboard.consume)."""
+    run_id: str = Field(pattern=r"^[A-Za-z0-9][A-Za-z0-9_-]{2,63}$")
+    claim_id: str = Field(pattern=ID_PATTERN)
+    section: ReportSection
+    run_seq: int = Field(ge=1)
+    sha256: str = Field(pattern=HEX64)
+    fingerprint: str = Field(pattern=HEX64)
+
+
+class ConsumedContext(StrictModel):
+    """One report an agent actually received from the blackboard, with the run_seq of its signed receipt."""
+    consumer: str
+    ref: ContextRef
+    receipt_run_seq: int = Field(ge=1)
 
 
 class TokenUsage(StrictModel):
@@ -359,6 +382,7 @@ class AgentRunRecord(StrictModel):
     tool_calls: int = 0
     errors: list[str] = Field(default_factory=list)
     output_summary: str | None = Field(default=None, max_length=500)
+    outcome: Literal["finished", "provider_error", "exception", "timeout", "cancelled"] | None = None
 
 
 class AgentToolCallRecord(StrictModel):
@@ -373,6 +397,74 @@ class AgentToolCallRecord(StrictModel):
     error: str | None = None
     started_at: datetime
     latency_ms: float = Field(ge=0)
+
+
+class ProviderFailure(StrictModel):
+    """One failed model request or agent output, classified (observability/provider_errors.py). Safe by construction:
+    no response body, prompt or key. http_status comes only from the exception's structured fields; None means the
+    failure carried no HTTP status, never that one was guessed. retryable says whether the same request could succeed
+    later; only an HTTP 503 is actually retried (once per agent, see ProviderRetry)."""
+    provider: str | None = None
+    model: str | None = None
+    http_status: int | None = Field(default=None, ge=400, le=599)
+    provider_status: str | None = Field(default=None, max_length=40)     # the provider's own word, e.g. UNAVAILABLE
+    provider_reason: Literal["high demand"] | None = None                # fixed vocabulary, never the provider's text
+    exception_type: str = Field(max_length=80)
+    error_code: str = Field(max_length=40, pattern=r"^[A-Z][A-Z0-9_]*$")
+    category: Literal["availability", "quota", "server", "authentication", "invalid_request", "network", "timeout",
+                      "output", "local_budget", "unknown"]
+    retryable: bool | None = None                                        # None: not known
+    occurred_at: AwareDatetime
+    agent: str | None = Field(default=None, max_length=60)
+    task_id: str | None = Field(default=None, max_length=40)
+    correlation_id: str = Field(min_length=8, max_length=80)
+    summary: str = Field(max_length=300)
+    retried: bool = False                                                # the automatic retry was made and failed too
+
+
+class ProviderRetry(StrictModel):
+    """One automatic retry after an HTTP 503. Each agent gets at most one, and the retry takes its own ledger slot.
+    "recovered": the second request succeeded. "failed": it failed too. "refused": the local budget did not allow it,
+    so no second request was sent."""
+    agent: str = Field(max_length=60)
+    task_id: str | None = Field(default=None, max_length=40)
+    occurred_at: AwareDatetime
+    http_status: int = Field(ge=400, le=599)
+    error_code: str = Field(max_length=40, pattern=r"^[A-Z][A-Z0-9_]*$")
+    delay_s: float = Field(ge=0)
+    outcome: Literal["recovered", "failed", "refused"]
+
+
+class SecurityVerification(StrictModel):
+    """What verification found, check by check. Results only: never a hash, a signature or a key."""
+    payload_integrity: Literal["MATCH", "MISMATCH", "NOT_CHECKED"] = "NOT_CHECKED"    # stored payload vs its SHA-256
+    signature: Literal["VALID", "INVALID", "UNSIGNED", "IDENTITY_MISMATCH", "UNKNOWN_KEY", "NOT_CHECKED"] = "NOT_CHECKED"
+
+
+class SecurityEvent(StrictModel):
+    """A refused read of shared context, as recorded by the component that refused it (blackboard/controller.py), or
+    instructions found in untrusted input and what became of them (security.py). Fixed labels and references only -
+    never document text, prompts, report content, hashes, signatures or keys.
+    The events describe what happened; test_mode has no effect on any verification."""
+    event_id: str = Field(pattern=r"^SEC-[0-9a-f]{12}$")
+    run_id: str
+    claim_id: str
+    event_type: Literal["EVIDENCE_INTEGRITY_VIOLATION", "UNAUTHORISED_ACCESS", "PROMPT_INJECTION"]
+    attack_type: str = Field(max_length=40, pattern=r"^[A-Z][A-Z_]*$")      # what the evidence shows (models.SECURITY_RESPONSES)
+    severity: Literal["CRITICAL", "HIGH"]
+    affected_entry_reference: str | None = Field(default=None, max_length=80)     # e.g. report:evidence_agent@5, doc:invoice
+    verification_result: SecurityVerification = Field(default_factory=SecurityVerification)
+    rejection_reason: str = Field(max_length=200)
+    consumer: str | None = Field(default=None, max_length=60)               # who was refused, or the agent concerned
+    downstream_blocked: bool = True                                          # the consumer received nothing
+    detection_status: Literal["DETECTED_BY_VERIFICATION", "DETECTED_BY_SCREEN", "DETECTED_BY_OUTPUT_CHECK",
+                              "DETECTED_BY_COMPARISON"] = "DETECTED_BY_VERIFICATION"
+    rejection_status: Literal["REFUSED", "ESCALATED", "IGNORED", "RECORDED"] = "REFUSED"
+    detection_rules: list[str] = Field(default_factory=list, max_length=20)  # names of the rules, never what they matched
+    downstream_impact: str | None = Field(default=None, max_length=200)
+    escalation_status: Literal["PENDING", "HUMAN_REVIEW_REQUIRED", "NOT_ESCALATED"] = "PENDING"
+    timestamp: AwareDatetime = Field(default_factory=utc_now)
+    test_mode: bool = False
 
 
 class AgentSystemResult(StrictModel):
@@ -393,8 +485,13 @@ class AgentSystemResult(StrictModel):
     agent_runs: list[AgentRunRecord] = Field(default_factory=list)
     tool_calls: list[AgentToolCallRecord] = Field(default_factory=list)
     unsupported_references: list[str] = Field(default_factory=list)
+    consumed_context: list[ConsumedContext] = Field(default_factory=list)   # reports read from the blackboard
     trace: list[dict[str, Any]] = Field(default_factory=list)
     errors: list[str] = Field(default_factory=list)
+    provider_failures: list[ProviderFailure] = Field(default_factory=list)
+    provider_retries: list[ProviderRetry] = Field(default_factory=list)
+    security_events: list[SecurityEvent] = Field(default_factory=list)      # shared context this system refused
+    injection_events: list[SecurityEvent] = Field(default_factory=list)     # its own output refused by security.restricted_output
 
     @model_validator(mode="after")
     def _report_matches_status(self) -> "AgentSystemResult":
@@ -539,6 +636,10 @@ class FinalComparison(StrictModel):
     decisions_agree: bool | None      # None when fewer than two decisions are available
 
 
+MCP_RECORDS_UNAVAILABLE = "MCP server records unavailable: the agents' tool calls could not be confirmed"
+MCP_LOG_EMPTY = "MCP server reported no fault, but its log holds none of the tool calls the agents recorded"
+
+
 class FinalClaimReport(StrictModel):
     """Produced by the controlled adjudication function; never by an LLM."""
     run_id: str
@@ -559,6 +660,10 @@ class FinalClaimReport(StrictModel):
     approval_status: Literal["NOT_REQUIRED", "PENDING", "APPROVED", "REJECTED"]
     comparison: FinalComparison
     generated_at: datetime = Field(default_factory=utc_now)
+    # COMPLETE: both agent systems returned a usable review; PARTIAL: one did; NONE: neither did. An incomplete
+    # investigation always needs human approval. None only on reports written before this field existed.
+    review_status: Literal["COMPLETE", "PARTIAL", "NONE"] | None = None
+    incomplete_reasons: list[str] = Field(default_factory=list)
 
     @model_validator(mode="after")
     def _payout_only_on_approve(self) -> "FinalClaimReport":
@@ -566,6 +671,8 @@ class FinalClaimReport(StrictModel):
             raise ValueError("a payout may only accompany a final APPROVE")
         if self.final_decision in (Decision.REJECT, Decision.ESCALATE) and not self.requires_human_approval:
             raise ValueError("REJECT and ESCALATE always need human approval")
+        if self.review_status in ("PARTIAL", "NONE") and not self.requires_human_approval:
+            raise ValueError("an incomplete investigation always needs human approval")
         return self
 
 
@@ -588,6 +695,9 @@ class ForensicRequestPayload(StrictModel):
     kind: Literal["forensic_request"] = "forensic_request"
     claim_id: str = Field(pattern=ID_PATTERN)
     documents: list[DocumentDigest]            # the receiver must hold exactly this evidence
+    # Blackboard mode: references to the shared context the receiver must read from the blackboard (never the
+    # report content itself). Empty in direct mode (blackboard disabled).
+    context: list[ContextRef] = Field(default_factory=list, max_length=3)
 
 
 class ForensicResponsePayload(StrictModel):
@@ -597,7 +707,8 @@ class ForensicResponsePayload(StrictModel):
 
 class ErrorPayload(StrictModel):
     kind: Literal["error"] = "error"
-    code: Literal["INVALID_MESSAGE", "CLAIM_MISMATCH", "RUN_MISMATCH", "EVIDENCE_MISMATCH", "EXECUTION_FAILED"]
+    code: Literal["INVALID_MESSAGE", "CLAIM_MISMATCH", "RUN_MISMATCH", "EVIDENCE_MISMATCH", "EXECUTION_FAILED",
+                  "CONTEXT_REJECTED"]
     detail: str = Field(max_length=2000)
 
 
@@ -639,10 +750,222 @@ class AuditEvent(StrictModel):
     run_id: str
     claim_id: str
     event: Literal["run_started", "workflow_started", "workflow_finished", "message_sent", "message_received",
-                   "mcp_records_fetched", "validation_failure", "adjudication", "run_finished"]
+                   "mcp_records_fetched", "validation_failure", "adjudication", "run_finished", "blackboard_context"]
     actor: str
     detail: str
     data: dict[str, Any] = Field(default_factory=dict)
+
+
+# --------------------------------------------------------------------------- hierarchical orchestration
+
+class TaskStatus(str, Enum):
+    PENDING = "PENDING"        # waiting for its dependencies
+    READY = "READY"            # dependencies satisfied; may be dispatched
+    RUNNING = "RUNNING"        # dispatched by the manager and started
+    COMPLETED = "COMPLETED"    # its output exists and was validated (and, in blackboard mode, verified)
+    FAILED = "FAILED"
+    TIMED_OUT = "TIMED_OUT"
+    BLOCKED = "BLOCKED"        # never dispatched: a required upstream task did not complete
+
+
+TaskId = Literal["baseline", "evidence", "investigation", "forensics", "adjudication"]
+
+
+class TaskDependency(StrictModel):
+    task_id: TaskId
+    # "completed": the upstream task must be COMPLETED (otherwise this task is BLOCKED);
+    # "finished": the upstream task must only have ended, in any terminal state.
+    requires: Literal["completed", "finished"]
+
+
+class TaskEvent(StrictModel):
+    ts: datetime
+    event: str = Field(max_length=60)
+    status: TaskStatus
+    detail: str = Field(default="", max_length=500)
+    ref: ContextRef | None = None
+
+
+class PlanTask(StrictModel):
+    """One task the manager assigns. Holds identifiers, states and short summaries only - no document content."""
+    task_id: TaskId
+    agent: Literal["deterministic_baseline", "evidence_agent", "investigator_agent", "forensic_agent", "adjudicator"]
+    framework: Literal["deterministic", "adk", "crewai"]
+    channel: str = Field(max_length=120)                 # how the manager delegates the task
+    description: str = Field(max_length=300)
+    depends_on: list[TaskDependency] = Field(default_factory=list)
+    status: TaskStatus = TaskStatus.PENDING
+    started_at: datetime | None = None
+    finished_at: datetime | None = None
+    result_ref: ContextRef | None = None                  # the published report, when there is one
+    result: dict[str, Any] = Field(default_factory=dict)  # short summary (status, decision, counts)
+    failure: str | None = Field(default=None, max_length=2000)
+    events: list[TaskEvent] = Field(default_factory=list)
+
+
+class ExecutionPlan(StrictModel):
+    """The manager's typed plan for one investigation run, updated as the tasks execute."""
+    run_id: str
+    claim_id: str
+    fingerprint: str = Field(pattern=HEX64)               # document fingerprint the run is bound to
+    context_sharing: Literal["blackboard", "direct"]
+    created_at: datetime
+    tasks: list[PlanTask]
+
+
+# --------------------------------------------------------------------------- observability (unified run trace)
+
+TraceComponent = Literal["manager", "baseline", "adk", "crewai", "mcp", "a2a", "blackboard", "adjudicator", "monitoring"]
+TraceStatus = Literal["ok", "error", "timeout", "blocked", "rejected", "info"]
+ErrorCategory = Literal["business", "agent", "integration", "monitoring", "provider", "security"]
+SafeValue = str | int | float | bool | None
+_EVENT_ID = r"^[0-9a-f]{32}$"
+# Metadata keys that could carry credentials are refused outright (values are short scalars only, see TraceEvent).
+FORBIDDEN_METADATA = ("api_key", "apikey", "secret", "password", "passwd", "authorization", "credential", "private_key",
+                      "access_key", "bearer")
+
+
+class TraceEvent(StrictModel):
+    """One event of an investigation run, from the component that actually recorded it.
+
+    correlation_id is shared by every event of the run; parent_event_id links an event to the event that caused or
+    contains it (an agent's events to its task's dispatch, a tool or model call to its agent's start), so concurrent
+    agents stay distinct. metadata holds safe scalar summaries only - never documents, prompts, payloads or keys."""
+    run_id: str = Field(pattern=r"^[A-Za-z0-9][A-Za-z0-9_-]{2,63}$")
+    claim_id: str = Field(pattern=ID_PATTERN)
+    event_id: str = Field(pattern=_EVENT_ID)
+    correlation_id: str = Field(min_length=8, max_length=80)
+    parent_event_id: str | None = Field(default=None, pattern=_EVENT_ID)
+    task_id: TaskId | None = None
+    agent_name: str | None = Field(default=None, max_length=60)
+    component: TraceComponent
+    event_type: str = Field(max_length=60, pattern=r"^[a-z][a-z0-9_]*(\.[a-z0-9_]+)*$")
+    timestamp: AwareDatetime
+    status: TraceStatus
+    duration_ms: float | None = Field(default=None, ge=0)
+    context_ref: ContextRef | None = None
+    error_code: str | None = Field(default=None, max_length=40, pattern=r"^[A-Z][A-Z0-9_]*$")
+    error_category: ErrorCategory | None = None
+    metadata: dict[str, SafeValue] = Field(default_factory=dict, max_length=24)
+
+    @field_validator("metadata")
+    @classmethod
+    def _safe_metadata(cls, value: dict[str, Any]) -> dict[str, Any]:
+        for key, item in value.items():
+            if not (key[:1].isalpha() and key.replace("_", "").isalnum() and key.islower() and len(key) <= 40):
+                raise ValueError(f"metadata key {key!r} must be lower-case snake_case")
+            if any(word in key for word in FORBIDDEN_METADATA):
+                raise ValueError(f"metadata key {key!r} is not allowed in monitoring records")
+            if isinstance(item, str) and len(item) > 300:
+                raise ValueError(f"metadata value of {key!r} is longer than 300 characters")
+        return value
+
+    @model_validator(mode="after")
+    def _error_fields(self) -> "TraceEvent":
+        if (self.error_code or self.error_category) and self.status in ("ok", "info"):
+            raise ValueError("an event with an error code or category must not have status ok/info")
+        return self
+
+
+class DurationStats(StrictModel):
+    count: int = Field(ge=1)
+    min_ms: float = Field(ge=0)
+    max_ms: float = Field(ge=0)
+    mean_ms: float = Field(ge=0)
+    median_ms: float = Field(ge=0)
+
+
+class TaskMetrics(StrictModel):
+    task_id: TaskId
+    agent: str
+    status: TaskStatus
+    lifecycle_ms: float | None = Field(default=None, ge=0)   # dispatched (RUNNING) -> terminal state, by the manager
+    execution_ms: float | None = Field(default=None, ge=0)   # the agent's or step's own recorded execution time
+    model_request_ms: float | None = Field(default=None, ge=0)   # time inside model requests, part of execution_ms
+    model_calls: int = Field(default=0, ge=0)
+    # "agent record": execution_ms was measured by the agent's framework. "manager lifecycle": the agent's own record
+    # was not recorded, only lifecycle_ms exists. None: the task never started.
+    duration_source: Literal["agent record", "manager lifecycle"] | None = None
+    error_code: str | None = Field(default=None, max_length=40)
+
+
+class ModelUsage(StrictModel):
+    """Model use of one agent, only from what the framework or provider reported. None means not reported (not 0)."""
+    agent: str
+    model: str | None
+    execution: Literal["live", "offline test double", "unknown"]
+    calls: int = Field(ge=0)
+    failed_calls: int = Field(ge=0)
+    usage_reported_calls: int = Field(ge=0)
+    prompt_tokens: int | None = None
+    completion_tokens: int | None = None
+    total_tokens: int | None = None
+    cached_tokens: int | None = None
+    request_ms: DurationStats | None = None
+    cost: float | None = None
+    currency: str | None = None
+    cost_note: str = Field(max_length=300)
+
+
+class RunMetrics(StrictModel):
+    """Measured from recorded timestamps and counts; a value that was not recorded is None, never estimated."""
+    execution: Literal["live gemini", "offline test double", "mixed", "unknown"]
+    total_ms: float | None = None
+    baseline_ms: float | None = None
+    evidence_ms: float | None = None
+    investigator_ms: float | None = None
+    forensic_ms: float | None = None
+    adjudication_ms: float | None = None
+    agents_sequential_sum_ms: float | None = None   # sum of the three agents' own execution times
+    agents_elapsed_ms: float | None = None          # first agent start to last agent end (wall clock)
+    parallel_overlap_ms: float | None = None        # time the Investigator and the Forensic Agent ran at once
+    tasks: list[TaskMetrics] = Field(default_factory=list)
+    mcp_calls: int = 0
+    mcp_latency: DurationStats | None = None
+    a2a_requests: int = 0
+    a2a_latency: DurationStats | None = None
+    blackboard_publish: DurationStats | None = None
+    blackboard_consume: DurationStats | None = None
+    blackboard_verify: DurationStats | None = None
+    blackboard_seal: DurationStats | None = None
+    models: list[ModelUsage] = Field(default_factory=list)
+
+
+class RunTrace(StrictModel):
+    """The unified trace of one run, assembled after the run from the events each component recorded as they
+    happened (it is not a live stream). collection_errors lists monitoring problems; they never affect the run."""
+    run_id: str
+    claim_id: str
+    correlation_id: str
+    collected_at: AwareDatetime
+    collection: Literal["assembled after execution from recorded events"] = "assembled after execution from recorded events"
+    events: list[TraceEvent] = Field(default_factory=list)
+    metrics: RunMetrics | None = None
+    collection_errors: list[str] = Field(default_factory=list)
+
+
+class RunStatus(str, Enum):
+    COMPLETED = "COMPLETED"      # every required agent review finished; no human review required
+    INCOMPLETE = "INCOMPLETE"    # a required agent review began but did not finish with a verified report
+    BLOCKED = "BLOCKED"          # no required agent review could begin
+    ESCALATED = "ESCALATED"      # every required agent review finished; a human must review the result
+
+
+class RunOutcome(StrictModel):
+    """How a run ended, for people (observability/outcome.py). It describes the run and decides nothing."""
+    run_status: RunStatus
+    requires_human_approval: bool | None = None
+    final_decision: Decision | None = None
+    review_status: str | None = None
+    failed_tasks: list[str] = Field(default_factory=list)            # FAILED or TIMED_OUT
+    blocked_tasks: list[str] = Field(default_factory=list)
+    preserved_reports: list[str] = Field(default_factory=list)       # agents whose valid report is kept
+    adjudicated_reports: list[str] = Field(default_factory=list)     # of those, the reports the adjudicator received
+    failures: list[ProviderFailure] = Field(default_factory=list)
+    retries: list[ProviderRetry] = Field(default_factory=list)       # automatic retries after an HTTP 503
+    failures_recorded: bool = True                                   # False: stored before failures were classified
+    explanation: str | None = Field(default=None, max_length=500)
+    security_events: int = 0                                         # refused reads of shared context in this run
 
 
 class ClaimRunBundle(StrictModel):
@@ -657,6 +980,14 @@ class ClaimRunBundle(StrictModel):
     final_report: FinalClaimReport | None
     audit: list[AuditEvent]
     workflow_metadata: dict[str, ExecutionMetadata]
+    # "blackboard": agent context shared through the blackboard and the adjudicator fed only verified reports;
+    # "direct": blackboard disabled (tests, plain CLI) - ADK session state and in-memory results, as before.
+    context_sharing: Literal["blackboard", "direct"] = "direct"
+    execution_plan: ExecutionPlan | None = None           # the manager's plan with every task's lifecycle
+    trace: RunTrace | None = None                         # unified execution trace and metrics (observability)
+    outcome: RunOutcome | None = None                     # how the run ended (None: stored before this was recorded)
+    security_events: list[SecurityEvent] = Field(default_factory=list)    # every refused read of shared context
+    injection_events: list[SecurityEvent] = Field(default_factory=list)   # instructions in the input, refused agent output
 
 
 # --------------------------------------------------------------------------- blackboard and events

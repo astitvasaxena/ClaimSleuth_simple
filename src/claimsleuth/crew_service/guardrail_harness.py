@@ -5,7 +5,7 @@ with a scripted test-double LLM whose final answers are deliberately corrupted:
   fabricated_citation  cites a document that was never submitted
   invalid_category     uses a finding category that the ForensicsAnalysis schema does not allow
   wrong_claim          answers for another claim id
-The Task guardrail (crew.make_guardrail) and CrewAI's output_pydantic conversion decide what happens; every
+The Task guardrail (crew.make_guardrail, strict ForensicsAnalysis validation) decides what happens; every
 guardrail verdict is recorded so the rejection and the retry are visible. Nothing here is LLM inference.
 
     .venv-crew\Scripts\python -m claimsleuth.crew_service.guardrail_harness --mcp-url URL --data-dir DIR [--claim CS-003]
@@ -61,9 +61,6 @@ class ScriptedOutputLLM(ForensicTestDoubleLLM):
 
     def _respond(self, messages, response_model):
         text = super()._respond(messages, response_model)
-        if response_model is not None:                       # CrewAI's converter re-asking for the same answer
-            mode = self.script[min(max(self.final_answers - 1, 0), len(self.script) - 1)]
-            return json.dumps(corrupt(json.loads(text), mode))
         match = _FINAL.search(text)
         if not match:
             return text                                      # a tool call: unchanged
@@ -77,13 +74,13 @@ def recorded_guardrail(verdicts: list[dict[str, Any]]):
     """Wrap crew.make_guardrail so every verdict of the real guardrail function is recorded."""
     original = crew_module.make_guardrail
 
-    def recording(claim_id, documents, returned_sources):
-        guardrail = original(claim_id, documents, returned_sources)
+    def recording(*args):
+        guardrail = original(*args)
 
         def forensic_output_guardrail(task_output):     # no annotation: CrewAI inspects it (see crew.py)
             ok, value = guardrail(task_output)
             verdicts.append({"attempt": len(verdicts) + 1, "accepted": ok,
-                             "message": "accepted" if ok else str(value)[:400]})
+                             "message": "accepted" if ok else crew_module.visible_error(value)[:400]})
             return ok, value
         return forensic_output_guardrail
 

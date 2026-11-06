@@ -25,7 +25,7 @@ from typing import Any
 from claimsleuth import config
 from claimsleuth.baseline import evaluate
 from claimsleuth.documents import quote_appears
-from claimsleuth.schemas import (AgentFinding, AgentSystemResult, BaselineResult, CheckOutcome, Citation, ClaimInput,
+from claimsleuth.schemas import (MCP_RECORDS_UNAVAILABLE, AgentFinding, AgentSystemResult, BaselineResult, CheckOutcome, Citation, ClaimInput,
                                  ComparisonRow, Decision, EvidenceDocument, ExecutionStatus, FinalClaimReport,
                                  FinalComparison, ForensicsReport, HistoryRecord, InvestigationReport, MCPResult,
                                  PolicyTerms)
@@ -182,7 +182,18 @@ def adjudicate(run_id: str, claim: ClaimInput, documents: list[EvidenceDocument]
     payout = rules.settlement if final == Decision.APPROVE else None      # step 7
     if payout is not None:
         rationale.append(f"Payout from deterministic Decimal arithmetic: {payout.explanation}")
-    needs_human = final in (Decision.REJECT, Decision.ESCALATE) or (
+    # step 8: an investigation without both agent reviews is marked incomplete and always goes to a human,
+    # whatever the decision (the decision itself never relies on a missing review).
+    incomplete = [f"{r['name']} review unavailable: {r.get('reason')}" for r in (adk_review, crew_review)
+                  if not r["available"]]
+    if mcp is not None and mcp.status != ExecutionStatus.COMPLETED:       # agents' history findings cannot be confirmed
+        incomplete.append(MCP_RECORDS_UNAVAILABLE)
+    review_status = "COMPLETE" if not incomplete else "PARTIAL" if reviews else "NONE"
+    if incomplete:
+        rationale.append("Both agent reviews finished, but the MCP server's records could not confirm their tool calls: "
+                         "human approval required." if len(reviews) == 2 else
+                         f"Investigation INCOMPLETE ({review_status} agent review): human approval required.")
+    needs_human = final in (Decision.REJECT, Decision.ESCALATE) or bool(incomplete) or (
         payout is not None and payout.payout >= config.HUMAN_APPROVAL_THRESHOLD)
 
     policy_refs = []
@@ -203,4 +214,5 @@ def adjudicate(run_id: str, claim: ClaimInput, documents: list[EvidenceDocument]
         deterministic_decision=d, payout=payout, rule_checks=rules.checks, evidence_references=rules.evidence_refs,
         policy_references=policy_refs, agreements=agreements, disagreements=disagreements,
         unsupported_claims=unsupported, rationale=rationale, requires_human_approval=needs_human,
-        approval_status="PENDING" if needs_human else "NOT_REQUIRED", comparison=comparison)
+        approval_status="PENDING" if needs_human else "NOT_REQUIRED", comparison=comparison,
+        review_status=review_status, incomplete_reasons=incomplete)

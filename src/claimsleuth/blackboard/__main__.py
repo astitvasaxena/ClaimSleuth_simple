@@ -18,7 +18,7 @@ DEFAULT_DB = config.RUNTIME_DIR / "blackboard.sqlite3"
 
 
 def main(argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(description="Show a run's shared coordination blackboard")
+    parser = argparse.ArgumentParser(description="Show a run's shared blackboard (state, context and receipts)")
     parser.add_argument("run_id", nargs="?")
     parser.add_argument("--db", type=Path, default=None, help=f"database (default: $CLAIMSLEUTH_BLACKBOARD_DB or {DEFAULT_DB})")
     parser.add_argument("--list", action="store_true", help="list the most recent runs")

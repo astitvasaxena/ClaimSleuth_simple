@@ -9,9 +9,10 @@ Routes:
   GET  /messages?run_id=...            this service's own log of received/sent messages     -- not A2A
 
 The executor accepts one A2A text part holding a WorkflowMessage (FORENSIC_REQUEST), validates it
-(contract, known claim, byte-identical evidence by SHA-256), runs the real CrewAI Crew for that claim
-and replies with a FORENSIC_RESPONSE (or ERROR) WorkflowMessage. Runs are serialised: CrewAI's event-bus
-handlers are process-wide.
+(contract, known claim, byte-identical evidence by SHA-256, context references for this run, claim and documents
+that the Forensic Agent may read), runs the real CrewAI Crew for that claim and replies with a FORENSIC_RESPONSE
+(or ERROR) WorkflowMessage. Context references are consumed from the shared blackboard by the runner, never taken
+from the message. Runs are serialised: CrewAI's event-bus handlers are process-wide.
 """
 from __future__ import annotations
 
@@ -39,7 +40,9 @@ from starlette.requests import Request
 from starlette.responses import JSONResponse
 from starlette.routing import Route
 
-from claimsleuth import config, contract
+from claimsleuth import config, contract, execution_mode
+from claimsleuth.blackboard import Blackboard, BlackboardError, configured_path
+from claimsleuth.crew_service import gemini as gemini_mode
 from claimsleuth.crew_service import ollama as ollama_mode
 from claimsleuth.crew_service.runner import DEFAULT_MCP_URL, mcp_health, run_forensic_investigation
 from claimsleuth.datastore import load_claim
@@ -49,14 +52,29 @@ RPC_PATH = "/a2a"
 
 
 def llm_mode() -> str:
-    return os.environ.get("CLAIMSLEUTH_CREW_LLM", "test-double")
+    try:
+        return execution_mode.crew_llm_mode()
+    except execution_mode.ExecutionModeError:
+        return "invalid"
 
 
 def llm_check() -> dict:
-    """Real readiness of the configured model: the test double always; ollama-local only after preflight."""
-    mode = llm_mode()
+    """Readiness of the configured model: the test double always; ollama-local only after preflight; gemini when
+    its configuration (key present, model name, limits) is valid. The health check makes no Gemini call, so it
+    costs no quota; the first investigation proves the key and the model (and fails explicitly if they are wrong)."""
+    try:
+        mode = execution_mode.crew_llm_mode()
+    except execution_mode.ExecutionModeError as exc:
+        return {"ok": False, "mode": "invalid", "error": str(exc)}
     if mode == "test-double":
-        return {"ok": True, "mode": mode, "model": "test-double"}
+        return {"ok": True, "mode": mode, "model": "test-double", "execution_mode": "offline"}
+    if mode == gemini_mode.MODE:
+        try:
+            settings = gemini_mode.settings_from_env()
+            return {"ok": True, "mode": mode, "model": settings.model, "provider": gemini_mode.PROVIDER,
+                    "execution_mode": "live", "key_configured": True}
+        except gemini_mode.GeminiConfigError as exc:
+            return {"ok": False, "mode": mode, "error": str(exc)}
     if mode == ollama_mode.MODE:
         try:
             settings = ollama_mode.settings_from_env()
@@ -68,14 +86,23 @@ def llm_check() -> dict:
     return {"ok": False, "mode": mode, "error": "unknown mode"}
 
 
+def _model_description() -> str:
+    mode = llm_mode()
+    if mode == "test-double":
+        return "a labelled offline test double (no language model)."
+    if mode == gemini_mode.MODE:
+        return f"Google Gemini ({execution_mode.gemini_model()}) through CrewAI's native Gemini provider."
+    if mode == ollama_mode.MODE:
+        return f"local Ollama inference ({mode}) on 127.0.0.1."
+    return f"not configured ({mode})."
+
+
 def agent_card(base_url: str) -> AgentCard:
     return AgentCard(
         name="ClaimSleuth CrewAI Forensic Agent",
         description="Forensic review of one warranty claim: serial numbers, chronology, suspicious details, "
                     "claim-history patterns (via MCP) and evidence gaps. Recommends an outcome only; never "
-                    "authorises a payout. Model: " + ("a labelled offline test double (no language model)."
-                                                      if llm_mode() == "test-double" else
-                                                      f"local Ollama inference ({llm_mode()}) on 127.0.0.1."),
+                    "authorises a payout. Model: " + _model_description(),
         version="0.1.0",
         supported_interfaces=[AgentInterface(url=base_url + RPC_PATH, protocol_binding="JSONRPC", protocol_version="1.0")],
         capabilities=AgentCapabilities(streaming=False, push_notifications=False),
@@ -124,6 +151,17 @@ def _ids_from_raw(text: str) -> tuple[str, str]:
             claim_id if _CLAIM_ID.fullmatch(claim_id) else "UNKNOWN")
 
 
+def _registration(run_id: str) -> dict[str, str] | None:
+    """The run's blackboard registration, or None. An unusable blackboard is reported by the run itself."""
+    path = configured_path()
+    if path is None or not path.exists():
+        return None
+    try:
+        return Blackboard(path).registration(run_id)
+    except BlackboardError:
+        return None
+
+
 class ForensicExecutor(AgentExecutor):
     def __init__(self, mcp_url: str, data_dir: Path, log: MessageLog) -> None:
         self.mcp_url, self.data_dir, self.log = mcp_url, data_dir, log
@@ -140,14 +178,16 @@ class ForensicExecutor(AgentExecutor):
         try:
             _, documents = load_claim(request.claim_id, self.data_dir)
             contract.check_request(request, documents)
+            contract.check_context_required(request, _registration(request.run_id))
         except FileNotFoundError:
             return contract.error_message(request.run_id, request.claim_id, "CLAIM_MISMATCH",
                                           f"claim {request.claim_id} is not known to the CrewAI service")
         except contract.ContractError as exc:
             return contract.error_message(request.run_id, request.claim_id, exc.code, exc.detail)
-        async with self._lock:
+        async with self._lock:     # context: blackboard references; the runner consumes them with the crewai key
             result = await asyncio.to_thread(run_forensic_investigation, request.claim_id, run_id=request.run_id,
-                                             mcp_url=self.mcp_url, data_dir=self.data_dir)
+                                             mcp_url=self.mcp_url, data_dir=self.data_dir,
+                                             context=list(request.payload.context))
         mode = "test-double" if result.model == "test-double" else ("live" if result.model else "none")
         return contract.forensic_response(request, result, llm_mode=mode)
 
@@ -196,6 +236,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--log-file", type=Path, default=config.RUNTIME_DIR / "logs" / "a2a_crew_messages.jsonl")
     parser.add_argument("--pid-file", type=Path, default=config.RUNTIME_DIR / "pids" / "crew_a2a.pid")
     args = parser.parse_args(argv)
+    execution_mode.load_env()        # GOOGLE_API_KEY / EXECUTION_MODE from .env; values already set win
     base_url = f"http://{args.host}:{args.port}"
     args.pid_file.parent.mkdir(parents=True, exist_ok=True)
     args.pid_file.write_text(str(os.getpid()), encoding="ascii")
