@@ -478,9 +478,9 @@ The suites cover:
   - E5 runs personas and two prompt structures (116 runs); the doubles ignore prompt wording, so no behavioural variance
     is claimed.
   - No live accuracy or live cost over 40 runs was measured.
-- **Cloud deployment is offline mode only:** the system runs on one AWS EC2 t4g.small (see the next section). Live mode was
-  not enabled there, there is no Elastic IP (the URL changes after a stop/start), and only the four sample claims were
-  checked on the instance.
+- **Cloud deployment:** the system runs on one AWS EC2 t4g.small with an Elastic IP (see the next section), in live mode
+  since 2026-11-19. The over-HTTPS checks (4 sample claims) were made in offline mode on 2026-11-19. One partial live claim
+  was run on the VM (below). On the free tier only about 2 to 3 live claims fit in a day.
 
   See "Teacher criteria" in `docs/CHECKLIST.md`.
 
@@ -488,16 +488,32 @@ The suites cover:
 
 The system is deployed on one AWS EC2 t4g.small (Ubuntu 24.04 ARM, ap-south-1) as a Docker Compose stack: the single
 application image (`Dockerfile.single`: dashboard, ADK agents, MCP server and CrewAI A2A service in one container) behind
-Caddy, which gives HTTPS (Let's Encrypt on an `<ip>.sslip.io` name) and basic auth. It runs in offline mode. One machine is
+Caddy, which gives HTTPS (Let's Encrypt on an `<ip>.sslip.io` name) and basic auth. It runs in live mode (Gemini
+`gemini-3.5-flash`, enabled 2026-11-19); offline mode stays selectable with `MODE=offline` in `deploy/.env` on the VM, then
+`deploy/boot.sh`. One machine is
 required because the blackboard is a SQLite (WAL) file shared by all writers.
 
 - `docs/AWS_DEPLOYMENT_PLAN.md`: the architecture, why one VM, and the resources created.
-- `docs/submission/DEPLOYED.txt`: the verified deployment record (URL on 2026-11-19, checks, cost, teardown). The URL changes
-  after a stop/start; the login is not stored in the repository.
+- `docs/submission/DEPLOYED.txt`: the deployment record (checks, cost, teardown). URL: `https://13-204-3-14.sslip.io/`
+  (Elastic IP 13.204.3.14, allocated 2026-11-19, stable across stop/start; the earlier `65-2-175-255` URL is dead). Elastic IPs
+  are billed like any public IPv4 (about 0.005 USD/h), also while the instance is stopped; `deploy/aws/teardown.sh` releases it.
+  The login is not stored in the repository.
 - `deploy/aws/README.md`, `deploy/boot.sh`, `deploy/Caddyfile`, `docker-compose.yml`: how it was created and how it restarts.
 - `docs/DEPLOYMENT_GUIDE.md` and `docs/submission/results/deploy_test.md`: local Docker tests and the measured image and memory.
-- On the VM a sample claim takes about 3 s; on a macOS laptop the same stack takes about 24 s (cause not isolated). Run record:
-  `docs/submission/results/aws_run_RUN-dash-6ac716c9bd.json`.
+- On the VM in OFFLINE mode (2026-11-19) a sample claim took about 3 s; on a macOS laptop the same stack takes about 24 s
+  (cause not isolated). Run record: `docs/submission/results/aws_run_RUN-dash-6ac716c9bd.json`.
+- One partial live run was made on the deployed VM on 2026-11-19 (`RUN-dash-6d15294eca`, claim WC-2026-0411, `docs/submission/results/aws_live_run_RUN-dash-6d15294eca.json`): the Evidence and Investigator agents (ADK) completed on Gemini (57.8 s and 23.6 s), the Forensic Agent (CrewAI) failed with HTTP 503 UNAVAILABLE after its retry, so the run was INCOMPLETE, human approval required, and the decision APPROVE came from the deterministic adjudicator over the two preserved reports. It is not a complete live run and not counted among the four.
+- Gemini request caps: the app enforces `CLAIMSLEUTH_GEMINI_RPD` (default 20) and `CLAIMSLEUTH_GEMINI_RPM` (default 5);
+  `docker-compose.yml` passes `GEMINI_RPD` and `GEMINI_RPM` from `deploy/.env`. A live claim costs about 6 to 9 requests,
+  so budget a dry run before a demo and tell examiners that only about 2 to 3 live claims per day fit on the free tier.
+- CI/CD: `.github/workflows/ci.yml` runs on every pull request and push to main (python compileall, `bash -n` of the deploy
+  scripts, a grep secret scan, a Docker build of `Dockerfile.single` with layer cache). It does not run pytest (the full
+  suites take about 45 minutes; run them locally). Both runs so far passed (PR #2 and merge commit `186f279`). The VM pulls:
+  systemd timer `claimsleuth-update.timer` runs `deploy/auto_update.sh` every minute, which fetches `origin/main` of the
+  public repository, copies the files (never `deploy/.env` or the runtime volume), runs `deploy/boot.sh`, waits for the
+  app health check and rolls back to the previous commit if it does not become healthy. Detection takes up to about 60 s;
+  rebuild time on the VM was not measured. The VM deploys main whatever CI says. `AUTO_UPDATE=off` in `deploy/.env` on the
+  VM pauses it; set that during the assessment window.
 - Local container run from the repository root: `docker compose --env-file deploy/.env up -d --build`.
 
 ## Documentation

@@ -26,10 +26,11 @@ git -C "$SRC_DIR" fetch --quiet origin "$BRANCH" || { echo "fetch failed (offlin
 NEW="$(git -C "$SRC_DIR" rev-parse "origin/$BRANCH")"
 OLD="$(cat deploy/.deployed_sha 2>/dev/null || echo none)"
 [ "$NEW" = "$OLD" ] && exit 0
+[ "$NEW" = "$(cat deploy/.skip_sha 2>/dev/null)" ] && exit 0   # this commit already failed and was rolled back
 
 sync_to() {  # $1 = commit
   git -C "$SRC_DIR" checkout --quiet --force "$1" || return 1
-  rsync -a --delete --exclude '.git' --exclude 'deploy/.env' --exclude 'deploy/site.env' --exclude 'deploy/.deployed_sha' \
+  rsync -a --delete --exclude '.git' --exclude 'deploy/.env' --exclude 'deploy/site.env' --exclude 'deploy/.deployed_sha' --exclude 'deploy/.skip_sha' --exclude 'deploy/.failed_sha' \
         --exclude 'runtime' --exclude 'docs' --exclude 'tests' --exclude '.claude' --exclude '.github' --exclude '*.bak-*' \
         --exclude '__pycache__' "$SRC_DIR/" "$APP_DIR/"
 }
@@ -54,6 +55,8 @@ else
   else
     echo "rollback also failed; inspect: docker compose logs app"
   fi
-  echo "$NEW" > deploy/.failed_sha   # not retried every minute; a newer commit on the branch is tried automatically
-  echo "$NEW" > deploy/.deployed_sha
+  # remember the failed commit so it is not retried every minute; a newer commit on the branch is tried automatically
+  echo "$NEW" > deploy/.failed_sha
+  [ "$OLD" != "none" ] && echo "$OLD" > deploy/.deployed_sha
+  echo "$NEW" > deploy/.skip_sha
 fi

@@ -378,7 +378,7 @@ s = new_slide(5, "Architecture evaluation: which orchestration is best",
               "independence of agent opinions, fault isolation, auditability and parallel speedup for the Investigator and Forensic stages. "
               "Sequential-only is as slow as the manager here because the manager also runs Evidence first; parallel-only is about twice as "
               "fast but nobody verifies the reports and the Investigator never sees the Evidence report. Laptop timings are not the "
-              "deployment numbers: on the AWS VM a claim takes about 3 s.")
+              "deployment numbers: on the AWS VM in offline mode (2026-11-19) a claim took about 3 s.")
 if SUMMARY:
     rows5 = [["Architecture (40 cases each)", "Correct", "Median (s)", "Mean / stdev (s)", "Model calls", "Context shared (chars)", "Evidence report seen by"]]
     names5 = {"seq_direct": ("Sequential only", "Investigator"),
@@ -396,7 +396,7 @@ text(s, 0.5, 3.55, 12.3, 3.4, [
     "- Accuracy is identical by construction (offline doubles ignore other agents' reports and prompt wording). It does not choose the design.",
     "- Measured: parallel-only halves wall time (12.2 s vs about 24.3 s) but shares no context and has no verification gate. Calls are equal (9 model calls, 6 MCP calls, 2 A2A messages).",
     "- Why the manager: Investigator and Forensic run in parallel after Evidence; the manager verifies each report, isolates a failing agent and keeps an audit trail.",
-    "- Offline laptop run (macOS), 3 x 40 runs. Not deployment numbers: the AWS VM takes about 3 s per claim.",
+    "- Offline laptop run (macOS), 3 x 40 runs. Not deployment numbers: the AWS VM in offline mode took about 3 s per claim.",
 ], 14)
 
 
@@ -500,7 +500,7 @@ if pic9.exists():
     pw = (BOTTOM - 0.35 - y9) * 2240 / 832
     s.shapes.add_picture(str(pic9), Inches(0.5), Inches(y9), width=Inches(min(pw, 8.6)))
     text(s, 9.25, y9, 3.6, 3.2, [
-        "System latency per claim, offline doubles, macOS laptop. Not the deployment numbers (AWS VM: about 3 s per claim).",
+        "System latency per claim, offline doubles, macOS laptop. Not the deployment numbers (AWS VM, offline mode: about 3 s per claim).",
         "Parallel-only is about 12 s; all other wirings about 24 s.",
     ], 12, False, DGREY)
 text(s, 0.5, BOTTOM - 0.35, 12.3, 0.3, "Variance: decisions identical by construction; only latency varies.", 12, False, DAMBER)
@@ -513,9 +513,9 @@ s = new_slide(10, "Validation: does it work as expected",
               "Tests: macOS rerun 795 passed and 1 failed (tests/test_provider_reliability.py::test_the_managers_deadline_keeps_the_agents_record, "
               "an existing test, fails alone, not edited), 155 passed in the CrewAI suite. Windows on 6 Nov 2026: 801 and 155. Latencies "
               "were measured offline on a macOS laptop (12 s per ADK agent in this stack, cause not investigated) and are not the deployment "
-              "numbers: on the AWS VM agents took 445, 266 and 1,142 ms and a claim about 3 s (run RUN-dash-6ac716c9bd). On the macOS laptop (Docker or native) a "
-              "claim takes about 24 s with about 12 s per ADK agent, cause not isolated; on the VM agents took 445, 266 and 1,142 ms "
-              "(results/aws_run_RUN-dash-6ac716c9bd.json). Cases were written by the developers and run on test "
+              "numbers: on the AWS VM in OFFLINE mode (2026-11-19) agents took 445, 266 and 1,142 ms and a claim about 3 s (run RUN-dash-6ac716c9bd). On the macOS laptop (Docker or native) a "
+              "claim takes about 24 s with about 12 s per ADK agent, cause not isolated; on the VM (offline) agents took 445, 266 and 1,142 ms "
+              "(results/aws_run_RUN-dash-6ac716c9bd.json). The VM now runs live mode; its one partial live run took 57.8 s and 23.6 s for the two ADK agents (results/aws_live_run_RUN-dash-6d15294eca.json), not comparable. If asked: those 3 s figures are offline test doubles. Cases were written by the developers and run on test "
               "doubles, so this shows pipeline correctness, not model accuracy.")
 if SUMMARY:
     L = SUMMARY["per_agent_and_system_latency_ms_all_runs"]
@@ -528,7 +528,7 @@ if SUMMARY:
         ["Tests, Windows 2026-11-06", "801 passed; CrewAI 155 passed", "docs/EVIDENCE.md"],
         ["Evidence / Investigator latency (laptop)", f"{_s(L['evidence_ms']['median'])} s / {_s(L['investigator_ms']['median'])} s median", "236 runs, summary.json"],
         ["Forensic / system latency (laptop)", f"{L['forensic_ms']['median']:.0f} ms / {_s(L['wall_ms']['median'])} s median", "236 runs, summary.json"],
-        ["AWS VM, offline", "agents 445, 266, 1,142 ms; about 3 s per claim (laptop: about 24 s)", "results/aws_run_RUN-dash-6ac716c9bd.json"],
+        ["AWS VM, OFFLINE mode, 2026-11-19", "agents 445, 266, 1,142 ms; about 3 s per claim (laptop: about 24 s)", "results/aws_run_RUN-dash-6ac716c9bd.json"],
     ]
 else:
     d10 = [["Check", "Result", "Source"], ["results/summary.json missing", "pending", ""]]
@@ -556,11 +556,20 @@ text(s, 0.5, 6.7, 12.3, 0.4, "Lead = main owner, Support = second member. PROPOS
 s = new_slide(12, "Demo screenshots",
               "Screenshots in docs/screenshots/ are from 1 November 2026, before the dashboard was simplified; the findings are the same. "
               "The right-hand box is the deployment architecture: AWS EC2 t4g.small (ARM, 2 GB RAM + 2 GB swap, Ubuntu 24.04, ap-south-1), Docker Compose, "
-              "Caddy with Let's Encrypt HTTPS on <ip>.sslip.io and basic auth, the single image (911 MB) with dashboard, ADK agents, MCP server and "
+              "Caddy with Let's Encrypt HTTPS on 13-204-3-14.sslip.io (Elastic IP 13.204.3.14) and basic auth, the single image (911 MB) with dashboard, ADK agents, MCP server and "
               "CrewAI A2A service, and one volume for the SQLite blackboard. "
-              "VERIFIED ON 2026-11-19 over HTTPS (docs/submission/DEPLOYED.txt): wrong password rejected (401); the four sample claims gave "
-              "APPROVE, ESCALATE, ESCALATE, REQUEST_EVIDENCE (about 3 s each); after a stop/start the public IP changed and the site came back by itself "
-              "on the new sslip.io host name. Offline mode only; live mode was not enabled on the VM; no Elastic IP, so the URL changes after a stop/start. "
+              "VERIFIED ON 2026-11-19 over HTTPS in OFFLINE mode (docs/submission/DEPLOYED.txt): wrong password rejected (401); the four sample claims gave "
+              "APPROVE, ESCALATE, ESCALATE, REQUEST_EVIDENCE (about 3 s each); before the Elastic IP was attached, a stop/start changed the public IP and the site came back by itself "
+              "on the new sslip.io host name. Since then the VM has an Elastic IP (13.204.3.14, URL https://13-204-3-14.sslip.io/, stable across stop/start) and runs LIVE mode "
+              "(Gemini gemini-3.5-flash, enabled 2026-11-19). One live claim was run there (RUN-dash-6d15294eca, WC-2026-0411): the two ADK agents completed on Gemini, "
+              "the CrewAI Forensic Agent failed with HTTP 503 after its retry, so the run was INCOMPLETE, human approval required, APPROVE from the deterministic adjudicator "
+              "over the two preserved reports: a partial run showing graceful degradation, not a complete live run. Free tier: the app caps Gemini at 20 requests per day and "
+              "5 per minute and a claim costs 6 to 9, so only about 2 to 3 live claims per day; budget a dry run before the demo, and tell examiners. "
+              "CI/CD: GitHub Actions ci.yml on every PR and push to main (compile, bash -n, secret grep, Docker build, no pytest); the VM pulls origin/main with a systemd timer "
+              "(about a minute to detect, rebuild time not measured) and rolls back if the app is not healthy; it deploys main whatever the CI result; "
+              "set AUTO_UPDATE=off in deploy/.env on the VM during the assessment. "
+              "PLACEHOLDER FOR THE USER (H1): the three screenshots on the left are local, from 1 November. Paste 2 or 3 real screenshots of https://13-204-3-14.sslip.io/ "
+              "(the login prompt, a finished claim report, the evaluation tab) over them before presenting; they cannot be generated here and none are faked. "
               "Image 911 MB; memory 339 MiB idle and 383 MiB peak were measured in Docker Desktop on the laptop, not on the VM. "
               "The three screenshots on the left are local, from 1 November; replace them with screenshots of the deployed URL before presenting.")
 caps = [("1_claim_investigation_start.png", "Claim intake"),
@@ -578,21 +587,24 @@ for fn, cap in caps:
         s.shapes.add_picture(str(p), Inches(x), Inches(1.25), Inches(iw * sc), Inches(ih * sc))
     text(s, x, 4.75, 3.0, 0.8, [cap, "(pre-simplification, 1 Nov)"], 14, False, DGREY, PP_ALIGN.CENTER)
     x += 3.1
-box(s, 9.9, 1.25, 3.0, 0.5, "Deployed on AWS (2026-11-19)", NAVY, NAVY, 12, True, WHITE)
-box(s, 9.9, 1.8, 3.0, 0.55, "EC2 t4g.small, Ubuntu ARM\nap-south-1 (Mumbai)", GREY, DGREY, 11)
+# H1 PLACEHOLDER (user): replace the three local screenshots above with 2 or 3 screenshots of the live site
+# (login prompt, finished claim report, evaluation tab). Not generated here; do not fake them.
+box(s, 9.9, 1.25, 3.0, 0.5, "Deployed on AWS (2026-11-20)", NAVY, NAVY, 12, True, WHITE)
+box(s, 9.9, 1.8, 3.0, 0.55, "EC2 t4g.small, Elastic IP\nap-south-1, live mode", GREY, DGREY, 11)
 box(s, 9.9, 2.45, 3.0, 0.55, "Caddy: HTTPS (Let's Encrypt,\nsslip.io) + basic auth", LBLUE, BLUE, 11)
 box(s, 9.9, 3.1, 3.0, 0.7, "Docker: single image 911 MB\ndashboard, ADK, MCP, CrewAI A2A", GREEN, DGREEN, 11)
 box(s, 9.9, 3.9, 3.0, 0.6, "Volume: blackboard.sqlite3", PURPLE, RGBColor(0x6D, 0x28, 0xD9), 11)
+box(s, 9.9, 4.6, 3.0, 0.8, "CI/CD: GitHub Actions CI;\nVM pulls origin/main\n(timer, health check, rollback)", AMBER, DAMBER, 11)
 text(s, 0.5, 5.5, 12.3, 0.5, "Left: offline mode, test-double models, local screenshots from 1 Nov (not the deployed site).",
      14, False, DGREY)
 text(s, 0.5, 5.95, 12.3, 0.9,
-     ["Verified on AWS over HTTPS (2026-11-19): wrong password gives 401; 4 of 4 sample claims correct (about 3 s each);",
-      "site recovered by itself after stop/start on a new URL. Offline mode only; no live mode on the VM."], 14, True, DGREEN)
+     ["Verified on AWS over HTTPS (2026-11-19, offline mode): 401 on wrong password; 4 of 4 sample claims (about 3 s each).",
+      "Live mode on the VM: one partial run (2 of 3 agents on Gemini, CrewAI hit HTTP 503), escalated to a human. Free tier: about 2 to 3 live claims a day."], 14, True, DGREEN)
 
 # ================================================================ slide 13
 s = new_slide(13, "Conclusions",
               "Summarise what is proven and what is not. Proven: end-to-end pipeline on real frameworks and protocols, deterministic decisions, "
-              "40 of 40 offline, 4 live runs, deployed on AWS and verified over HTTPS on 2026-11-19 (offline mode). Not proven: live accuracy, scale. Be upfront that comparisons and deployment numbers come "
+              "40 of 40 offline, 4 live runs, deployed on AWS (Elastic IP, live mode since 2026-11-19) and verified over HTTPS on 2026-11-19 in offline mode; one additional PARTIAL live run on the VM (2 of 3 agents completed, CrewAI hit HTTP 503), do not call it complete. Not proven: live accuracy, scale. Free tier allows about 2 to 3 live claims a day. Be upfront that comparisons and deployment numbers come "
               "from the results files and that offline agents are test doubles.")
 text(s, 0.5, 1.2, 6.0, 0.4, "Achieved", 20, True, DGREY if False else DGREEN)
 text(s, 0.5, 1.65, 6.0, 4.9, [
@@ -601,14 +613,16 @@ text(s, 0.5, 1.65, 6.0, 4.9, [
     "- Deterministic adjudicator: agents recommend, rules decide every rupee.",
     "- Layered security; 801 and 155 tests passed (6 Nov 2026); 40 of 40 offline cases correct.",
     "- 4 complete live Gemini runs (6 to 9 requests each).",
-    "- Deployed on AWS (EC2, Docker, Caddy HTTPS) and verified 2026-11-19: 4 of 4 claims, 401 on wrong password, recovery after stop/start.",
+    "- Deployed on AWS (EC2, Docker, Caddy HTTPS, Elastic IP) and verified 2026-11-19 offline: 4 of 4 claims, 401 on wrong password.",
+    "- GitHub Actions CI plus pull-based update of the VM with rollback.",
 ], 16)
 text(s, 6.9, 1.2, 6.0, 0.4, "Limits and next steps", 20, True, DAMBER)
 text(s, 6.9, 1.65, 6.0, 4.9, [
     "- Default agents are offline test doubles; no live accuracy figure.",
     "- Injection screen is a pattern list; cases are synthetic and developer-written.",
     "- Blackboard is SQLite: one machine only, which fixes the deployment shape.",
-    "- Deployment is offline mode on one VM; no live mode there, no fixed IP (URL changes after stop/start).",
+    "- One VM; one partial live run there (CrewAI 503), live capped at about 2 to 3 claims a day on the free tier.",
+    "- CI does not run pytest; the VM deploys main whatever CI says.",
     "- Next: larger live evaluation, authenticated reviewers, broader attack coverage.",
 ], 16)
 
