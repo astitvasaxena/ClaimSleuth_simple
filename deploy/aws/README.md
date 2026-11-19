@@ -1,7 +1,7 @@
 # AWS: one EC2 t4g.small (ARM); the deployed VM has an Elastic IP
 
 Same one-VM design as GCP: one instance, one Docker image (`Dockerfile.single`, 911 MB), Caddy in front (HTTPS + password),
-a named volume for the SQLite blackboard. Nothing here was run against a real AWS account (see "What was tested").
+a named volume for the SQLite blackboard. It was run on a real AWS account (EC2 t4g.small, ap-south-1) on 2026-11-19: see docs/submission/DEPLOYED.txt and "What was tested".
 You run every `aws` command yourself; no step needs a secret in this repo.
 
 ## Why these choices
@@ -78,7 +78,7 @@ Lightsail 2 GB (about 10 to 12 USD/month, includes a static IP option and 3 TB t
 `GOOGLE_API_KEY` only in `/opt/claimsleuth/deploy/.env` (chmod 600) on the VM, or AWS Secrets Manager / SSM Parameter Store (`SecureString`) fetched into that file by hand. Never in the image or repo. The instance has no IAM role (none needed).
 
 ## Cost (estimate, check the AWS pricing page for your region)
-t4g.small about 0.017 to 0.02 USD/hour on demand (about 12 to 15 USD/month if left on), 20 GB gp3 about 1.6 to 2 USD/month (billed even when the instance is stopped), public IPv4 address about 0.005 USD/hour while the instance runs (since Feb 2024, about 3.6 USD/month). A stopped instance costs only its disk. Free-tier eligibility for t4g.small trials varies by account and date: check yours.
+t4g.small about 0.0112 USD/hour on demand in ap-south-1 as recorded in docs/submission/DEPLOYED.txt (about 8 USD/month if left on; check the AWS pricing page, other regions differ), 20 GB gp3 about 1.6 to 2 USD/month (billed even when the instance is stopped), public IPv4 address about 0.005 USD/hour while the instance runs (since Feb 2024, about 3.6 USD/month). A stopped instance costs only its disk. Free-tier eligibility for t4g.small trials varies by account and date: check yours.
 
 ## Operations
 - Logs: `sudo docker compose logs -f app caddy` (rotated 10 MB x 3 per container).
@@ -99,4 +99,4 @@ aws ec2 delete-key-pair --region $AWS_REGION --key-name $KEY_NAME      # optiona
 (The root volume is deleted with the instance. If you created an Elastic IP or a snapshot, release/delete it too: an unreleased Elastic IP keeps costing about 0.005 USD/h. `deploy/aws/teardown.sh` releases it.)
 
 ## What was tested
-Locally (Docker Desktop, ARM): the slim image, the 4 sample claims (4 of 4 match), the production compose file with Caddy and basic auth on port 80 (401 without password, 200 with), and `deploy/boot.sh` with mocked IMDSv2 responses. NOT tested: any `aws` command, the user-data script on a real instance, Let's Encrypt/sslip.io certificate issuance, behaviour on 2 GB RAM, `docker compose build` on a t4g.small. Expect to fix small things on the first real run.
+Locally (Docker Desktop, ARM): the slim image, the 4 sample claims (4 of 4 match), the production compose file with Caddy and basic auth on port 80 (401 without password, 200 with), and `deploy/boot.sh` with mocked IMDSv2 responses. Then on a real t4g.small in ap-south-1 (2026-11-19): `aws` provisioning, the user-data script, Let's Encrypt/sslip.io HTTPS, the 4 sample claims over HTTPS with login, and a stop/start (see docs/submission/DEPLOYED.txt). Not re-tested after adding the Elastic IP: a stop/start with the fixed URL. Not measured: rebuild time on the VM.
