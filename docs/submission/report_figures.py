@@ -159,19 +159,23 @@ def fig_sequence():
 
 
 def fig_deployment():
-    fig, ax = _canvas(9.5, 5.6)
+    fig, ax = _canvas(9.5, 7.2)
     box(ax, 2, 40, 16, 8, "Browser\n(reviewer, examiner)", fs=7)
-    box(ax, 2, 22, 16, 8, "Gemini API\n(only in live mode,\nkey from env file)", fs=6.3, ls="--")
-    region(ax, 24, 3, 70, 49, "AWS EC2 t4g.small (ARM, 2 GB RAM), ap-south-1")
+    box(ax, 2, 22, 16, 8, "Gemini API\n(live mode, key\nfrom env file; app caps\n20/day, 5/min)", fs=6.0, ls="--")
+    region(ax, 24, 3, 70, 58, "AWS EC2 t4g.small (ARM, 2 GB RAM), ap-south-1, Elastic IP 13.204.3.14")
     region(ax, 27, 6, 64, 38, "Docker Compose on the VM (ports 80 and 443 public; 22 restricted)", fc="#ececec")
-    box(ax, 29, 31, 22, 9, "Caddy (caddy:2-alpine)\nHTTPS: Let's Encrypt on\n<ip>.sslip.io, basic auth", fs=6.3)
+    box(ax, 29, 31, 22, 9, "Caddy (caddy:2-alpine)\nHTTPS: Let's Encrypt on\n13-204-3-14.sslip.io,\nbasic auth", fs=6.0)
     box(ax, 55, 22, 34, 17, "Single image claimsleuth-single (911 MB)\none container, uid 1000,\ndashboard :7860 (compose network only)\n\ndashboard + ADK agents\nMCP server :8102 (127.0.0.1)\nCrewAI A2A service :8103 (127.0.0.1)", fs=6.3)
     cylinder(ax, 55, 8, 34, 11, "Volume runtime/\nblackboard.sqlite3 (WAL), runs, logs", fs=6.2)
+    box(ax, 60, 47, 31, 9, "systemd timer (every minute)\nauto_update.sh: fetch, boot.sh,\nhealth check, rollback", fs=6.0)
+    box(ax, 60, 64, 34, 6.5, "GitHub: origin/main\nCI on PR and push (compile, bash -n,\nsecret grep, Docker build; no pytest)", fs=6.0)
     arrow(ax, (18, 44), (29, 38), "HTTPS", ty=2)
     arrow(ax, (51, 35), (55, 32), "HTTP")
     arrow(ax, (72, 22), (72, 19), None, both=True)
     arrow(ax, (55, 30), (18, 26), "HTTPS out", ty=2, dashed=True)
-    ax.text(1, 8, "One image: the dashboard starts\nMCP and CrewAI itself. One VM: the\nSQLite blackboard needs all writers\non one machine. No Elastic IP: the\nURL changes after a stop/start.",
+    arrow(ax, (86, 64), (86, 56), "pull", tx=3, ty=0)
+    arrow(ax, (75, 47), (75, 44), None)
+    ax.text(1, 8, "One image: the dashboard starts\nMCP and CrewAI itself. One VM: the\nSQLite blackboard needs all writers\non one machine. Elastic IP: the URL\nstays the same after a stop/start.",
             fontsize=6.0, ha="left", va="center", bbox=dict(fc="white", ec="black", lw=0.6, pad=2))
     return _save(fig, "fig_deployment.png")
 

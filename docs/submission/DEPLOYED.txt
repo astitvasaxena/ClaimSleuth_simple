@@ -1,9 +1,12 @@
 Platform: AWS EC2, region ap-south-1 (Mumbai)
-Instance: t4g.small (2 vCPU ARM, 2 GB RAM + 2 GB swap), Ubuntu 24.04, 20 GB gp3 encrypted, IMDSv2 required, no Elastic IP
+Instance: t4g.small (2 vCPU ARM, 2 GB RAM + 2 GB swap), Ubuntu 24.04, 20 GB gp3 encrypted, IMDSv2 required; Elastic IP 13.204.3.14 attached (allocated 2026-11-19)
 Instance id: i-01e12e3df2c70f60f
-Stack: Docker Compose on the single VM: caddy:2-alpine (HTTPS via Let's Encrypt on <ip>.sslip.io, basic auth) + claimsleuth-single image (911 MB; dashboard, ADK agents, MCP server, CrewAI A2A service)
-Mode: OFFLINE (labelled test doubles); live mode not enabled
-URL on 2026-11-19 (changes after a stop/start, see deploy/boot.sh): https://65-2-175-255.sslip.io/
-Verified on 2026-11-19 over HTTPS with the login: wrong password rejected (401); the four sample claims gave APPROVE, ESCALATE, ESCALATE, REQUEST_EVIDENCE (about 3 s each); after stop/start the public IP changed and the site came back by itself on the new sslip.io hostname; the blackboard run after the restart completed.
-Cost: about 0.0112 USD/h instance + 0.005 USD/h public IPv4 + disk; account on the AWS Free plan (credits)
-Teardown: deploy/aws/teardown.sh
+Stack: Docker Compose on the single VM: caddy:2-alpine (HTTPS via Let's Encrypt on <ip>.sslip.io, basic auth user claimsleuth) + claimsleuth-single image (911 MB; dashboard, ADK agents, MCP server, CrewAI A2A service)
+Mode on 2026-11-20: LIVE (Gemini gemini-3.5-flash, all three agents), enabled 2026-11-19. Offline mode stays selectable (MODE=offline in deploy/.env on the VM, then boot.sh). Gemini request caps enforced by the app: GEMINI_RPD default 20 per day, GEMINI_RPM default 5 (docker-compose passes both from deploy/.env). A live claim costs about 6 to 9 requests, so the free tier allows about 2 to 3 live claims per day.
+URL on 2026-11-20 (stable across stop/start because of the Elastic IP): https://13-204-3-14.sslip.io/
+Earlier URL, now dead: https://65-2-175-255.sslip.io/ (public IP before the Elastic IP was attached; it changed after the 2026-11-19 stop/start test).
+Verified on 2026-11-19 over HTTPS with the login, in OFFLINE mode: wrong password rejected (401); the four sample claims gave APPROVE, ESCALATE, ESCALATE, REQUEST_EVIDENCE (about 3 s each, run RUN-dash-6ac716c9bd); after stop/start the public IP changed and the site came back by itself on the new sslip.io hostname; the blackboard run after the restart completed.
+Live run on the VM, 2026-11-19 (partial): RUN-dash-6d15294eca, claim WC-2026-0411, record results/aws_live_run_RUN-dash-6d15294eca.json. Evidence Agent (ADK) and Investigator Agent (ADK) completed with real Gemini inference; Forensic Agent (CrewAI) failed with Google HTTP 503 UNAVAILABLE after its retry, so the run was INCOMPLETE, human approval required, decision APPROVE from the deterministic adjudicator over the two preserved reports. Not a complete live run.
+CI/CD: .github/workflows/ci.yml runs on every PR and push to main (compileall, bash -n of deploy scripts, secret grep, Docker build of Dockerfile.single; no pytest). Deployment is pull-based: systemd timer claimsleuth-update.timer runs deploy/auto_update.sh about every minute against origin/main of astitvasaxena/ClaimSleuth_simple, with rollback if the app does not become healthy. The VM deploys main whatever the CI result. AUTO_UPDATE=off in deploy/.env on the VM pauses it (recommended during the assessment window).
+Cost: about 0.0112 USD/h instance + 0.005 USD/h for the public IPv4 (the Elastic IP is billed at the same rate, also while the instance is stopped) + disk; account on the AWS Free plan (credits)
+Teardown: deploy/aws/teardown.sh (also releases the Elastic IP)

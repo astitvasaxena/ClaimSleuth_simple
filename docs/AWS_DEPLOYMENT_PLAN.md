@@ -32,9 +32,9 @@ services. Measured footprint: 339 MiB idle, 383 MiB peak during runs, Caddy 14 M
 |---|---|---|
 | Key pair `claimsleuth-key` | private key saved to `~/.claimsleuth-aws/` (chmod 400), outside the repo | SSH for deployment |
 | Security group `claimsleuth-sg` (default VPC) | 80, 443 from 0.0.0.0/0; 22 from the deployer's current IP/32 | minimal exposure |
-| EC2 instance | t4g.small, Ubuntu 24.04 arm64 (latest from the public SSM parameter), 20 GB gp3 encrypted, IMDSv2 required, auto-assigned public IPv4, no Elastic IP, no IAM role | measured need, tested architecture |
+| EC2 instance | t4g.small, Ubuntu 24.04 arm64 (latest from the public SSM parameter), 20 GB gp3 encrypted, IMDSv2 required, auto-assigned public IPv4 at launch, Elastic IP 13.204.3.14 attached on 2026-11-19, no IAM role | measured need, tested architecture |
 | User data | `deploy/aws/user-data.sh`: swap, Docker, log rotation, `claimsleuth.service` | repeatable, no secrets |
-Not created: Elastic IP, load balancer, NAT gateway, S3, ECR, IAM roles, RDS, budgets (none needed).
+Added later (2026-11-19): the Elastic IP (billed about 0.005 USD/h, also while stopped; released by `teardown.sh`), URL `https://13-204-3-14.sslip.io/`, live mode, and the systemd timer `claimsleuth-update.timer` that pulls `origin/main` (rollback on failed health check; `AUTO_UPDATE=off` pauses it). Not created: load balancer, NAT gateway, S3, ECR, IAM roles, RDS, budgets (none needed).
 
 ## 3. Cost (live prices from the Pricing API, ap-south-1)
 t4g.small 0.0112 USD/h (about 8 USD/month) + public IPv4 0.005 USD/h (about 3.6) + 20 GB gp3 (about 2) = roughly 14 USD per month,
@@ -57,7 +57,7 @@ about 35 USD until the plan ends. A stopped instance costs only its disk.
 | Let's Encrypt rate limit or failure on sslip.io | Caddy retries and tries another CA; else serve HTTP on :80 with `SITE_ADDRESS=:80` for the demo |
 | Image build runs out of memory on 2 GB | swap is already added; stop and retry, or resize to t4g.medium for the build only |
 | Deployer's IP changes (SSH locked out) | re-authorise the new IP in the security group (one CLI call) |
-| Public IP and URL change after stop/start | `boot.sh` recomputes the hostname; read the new URL from `deploy/site.env` or the CLI |
+| Public IP and URL change after stop/start | Fixed by the Elastic IP (stable URL). `boot.sh` still recomputes the hostname from the IP the metadata service returns |
 | Anything goes wrong | `deploy/aws/teardown.sh` terminates the instance and removes the security group and key pair |
 
 ## 6. Security notes

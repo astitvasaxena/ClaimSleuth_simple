@@ -16,6 +16,8 @@ services:
       EXECUTION_MODE: ${MODE:-offline}          # offline (default) | live
       GOOGLE_API_KEY: ${GOOGLE_API_KEY:-}       # only needed for MODE=live; comes from deploy/.env on the VM
       CLAIMSLEUTH_BLACKBOARD_DB: /app/runtime/blackboard.sqlite3
+      CLAIMSLEUTH_GEMINI_RPD: ${GEMINI_RPD:-20}  # daily request cap (free tier 20); raise only if your key's quota is higher, 0 = off
+      CLAIMSLEUTH_GEMINI_RPM: ${GEMINI_RPM:-5}
     volumes: [runtime:/app/runtime]
     expose: ["7860"]
     healthcheck:

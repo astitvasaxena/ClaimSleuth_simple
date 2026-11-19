@@ -402,7 +402,7 @@ def build_content(b, team, summary):
            "`ForensicTestDoubleLLM`). Everything around the test doubles is the real thing: the ADK Runner and "
            "SequentialAgent, the CrewAI Agent, Task and Crew, the A2A server and client, the MCP server, the blackboard, the "
            "rules engine and the adjudicator. A live mode runs all three agents on Google Gemini (`gemini-3.5-flash`), but because "
-           "we used a free-tier key (20 requests per day per model) only four complete live runs exist. All claims, people and "
+           "we used a free-tier key (20 requests per day per model) only four complete live runs exist (plus one partial live run on the deployed VM, Section 7.4). All claims, people and "
            "serial numbers are synthetic.", "justify")
     b.para("The report follows the course format. Section 2 states the problem, Section 3 reviews existing products and "
            "research and lists the gaps, Section 4 turns the gaps into numbered requirements (R1 to R11), Section 5 describes "
@@ -701,13 +701,31 @@ def build_content(b, team, summary):
            "the loopback interface. We first built a two-image stack and measured both; the memory is the same (381 and 382 MiB after "
            "four runs) because the processes are the same, and the single image is smaller (911 MB after pruning against 1.95 GB) and has one "
            "container less to supervise, so the production file uses it. A Caddy reverse proxy in front provides HTTPS with a "
-           "Let's Encrypt certificate and basic authentication; only ports 80 and 443 are public, and SSH is restricted. The VM has no "
-           "fixed address, so a boot script reads the public IPv4 address and uses the host name `<ip-with-dashes>.sslip.io`, "
-           "which means the URL changes after a stop/start. Cloud Run style services were not used because a SQLite file shared by "
-           "two services is not supported there. The deployed demonstration runs in offline mode; live mode needs a Gemini key supplied "
-           "through an environment file on the machine, never in an image or the repository, and was not enabled on the VM.",
+           "Let's Encrypt certificate and basic authentication; only ports 80 and 443 are public, and SSH is restricted. The VM has an "
+           "Elastic IP (13.204.3.14, allocated on 2026-11-19), and a boot script reads the public IPv4 address and uses the host name "
+           "`<ip-with-dashes>.sslip.io`, so the URL (`https://13-204-3-14.sslip.io/`) stays the same across a stop/start. Before the "
+           "Elastic IP was attached the address changed after a stop/start, which we observed in the 2026-11-19 test. An Elastic IP "
+           "is billed like any public IPv4 address (about 0.005 USD per hour), also while the instance is stopped, and the teardown "
+           "script releases it. Cloud Run style services were not used because a SQLite file shared by "
+           "two services is not supported there. The deployed system runs in LIVE mode since 2026-11-19: all three agents call Gemini "
+           "(`gemini-3.5-flash`) with a key supplied through an environment file on the machine, never in an image or the repository. "
+           "The application enforces its own request caps (`CLAIMSLEUTH_GEMINI_RPD`, default 20 per day, and `CLAIMSLEUTH_GEMINI_RPM`, "
+           "default 5, both passed in from the environment file). A live claim costs about 6 to 9 requests, so on the free tier only about "
+           "2 to 3 live claims fit in a day; after that the agents fail and the claim is escalated to a person. Offline mode stays "
+           "selectable (`MODE=offline` in the environment file, then `boot.sh`).",
            "justify")
-    b.figure("f_deploy", FIGS / "fig_deployment.png", "Deployment on AWS: one EC2 VM, Docker Compose with Caddy and the single image, a volume for the blackboard.", width=6.2)
+    b.para("**CI/CD.** The repository has a GitHub Actions workflow (`.github/workflows/ci.yml`) that runs on every pull request and "
+           "every push to main: it compiles `src/` and `tests/`, parses the deploy shell scripts with `bash -n`, greps for committed "
+           "secrets and builds `Dockerfile.single` with a layer cache (the image is not pushed). It does not run pytest, because the "
+           "full suites take about 45 minutes; they are run locally and the quoted test counts are the ones in Section 7. Both runs so "
+           "far passed (the pull request and the merge commit `186f279`). Deployment is pull-based: a systemd timer on the VM "
+           "(`claimsleuth-update.timer`) runs `deploy/auto_update.sh` every minute. The script fetches `origin/main` of the public "
+           "repository, copies the files (never `deploy/.env` or the runtime volume), runs `boot.sh` (`docker compose up -d --build`), waits "
+           "for the application container's health check and rolls back to the previous commit if it does not become healthy. A new "
+           "commit is detected within about a minute; the rebuild time on the VM was not measured. The VM deploys main whatever the CI "
+           "result is, so a green CI run is not a precondition for a deployment. Setting `AUTO_UPDATE=off` in `deploy/.env` on the VM "
+           "pauses the updates, which we recommend during the assessment window.", "justify")
+    b.figure("f_deploy", FIGS / "fig_deployment.png", "Deployment on AWS: one EC2 VM with an Elastic IP, Docker Compose with Caddy and the single image, a volume for the blackboard, pull-based updates from GitHub main.", width=6.2)
     b.para("**What testing showed (2026-11-19).** Before the cloud step we ran the images with Docker Desktop on one laptop. The "
            "two-service stack exposed a real defect: the crew container did not know the blackboard path, so every run ended "
            "INCOMPLETE because the Forensic Agent could not read the blackboard. We fixed it by setting the same "
@@ -738,6 +756,7 @@ def build_content(b, team, summary):
                 ("AWS EC2 t4g.small", "Ubuntu 24.04, ARM, ap-south-1", "The one virtual machine that hosts the deployed system (2 vCPU, 2 GB RAM, 2 GB swap, 20 GB encrypted disk)"),
                 ("Docker and Docker Compose", "Docker 28 on the laptop; compose on the VM", "One image (`Dockerfile.single`, 911 MB) holding both Python environments; the compose file also starts Caddy"),
                 ("Caddy", "`caddy:2-alpine`", "Reverse proxy: HTTPS and basic authentication in front of the dashboard"),
+                ("GitHub Actions and a systemd timer", "workflow `ci.yml`; `claimsleuth-update.timer`", "CI checks on every PR and push to main; pull-based update of the VM from origin/main with health check and rollback"),
                 ("Let's Encrypt and sslip.io", "external services", "Free certificate for the host name `<ip>.sslip.io`, which resolves to the VM's public IP without owning a domain"),
             ], widths=[2.6, 2.8, 5.0], size=8.5)
     b.para("**Frontend.** The page is plain HTML, CSS and JavaScript served as static files by the Starlette application "
@@ -754,7 +773,7 @@ def build_content(b, team, summary):
            "protocols and the deterministic rules behave as designed on synthetic cases written by the same people who "
            "wrote the code. They do not show how accurate a language model is at this task, and the 40-case result in "
            "particular must not be read as a Gemini accuracy figure. Where a figure comes from live runs we say so, and only four complete "
-           "live runs exist.", "justify")
+           "live runs exist, plus one partial live run on the VM.", "justify")
     b.h2("Test results")
     b.para("The final regression ran on 6 November 2026 on the Windows 11 development machine, on the final code. A connection "
            "guard refused anything that was not a local test service, so no test sent a Gemini request. These counts are from "
@@ -832,6 +851,17 @@ def build_content(b, team, summary):
            "`RUN-live-crew-cs003`).", "justify")
     b.para("These runs show that the system works end to end on a real model. Four runs on two sample claims cannot "
            "measure live accuracy, and we do not claim a live accuracy figure.", "justify")
+    b.para("**One partial live run on the deployed VM (2026-11-19).** After live mode was enabled on the AWS VM, claim WC-2026-0411 "
+           "was run once through the public site (`RUN-dash-6d15294eca`, record `docs/submission/results/aws_live_run_RUN-dash-6d15294eca.json`). "
+           "It is not counted among the four complete live runs, because it did not complete. The Evidence Agent (ADK) and the "
+           "Investigator Agent (ADK) completed with real Gemini inference: the Evidence Agent took 57.8 s with 2 model calls "
+           "(8,068 prompt and 1,181 completion tokens) and the Investigator 23.6 s with 2 calls (23,696 prompt and 661 completion tokens). "
+           "The Forensic Agent (CrewAI) made 3 model calls (the first returned 612 completion tokens), then Google answered HTTP 503 UNAVAILABLE "
+           "(high demand) on its second call; the one retry after 15 seconds failed with the same error, and the agent ended FAILED after "
+           "107.3 s. In total the ledger records 7 Gemini requests, and the run took about 2 min 48 s from submission to the final record. "
+           "The run status was INCOMPLETE and the review status PARTIAL, human approval was required, and the final decision APPROVE "
+           "(payout ₹16,400.00) came from the deterministic adjudicator over the two preserved reports, with the failure and the retry kept "
+           "in the record. This shows graceful degradation on the deployed system, not accuracy, and it is one run.", "justify")
     b.h2("Security and reliability experiments")
     b.para("**Evidence integrity and prompt injection.** The two labs run offline on disposable copies. The first tampers "
            "with shared context and checks that the read is refused, a structured event is recorded and no agent report of "
@@ -1007,13 +1037,14 @@ def build_content(b, team, summary):
                "band, which is why the boxes are thin. The Forensic Agent takes about 0.54 s and the "
                "two ADK agents about 12 s each in this setup. These are properties of the local stack with test doubles; they "
                "are not Gemini latencies.", "justify")
-        b.para("**Which latencies to trust.** The laptop figures above are not the deployment numbers. On the AWS VM the run "
+        b.para("**Which latencies to trust.** The laptop figures above are not the deployment numbers. On the AWS VM in OFFLINE mode (2026-11-19) the run "
                "record `RUN-dash-6ac716c9bd` shows agent latencies of 0.27 to 1.14 s (ADK agents 445 and 266 ms, the CrewAI agent "
                "1,142 ms) and a sample claim takes about 3 s end to end. On the macOS laptop, "
                "in Docker or native, a claim takes about 24 s, with about 12 s per ADK agent (the earlier 24 to 27 s Docker Desktop "
                "figure and the 236 unloaded experiment runs agree). We did not isolate the cause of this difference between the "
-               "laptop and the VM, so the deployment measurement is the one to quote for the running system. The VM record is saved as "
-               "`docs/submission/results/aws_run_RUN-dash-6ac716c9bd.json`.", "justify")
+               "laptop and the VM, so the VM offline figures are the deployment measurement for offline mode. The deployed VM now runs live mode, where the "
+               "one partial run shows 57.8 s and 23.6 s for the two ADK agents (Section 7.4), a different regime that is not comparable. "
+               "The offline VM record is saved as `docs/submission/results/aws_run_RUN-dash-6ac716c9bd.json`.", "justify")
 
         # --- interpretation
         b.para("**What the comparisons do and do not justify.** Accuracy is identical across all configurations, and that is "
@@ -1034,7 +1065,7 @@ def build_content(b, team, summary):
         b.para("**Cost.** In offline mode the cost is INR 0: no model is billed and the ledger shows 0 Gemini requests. A live cost "
                "over 40 runs was not measured. `observability/pricing.py` ships no prices, so a live rupee figure would need a "
                "verified price table and token counts, and none were recorded for the live runs. What exists is the request count: "
-               "the four complete live runs used 9, 6, 7 and 7 requests (29 in total). Forty live runs would therefore need about "
+               "the four complete live runs used 9, 6, 7 and 7 requests (29 in total); the partial run on the VM added 7 requests more. Forty live runs would therefore need about "
                "240 to 360 requests (about 400 at the code's estimate of 10 per claim), against a free tier of 20 requests per day "
                "per model.", "justify")
         b.table("t_cost", "Cost and request counts (source: results/summary.json, docs/EVIDENCE.md).",
@@ -1061,21 +1092,25 @@ def build_content(b, team, summary):
                 ("Concurrency", "One investigation runs at a time. The blackboard needs all writers on one machine."),
             ], widths=[2.6, 7.6], size=8.5)
     b.h2("Deployment status")
-    b.para("The system is deployed on AWS (EC2 t4g.small, Ubuntu 24.04 ARM, ap-south-1) and was verified on 2026-11-19 over HTTPS "
-           "in offline mode. This is a smoke test of the deployment, not a new benchmark. The record is `docs/submission/DEPLOYED.txt`.", "justify")
-    b.table("t_deploy", "Deployment verification on AWS (source: DEPLOYED.txt, 2026-11-19).",
+    b.para("The system is deployed on AWS (EC2 t4g.small, Ubuntu 24.04 ARM, ap-south-1) at `https://13-204-3-14.sslip.io/` (Elastic IP "
+           "13.204.3.14). The checks in the table below were made on 2026-11-19 over HTTPS in OFFLINE mode; live mode was enabled on the "
+           "VM afterwards (2026-11-19) and one partial live claim was run there (Section 7.4). This is a smoke test of the deployment, not a "
+           "new benchmark. The record is `docs/submission/DEPLOYED.txt`.", "justify")
+    b.table("t_deploy", "Deployment verification on AWS, offline mode, before the Elastic IP (source: DEPLOYED.txt, 2026-11-19).",
             ["Check", "Result"],
             [
                 ("Login", "A wrong password was rejected with HTTP 401; the correct login opened the dashboard over HTTPS."),
                 ("Four sample claims through the public URL", "APPROVE, ESCALATE, ESCALATE, REQUEST_EVIDENCE, matching the expected results; about 3 seconds each."),
-                ("Stop and start of the instance", "The public IP changed, and the site came back by itself on the new sslip.io host name; a blackboard run after the restart completed."),
+                ("Stop and start of the instance", "Before the Elastic IP was attached, the public IP changed and the site came back by itself on the new sslip.io host name; a blackboard run after the restart completed. With the Elastic IP the URL is stable across stop/start (not re-tested)."),
+                ("One live claim on the VM (partial)", "RUN-dash-6d15294eca: two ADK agents completed on Gemini, the CrewAI agent failed with HTTP 503 after its retry; INCOMPLETE, human approval required, APPROVE from the adjudicator (Section 7.4)."),
                 ("Image and memory (laptop measurement)", "Image 911 MB; memory 339 MiB idle and 383 MiB peak in Docker Desktop. Not measured on the instance."),
             ], widths=[3.0, 7.2], size=8.5)
-    b.para("Not verified: live mode on the VM, load from several users, or a fixed address (there is no Elastic IP, so the URL changes "
-           "after a stop/start). The about 3 seconds per claim is the offline test doubles running on the VM. On the macOS laptop (Docker or native) a claim takes about 24 s, with about 12 s per ADK agent; "
+    b.para("Not verified: a complete live run on the VM (the one live claim was partial), live accuracy, load from several users, or a "
+           "stop/start with the Elastic IP attached. The about 3 seconds per claim is the offline test doubles running on the VM "
+           "(offline mode, 2026-11-19); it is not the latency of the live system. On the macOS laptop (Docker or native) a claim takes about 24 s, with about 12 s per ADK agent; "
            "the cause was not isolated. On the VM the run record `RUN-dash-6ac716c9bd` (`results/aws_run_RUN-dash-6ac716c9bd.json`) shows "
-           "agent latencies of 445 and 266 ms for the ADK agents and 1,142 ms for the CrewAI agent, so the VM figure is the deployment measurement. "
-           "Running cost is about 0.0112 USD per hour for the instance plus about 0.005 USD per hour for the public IPv4 address; "
+           "agent latencies of 445 and 266 ms for the ADK agents and 1,142 ms for the CrewAI agent, so these are the offline VM measurements. "
+           "Running cost is about 0.0112 USD per hour for the instance plus about 0.005 USD per hour for the public IPv4 address, which is the same for the Elastic IP and is charged while the instance is stopped; "
            "the disk is billed separately, on an account with free credits.", "justify")
 
     # ===================================================================== 8 TEAM
@@ -1155,7 +1190,8 @@ def build_content(b, team, summary):
                 _url = _ln.split(":", 1)[1].strip() if False else _ln
     if _url:
         _u = _url[_url.index("https://"):].strip()
-        b.para("**Deployed system.** URL on 2026-11-19 (it changes after a stop/start of the instance, see Section 5.10): `" + _u + "`. "
+        b.para("**Deployed system.** URL on 2026-11-20 (Elastic IP, stable across stop/start, see Section 5.10): `" + _u + "`. The deployed system runs "
+               "in live mode on the free tier, which allows only about 2 to 3 live claims per day (a claim costs 6 to 9 requests); offline mode is selectable on the VM. "
                "The login is given to the examiners separately and is not part of this report.", "justify")
     b.para("**B. The four sample claims and their expected outcomes**", keep=True)
     b.table("t_samples", "Sample claims (source: README.md and data/sample_ground_truth.json).",

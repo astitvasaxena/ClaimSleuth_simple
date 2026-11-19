@@ -20,7 +20,7 @@ repository.
 | C-8 Security and guardrails; prompt variance; personas | **Mostly met** | Screening, restricted-output checks in callbacks, injection tests, persona claim variants. A standard vs evidence-first ReAct prompt structure was run (E5, 2026-11-19; 0 of 58 paired decisions changed, expected because the offline doubles ignore wording); no live prompt-variance result |
 | C-9 Observability, auditability, provenance | **Met** | Trace, audit trail, Blackboard provenance, page and line citations |
 | C-10 Performance, cost and time over about 40 runs; boxplots | **Mostly met (2026-11-19)** | 236 offline runs (E3/E4/E5) plus the 40-case baseline `EV-20261119-141842-e46c4a` with latency box plots and heat map (`docs/submission/results/`), personas x prompt structures included. Offline cost INR 0. Live cost over 40 runs NOT measured: 4 live runs used 9, 6, 7, 7 requests, 40 would need about 240 to 360 |
-| C-11 Deploy on a cloud platform | **Met (2026-11-19)** | AWS EC2 t4g.small, ap-south-1, Docker Compose + Caddy HTTPS; evidence in `docs/submission/DEPLOYED.txt` and `results/deploy_test.md`. Offline mode only; live mode not enabled |
+| C-11 Deploy on a cloud platform | **Met (2026-11-19)** | AWS EC2 t4g.small, ap-south-1, Docker Compose + Caddy HTTPS; evidence in `docs/submission/DEPLOYED.txt` and `results/deploy_test.md`. Elastic IP 13.204.3.14, URL `https://13-204-3-14.sslip.io/` (2026-11-20). Verified 2026-11-19 in offline mode; live mode (Gemini) enabled on the VM 2026-11-19 with one PARTIAL live run (`results/aws_live_run_RUN-dash-6d15294eca.json`: CrewAI HTTP 503, INCOMPLETE, human approval). CI (GitHub Actions) and pull-based auto-deploy added; CI does not run pytest |
 
 ## Phase 1 — Schemas, dataset, deterministic baseline (no LLM)
 - [x] Pydantic schemas for claim, evidence, findings, baseline, MCP results, comparison, final report, blackboard (C-3)
@@ -141,11 +141,11 @@ repository.
 - [x] 2026-11-19 (macOS laptop, offline, 0 Gemini requests): E3 architecture 3x40, E4 messaging 3x40, E5 persona x prompt structure 116 runs;
       236 runs, 0 failed; baseline rerun `EV-20261119-141842-e46c4a` 40/40; boxplot and agent-latency heat map in `docs/submission/results/`
       (`summary.json`, `README.md`). Accuracy identical by construction; E5 persona counts unbalanced (38/6/6/8); 0 of 58 paired
-      decisions changed. Laptop latencies (about 12 s per ADK agent) are not the AWS VM figures (0.27 to 1.14 s per agent, about 3 s per claim)
+      decisions changed. Laptop latencies (about 12 s per ADK agent) are not the AWS VM figures (0.27 to 1.14 s per agent, about 3 s per claim, offline mode on the VM, 2026-11-19)
 - [ ] Live cost over 40 runs (needs a price table and about 240 to 360 live requests; free tier is 20 per day per model)
 
 ## Phase 9 — Cloud deployment
-- [x] One platform, simple deployment, no exposed credentials (C-11). Done 2026-11-19: AWS EC2 t4g.small (ap-south-1), single image (911 MB) + Caddy, HTTPS via Let's Encrypt on sslip.io, basic auth. Verified over HTTPS: wrong password rejected (401), four sample claims APPROVE/ESCALATE/ESCALATE/REQUEST_EVIDENCE, site recovered by itself after stop/start (new IP, new hostname). Evidence: `docs/submission/DEPLOYED.txt`. Not done: live mode on the VM, Elastic IP
+- [x] One platform, simple deployment, no exposed credentials (C-11). Done 2026-11-19: AWS EC2 t4g.small (ap-south-1), single image (911 MB) + Caddy, HTTPS via Let's Encrypt on sslip.io, basic auth. Verified over HTTPS: wrong password rejected (401), four sample claims APPROVE/ESCALATE/ESCALATE/REQUEST_EVIDENCE, site recovered by itself after stop/start (new IP, new hostname). Evidence: `docs/submission/DEPLOYED.txt`. Updated 2026-11-20: Elastic IP 13.204.3.14 attached (2026-11-19), URL `https://13-204-3-14.sslip.io/`; live mode enabled on the VM (2026-11-19), one partial live run saved (CrewAI HTTP 503); the stop/start recovery above was observed before the Elastic IP. Not done: a complete live run on the VM, live accuracy, a stop/start re-test with the Elastic IP, measured rebuild time of the auto-deploy
 
 ## Final hardening and submission (2026-11-06)
 - [x] Documentation audit, stale claims corrected, `docs/DEMO_GUIDE.md` and `docs/EVIDENCE.md` added

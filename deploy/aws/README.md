@@ -1,4 +1,4 @@
-# AWS: one EC2 t4g.small (ARM), no Elastic IP
+# AWS: one EC2 t4g.small (ARM); the deployed VM has an Elastic IP
 
 Same one-VM design as GCP: one instance, one Docker image (`Dockerfile.single`, 911 MB), Caddy in front (HTTPS + password),
 a named volume for the SQLite blackboard. Nothing here was run against a real AWS account (see "What was tested").
@@ -8,10 +8,10 @@ You run every `aws` command yourself; no step needs a secret in this repo.
 - t4g.small: 2 vCPU (Graviton, ARM), 2 GB RAM. Measured on Docker Desktop (ARM): whole stack about 400 MiB at peak while running the
   sample claims, so 2 GB is enough; a 2 GB swap file is added as a safety margin and for the image build.
 - ARM64 on purpose: the image builds natively on ARM (python:3.12-slim and caddy are multi-arch). If you build on an x86 laptop, build ON THE VM, do not copy the image.
-- No Elastic IP: the public IPv4 changes every time the instance is stopped and started (a plain reboot keeps it).
+- Without an Elastic IP the public IPv4 changes every time the instance is stopped and started (a plain reboot keeps it). The deployed VM got an Elastic IP (13.204.3.14, allocated 2026-11-19), so its URL `https://13-204-3-14.sslip.io/` is stable; the original public IP (65.2.175.255) is gone and its URL is dead.
   `deploy/boot.sh` runs at every boot, reads the current public IP from the metadata service (IMDSv2) and sets the site name to
   `<ip-with-dashes>.sslip.io` (e.g. `13-232-10-5.sslip.io`, a free public DNS name that resolves to that IP), then restarts the stack so Caddy gets a certificate for it.
-  THE URL THEREFORE CHANGES AFTER EVERY STOP/START. Find the new one with the command in step 7. If you need a stable URL, attach an Elastic IP (it is free while attached to a running instance, billed when idle) or use your own domain and set `SITE_ADDRESS` in `deploy/.env`.
+  WITHOUT AN ELASTIC IP THE URL CHANGES AFTER EVERY STOP/START. Find the new one with the command in step 7. For a stable URL attach an Elastic IP or use your own domain and set `SITE_ADDRESS` in `deploy/.env`. Elastic IPs are NOT free: since February 2024 AWS bills every public IPv4 address, attached Elastic IPs included, at about 0.005 USD/h, also while the instance is stopped. `teardown.sh` releases the Elastic IP (set `EIP_ALLOC` to its allocation id).
 - IMDSv2 required (`HttpTokens=required`): the metadata service only answers token-authenticated requests.
 
 ## Prerequisites (you)
@@ -62,7 +62,7 @@ ssh -i claimsleuth-key.pem ubuntu@$IP 'cloud-init status --wait; cd /opt/claimsl
 ssh -i claimsleuth-key.pem ubuntu@$IP
 cd /opt/claimsleuth
 sudo docker run --rm caddy:2-alpine caddy hash-password --plaintext 'CHOOSE_A_PASSWORD'   # copy the output
-nano deploy/.env      # BASIC_AUTH_HASH='<paste, single-quoted>'; leave SITE_ADDRESS=auto; MODE=offline (default) or live + GOOGLE_API_KEY
+nano deploy/.env      # BASIC_AUTH_HASH='<paste, single-quoted>'; leave SITE_ADDRESS=auto; MODE=offline (default) or live + GOOGLE_API_KEY; GEMINI_RPD / GEMINI_RPM (default 20 / 5) cap Gemini requests
 sudo bash deploy/boot.sh        # first start builds the image (about 5 to 10 minutes on a t4g.small), prints the https URL
 ```
 7. After ANY stop/start, find the new URL (boot.sh already restarted the stack by itself when the instance came up):
@@ -72,7 +72,7 @@ sudo bash deploy/boot.sh        # first start builds the image (about 5 to 10 mi
 8. Smoke test: see `docs/DEPLOYMENT_GUIDE.md` (login prompt, status panel, one sample claim, restart).
 
 ## Lightsail alternative
-Lightsail 2 GB (about 10 to 12 USD/month, includes a static IP option and 3 TB transfer) works the same way: pick Ubuntu 24.04, paste `deploy/aws/user-data.sh` as the launch script, open ports 80/443 in the Lightsail firewall, then follow steps 5 to 8. Lightsail static IPs are free while attached, which avoids the changing URL.
+Lightsail 2 GB (about 10 to 12 USD/month, includes a static IP option and 3 TB transfer) works the same way: pick Ubuntu 24.04, paste `deploy/aws/user-data.sh` as the launch script, open ports 80/443 in the Lightsail firewall, then follow steps 5 to 8. Lightsail static IPs are free while attached to an instance (check current Lightsail pricing), which avoids the changing URL.
 
 ## Secrets
 `GOOGLE_API_KEY` only in `/opt/claimsleuth/deploy/.env` (chmod 600) on the VM, or AWS Secrets Manager / SSM Parameter Store (`SecureString`) fetched into that file by hand. Never in the image or repo. The instance has no IAM role (none needed).
@@ -96,7 +96,7 @@ aws ec2 wait instance-terminated --region $AWS_REGION --instance-ids $IID
 aws ec2 delete-security-group --region $AWS_REGION --group-id $SG
 aws ec2 delete-key-pair --region $AWS_REGION --key-name $KEY_NAME      # optional; also delete claimsleuth-key.pem locally
 ```
-(The root volume is deleted with the instance. If you created an Elastic IP or a snapshot, release/delete it too.)
+(The root volume is deleted with the instance. If you created an Elastic IP or a snapshot, release/delete it too: an unreleased Elastic IP keeps costing about 0.005 USD/h. `deploy/aws/teardown.sh` releases it.)
 
 ## What was tested
 Locally (Docker Desktop, ARM): the slim image, the 4 sample claims (4 of 4 match), the production compose file with Caddy and basic auth on port 80 (401 without password, 200 with), and `deploy/boot.sh` with mocked IMDSv2 responses. NOT tested: any `aws` command, the user-data script on a real instance, Let's Encrypt/sslip.io certificate issuance, behaviour on 2 GB RAM, `docker compose build` on a t4g.small. Expect to fix small things on the first real run.
