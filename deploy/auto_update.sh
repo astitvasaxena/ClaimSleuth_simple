@@ -35,7 +35,7 @@ sync_to() {  # $1 = commit
 }
 healthy() {
   for i in $(seq 1 40); do   # up to ~10 minutes (first build on a t4g.small is slow)
-    st="$(docker inspect -f '{{.State.Health.Status}}' "$(docker compose ps -q app 2>/dev/null)" 2>/dev/null || true)"
+    st="$(docker inspect -f '{{.State.Health.Status}}' "$(docker compose --env-file deploy/.env ps -q app 2>/dev/null)" 2>/dev/null || true)"
     [ "$st" = "healthy" ] && return 0
     sleep 15
   done
