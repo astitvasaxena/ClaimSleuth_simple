@@ -6,21 +6,21 @@ A box is ticked only after the listed check has actually been run.
 Teacher criteria (C-1 … C-11) are from `ClaimSleuth_Handoff_Gap_Analysis_and_Build_Plan.md` §2.1. That file is not in this
 repository.
 
-## Teacher criteria: status on 2026-11-06
+## Teacher criteria: status on 2026-11-19 (updated from 2026-11-06)
 
 | Criterion | Status | Evidence or gap |
 |---|---|---|
-| C-1 Context sharing; Blackboard mandatory; messaging architectures tried | **Partly met** | The Blackboard carries the Evidence report to both later agents, with A2A messages and MCP calls alongside. No measured comparison of messaging styles exists |
+| C-1 Context sharing; Blackboard mandatory; messaging architectures tried | **Met for the comparison actually built (2026-11-19)** | Blackboard vs direct message passing vs no sharing, 40 cases each, offline, macOS (`docs/submission/results/messaging_comparison.csv`). Accuracy identical (40/40) by construction; they differ in time, context shared (4,740 vs 2,370 vs 0 chars) and receipts. A pub/sub broadcast arm was NOT built |
 | C-2 At least two MCP tools | **Met** | `warranty_policy_search`, `claim_history_lookup` on a separate MCP server |
 | C-3 Structured output with Pydantic | **Met** | Validated reports; final report as JSON and Markdown |
-| C-4 Design patterns, evaluated against others | **Partly met** | Hierarchical, sequential and parallel execution are all in one design. They are not evaluated against each other, and worker-node on/off, workflow-based and event-driven variants do not exist |
+| C-4 Design patterns, evaluated against others | **Partly met (2026-11-19)** | Sequential-only, parallel-only and the hierarchical manager compared on 40 cases each (`results/architecture_comparison.csv`): accuracy identical by construction; median 24.7 s, 12.2 s, 24.3 s (laptop, offline). Worker-node on/off, workflow-based and event-driven variants do not exist |
 | C-5 Callback monitoring and logging; heat map | **Met** | ADK callbacks, CrewAI events, unified trace, heat maps in the evaluation tab |
 | C-6 A2A between ADK and CrewAI | **Met** | a2a-sdk service and ADK `RemoteA2aAgent`, across two environments |
 | C-7 Both CrewAI and ADK, no other framework | **Met** | No other agentic framework is imported in `src` or `tests` |
-| C-8 Security and guardrails; prompt variance; personas | **Mostly met** | Screening, restricted-output checks in callbacks, injection tests, persona claim variants. Prompt variants such as ReAct were not built |
+| C-8 Security and guardrails; prompt variance; personas | **Mostly met** | Screening, restricted-output checks in callbacks, injection tests, persona claim variants. A standard vs evidence-first ReAct prompt structure was run (E5, 2026-11-19; 0 of 58 paired decisions changed, expected because the offline doubles ignore wording); no live prompt-variance result |
 | C-9 Observability, auditability, provenance | **Met** | Trace, audit trail, Blackboard provenance, page and line citations |
-| C-10 Performance, cost and time over about 40 runs; boxplots | **Partly met** | 40 cases with latency box plots, offline. Gemini requests are counted per live run. There is no 40-run live cost figure and no comparison across architectures or personas |
-| C-11 Deploy on a cloud platform | **Not met** | Local only; every service binds to 127.0.0.1 |
+| C-10 Performance, cost and time over about 40 runs; boxplots | **Mostly met (2026-11-19)** | 236 offline runs (E3/E4/E5) plus the 40-case baseline `EV-20261119-141842-e46c4a` with latency box plots and heat map (`docs/submission/results/`), personas x prompt structures included. Offline cost INR 0. Live cost over 40 runs NOT measured: 4 live runs used 9, 6, 7, 7 requests, 40 would need about 240 to 360 |
+| C-11 Deploy on a cloud platform | **Met (2026-11-19)** | AWS EC2 t4g.small, ap-south-1, Docker Compose + Caddy HTTPS; evidence in `docs/submission/DEPLOYED.txt` and `results/deploy_test.md`. Offline mode only; live mode not enabled |
 
 ## Phase 1 — Schemas, dataset, deterministic baseline (no LLM)
 - [x] Pydantic schemas for claim, evidence, findings, baseline, MCP results, comparison, final report, blackboard (C-3)
@@ -79,9 +79,10 @@ repository.
 - [x] Blackboard state model: shared coordination blackboard (SQLite) used by the ADK process and the CrewAI
       A2A service process; append-only, isolated per run/claim, concurrency-safe (Phase 7e,
       docs/BLACKBOARD_GUIDE.md). Coordination only: agents do not exchange findings.
-- [ ] Communication-mode comparison (blackboard / peer-to-peer / broadcast) (C-1)
-- [~] Architectures: sequential, parallel and hierarchical are implemented in one design. Workflow, event-driven, worker-node
-      on/off and any comparison between them are not (C-4)
+- [~] Communication-mode comparison (C-1): blackboard vs direct vs no sharing measured 2026-11-19 (`docs/submission/results/messaging_comparison.csv`); pub/sub broadcast arm not built
+- [~] Architectures: sequential, parallel and hierarchical are implemented in one design and compared 2026-11-19 on 40 cases each
+      (`results/architecture_comparison.csv`; accuracy identical by construction, differs in time and context shared). Workflow,
+      event-driven and worker-node on/off are not built (C-4)
 - Check: `python -m claimsleuth.integration CS-003` (MCP :8102 and CrewAI A2A :8103 running)
 
 ## Phase 6 — Local LLM (6A audit, 6B ollama-local for CrewAI) · security and personas
@@ -137,9 +138,14 @@ repository.
       offline by default, live opt-in (C-10)
 - [x] CSV, JSON and Markdown export, accuracy, latency box plots, heat maps, request counts (C-5, C-10). Live cost over 40 runs is
       not measured
+- [x] 2026-11-19 (macOS laptop, offline, 0 Gemini requests): E3 architecture 3x40, E4 messaging 3x40, E5 persona x prompt structure 116 runs;
+      236 runs, 0 failed; baseline rerun `EV-20261119-141842-e46c4a` 40/40; boxplot and agent-latency heat map in `docs/submission/results/`
+      (`summary.json`, `README.md`). Accuracy identical by construction; E5 persona counts unbalanced (38/6/6/8); 0 of 58 paired
+      decisions changed. Laptop latencies (about 12 s per ADK agent) are not the AWS VM figures (0.27 to 1.14 s per agent, about 3 s per claim)
+- [ ] Live cost over 40 runs (needs a price table and about 240 to 360 live requests; free tier is 20 per day per model)
 
-## Phase 9 — Cloud deployment (only after explicit approval)
-- [ ] One platform, simple deployment, no exposed credentials (C-11)
+## Phase 9 — Cloud deployment
+- [x] One platform, simple deployment, no exposed credentials (C-11). Done 2026-11-19: AWS EC2 t4g.small (ap-south-1), single image (911 MB) + Caddy, HTTPS via Let's Encrypt on sslip.io, basic auth. Verified over HTTPS: wrong password rejected (401), four sample claims APPROVE/ESCALATE/ESCALATE/REQUEST_EVIDENCE, site recovered by itself after stop/start (new IP, new hostname). Evidence: `docs/submission/DEPLOYED.txt`. Not done: live mode on the VM, Elastic IP
 
 ## Final hardening and submission (2026-11-06)
 - [x] Documentation audit, stale claims corrected, `docs/DEMO_GUIDE.md` and `docs/EVIDENCE.md` added

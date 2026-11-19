@@ -375,6 +375,21 @@ Ground truth is fixed per case by the scenario's design and is never computed by
 
 The evaluation starts its own MCP and CrewAI services (ports 8122/8123), and results go to `runtime\evaluation\`.
 
+### Architecture, messaging and persona experiments
+
+`src/claimsleuth/evaluation/experiments.py` (tests in `tests/test_experiments.py`) runs three offline experiments and
+writes `docs/submission/results/` (`architecture_comparison.csv`, `messaging_comparison.csv`, `persona_prompt_runs.csv`,
+`experiment_runs.csv`, `summary.json`, a latency box plot and an agent-by-persona heat map):
+
+- E3: sequential-only, parallel-only and the hierarchical manager, 40 cases each (median 24.75 s, 12.20 s, 24.25 s on the
+  macOS laptop);
+- E4: blackboard, direct message passing and no sharing, 40 cases each; the blackboard records signed read receipts;
+- E5: honest, vague, abusive and injection personas under two prompt structures, 116 runs, 0 of 58 paired decisions changed.
+
+No run failed, and no Gemini request was sent (the agents are the labelled test doubles). Accuracy is identical across
+configurations by construction, so these compare time, calls and context passed, not reasoning quality. Run:
+`.venv/bin/python -m claimsleuth.evaluation.experiments run --out docs/submission/results`.
+
 ### Shared blackboard: context between agents
 
 The blackboard (SQLite, `runtime/blackboard.sqlite3` for the dashboard) is the shared state of an investigation,
@@ -456,14 +471,34 @@ The suites cover:
   - the reviewer name is typed in, not authenticated;
   - the lock that stops two conflicting reviews works within one process only;
   - one investigation runs at a time.
-- **Not built:**
-  - a measured comparison of messaging architectures (the system uses three - blackboard shared state, A2A
-    messages and MCP tool calls - but no benchmark compares them);
-  - an evaluation of the design patterns against each other (the manager uses hierarchical, sequential and parallel
-    execution in one design), including the five-architecture study;
-  - cloud deployment.
+- **Comparisons, now built but limited** (`src/claimsleuth/evaluation/experiments.py`, results in `docs/submission/results/`):
+  - E3 compares sequential-only, parallel-only and the hierarchical manager, and E4 compares the blackboard with direct
+    message passing and no sharing, 40 cases each, 0 failed. They ran offline on the test doubles, so accuracy is identical
+    by construction and only time, calls and context passed differ. A publish/subscribe broadcast arm was not built.
+  - E5 runs personas and two prompt structures (116 runs); the doubles ignore prompt wording, so no behavioural variance
+    is claimed.
+  - No live accuracy or live cost over 40 runs was measured.
+- **Cloud deployment is offline mode only:** the system runs on one AWS EC2 t4g.small (see the next section). Live mode was
+  not enabled there, there is no Elastic IP (the URL changes after a stop/start), and only the four sample claims were
+  checked on the instance.
 
   See "Teacher criteria" in `docs/CHECKLIST.md`.
+
+## Deployment (AWS)
+
+The system is deployed on one AWS EC2 t4g.small (Ubuntu 24.04 ARM, ap-south-1) as a Docker Compose stack: the single
+application image (`Dockerfile.single`: dashboard, ADK agents, MCP server and CrewAI A2A service in one container) behind
+Caddy, which gives HTTPS (Let's Encrypt on an `<ip>.sslip.io` name) and basic auth. It runs in offline mode. One machine is
+required because the blackboard is a SQLite (WAL) file shared by all writers.
+
+- `docs/AWS_DEPLOYMENT_PLAN.md`: the architecture, why one VM, and the resources created.
+- `docs/submission/DEPLOYED.txt`: the verified deployment record (URL on 2026-11-19, checks, cost, teardown). The URL changes
+  after a stop/start; the login is not stored in the repository.
+- `deploy/aws/README.md`, `deploy/boot.sh`, `deploy/Caddyfile`, `docker-compose.yml`: how it was created and how it restarts.
+- `docs/DEPLOYMENT_GUIDE.md` and `docs/submission/results/deploy_test.md`: local Docker tests and the measured image and memory.
+- On the VM a sample claim takes about 3 s; on a macOS laptop the same stack takes about 24 s (cause not isolated). Run record:
+  `docs/submission/results/aws_run_RUN-dash-6ac716c9bd.json`.
+- Local container run from the repository root: `docker compose --env-file deploy/.env up -d --build`.
 
 ## Documentation
 

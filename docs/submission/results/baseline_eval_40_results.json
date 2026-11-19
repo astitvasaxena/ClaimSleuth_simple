@@ -1,0 +1,4353 @@
+{
+ "meta": {
+  "evaluation_id": "EV-20261119-141842-e46c4a",
+  "dataset_version": "eval-v1",
+  "mode": "offline",
+  "mode_label": "OFFLINE (labelled test doubles, not LLM reasoning)",
+  "started_at": "2026-11-19T14:18:42.247448+00:00",
+  "finished_at": "2026-11-19T14:34:58.159407+00:00",
+  "cases_total": 40,
+  "cases_requested": 40,
+  "cases_executed": 40,
+  "stopped_reason": null,
+  "live_estimate": null,
+  "gemini_model": null,
+  "synthetic": true,
+  "context_sharing": "blackboard",
+  "blackboard": "/Users/vaibhav/Study/Sem 7/Agentic AI/Project/ClaimSleuth_simple/runtime/evaluation/EV-20261119-141842-e46c4a/blackboard.sqlite3",
+  "ledger_requests_added": 0
+ },
+ "rows": [
+  {
+   "case_id": "EVAL-01",
+   "category": "conflict_injection",
+   "source": "new",
+   "expected_decision": "ESCALATE",
+   "policy_violation": false,
+   "missing_evidence": [],
+   "anomalies": [
+    "prompt_injection"
+   ],
+   "run_id": "RUN-EV-20261119-141842-e46c4a-EVAL-01",
+   "run_error": null,
+   "evidence": {
+    "status": "completed",
+    "latency_ms": 12348.057,
+    "llm_calls": 2,
+    "tokens": null,
+    "api_requests": 0,
+    "model": "test-double",
+    "errors": [],
+    "recommendation": "ESCALATE",
+    "facts_expected": 8,
+    "facts_matched": 7,
+    "missing_detected": false,
+    "citations_valid": 18,
+    "citations_total": 18
+   },
+   "investigator": {
+    "status": "completed",
+    "latency_ms": 12107.398,
+    "llm_calls": 4,
+    "tokens": null,
+    "api_requests": 0,
+    "model": "test-double",
+    "errors": [],
+    "recommendation": "ESCALATE",
+    "policy_violation_detected": false,
+    "eligibility": "ELIGIBLE",
+    "history_anomaly_detected": false,
+    "citations_valid": 2,
+    "citations_total": 2
+   },
+   "forensic": {
+    "status": "completed",
+    "latency_ms": 822.424,
+    "llm_calls": 3,
+    "tokens": null,
+    "api_requests": 0,
+    "model": "test-double",
+    "errors": [],
+    "recommendation": "ESCALATE",
+    "anomaly_detected": true,
+    "detected_types": [
+     "data_access_request",
+     "prompt_injection"
+    ],
+    "type_hits": {
+     "prompt_injection": true
+    },
+    "citations_valid": 10,
+    "citations_total": 10
+   },
+   "combined": {
+    "status": "completed",
+    "latency_ms": 26037.572,
+    "final_decision": "ESCALATE",
+    "recommendation": "ESCALATE",
+    "decided_by": "GUARDRAIL_ESCALATION",
+    "review_status": "COMPLETE",
+    "requires_human_approval": true,
+    "anomaly_detected": true,
+    "mcp_calls": 6,
+    "api_requests": 0,
+    "api_requests_source": "offline",
+    "tokens": null
+   }
+  },
+  {
+   "case_id": "EVAL-02",
+   "category": "conflict_injection",
+   "source": "new",
+   "expected_decision": "ESCALATE",
+   "policy_violation": false,
+   "missing_evidence": [],
+   "anomalies": [
+    "chronology"
+   ],
+   "run_id": "RUN-EV-20261119-141842-e46c4a-EVAL-02",
+   "run_error": null,
+   "evidence": {
+    "status": "completed",
+    "latency_ms": 11988.599,
+    "llm_calls": 2,
+    "tokens": null,
+    "api_requests": 0,
+    "model": "test-double",
+    "errors": [],
+    "recommendation": "ESCALATE",
+    "facts_expected": 8,
+    "facts_matched": 7,
+    "missing_detected": false,
+    "citations_valid": 18,
+    "citations_total": 18
+   },
+   "investigator": {
+    "status": "completed",
+    "latency_ms": 12062.241,
+    "llm_calls": 4,
+    "tokens": null,
+    "api_requests": 0,
+    "model": "test-double",
+    "errors": [],
+    "recommendation": "ESCALATE",
+    "policy_violation_detected": false,
+    "eligibility": "ELIGIBLE",
+    "history_anomaly_detected": false,
+    "citations_valid": 2,
+    "citations_total": 2
+   },
+   "forensic": {
+    "status": "completed",
+    "latency_ms": 522.838,
+    "llm_calls": 3,
+    "tokens": null,
+    "api_requests": 0,
+    "model": "test-double",
+    "errors": [],
+    "recommendation": "ESCALATE",
+    "anomaly_detected": true,
+    "detected_types": [
+     "chronology"
+    ],
+    "type_hits": {
+     "chronology": true
+    },
+    "citations_valid": 9,
+    "citations_total": 9
+   },
+   "combined": {
+    "status": "completed",
+    "latency_ms": 24140.093,
+    "final_decision": "ESCALATE",
+    "recommendation": "ESCALATE",
+    "decided_by": "DETERMINISTIC_RULES",
+    "review_status": "COMPLETE",
+    "requires_human_approval": true,
+    "anomaly_detected": true,
+    "mcp_calls": 6,
+    "api_requests": 0,
+    "api_requests_source": "offline",
+    "tokens": null
+   }
+  },
+  {
+   "case_id": "EVAL-03",
+   "category": "suspicious",
+   "source": "existing:CS-003",
+   "expected_decision": "ESCALATE",
+   "policy_violation": false,
+   "missing_evidence": [],
+   "anomalies": [
+    "serial_mismatch"
+   ],
+   "run_id": "RUN-EV-20261119-141842-e46c4a-EVAL-03",
+   "run_error": null,
+   "evidence": {
+    "status": "completed",
+    "latency_ms": 12029.958,
+    "llm_calls": 2,
+    "tokens": null,
+    "api_requests": 0,
+    "model": "test-double",
+    "errors": [],
+    "recommendation": "ESCALATE",
+    "facts_expected": 8,
+    "facts_matched": 7,
+    "missing_detected": false,
+    "citations_valid": 20,
+    "citations_total": 20
+   },
+   "investigator": {
+    "status": "completed",
+    "latency_ms": 12109.273,
+    "llm_calls": 4,
+    "tokens": null,
+    "api_requests": 0,
+    "model": "test-double",
+    "errors": [],
+    "recommendation": "ESCALATE",
+    "policy_violation_detected": false,
+    "eligibility": "ELIGIBLE",
+    "history_anomaly_detected": false,
+    "citations_valid": 4,
+    "citations_total": 4
+   },
+   "forensic": {
+    "status": "completed",
+    "latency_ms": 543.257,
+    "llm_calls": 3,
+    "tokens": null,
+    "api_requests": 0,
+    "model": "test-double",
+    "errors": [],
+    "recommendation": "ESCALATE",
+    "anomaly_detected": true,
+    "detected_types": [
+     "serial_mismatch"
+    ],
+    "type_hits": {
+     "serial_mismatch": true
+    },
+    "citations_valid": 11,
+    "citations_total": 11
+   },
+   "combined": {
+    "status": "completed",
+    "latency_ms": 24230.452,
+    "final_decision": "ESCALATE",
+    "recommendation": "ESCALATE",
+    "decided_by": "DETERMINISTIC_RULES",
+    "review_status": "COMPLETE",
+    "requires_human_approval": true,
+    "anomaly_detected": true,
+    "mcp_calls": 6,
+    "api_requests": 0,
+    "api_requests_source": "offline",
+    "tokens": null
+   }
+  },
+  {
+   "case_id": "EVAL-04",
+   "category": "policy_violation",
+   "source": "new",
+   "expected_decision": "REJECT",
+   "policy_violation": true,
+   "missing_evidence": [],
+   "anomalies": [],
+   "run_id": "RUN-EV-20261119-141842-e46c4a-EVAL-04",
+   "run_error": null,
+   "evidence": {
+    "status": "completed",
+    "latency_ms": 12030.491,
+    "llm_calls": 2,
+    "tokens": null,
+    "api_requests": 0,
+    "model": "test-double",
+    "errors": [],
+    "recommendation": "APPROVE",
+    "facts_expected": 8,
+    "facts_matched": 7,
+    "missing_detected": false,
+    "citations_valid": 16,
+    "citations_total": 16
+   },
+   "investigator": {
+    "status": "completed",
+    "latency_ms": 11969.258,
+    "llm_calls": 4,
+    "tokens": null,
+    "api_requests": 0,
+    "model": "test-double",
+    "errors": [],
+    "recommendation": "REJECT",
+    "policy_violation_detected": true,
+    "eligibility": "NOT_ELIGIBLE",
+    "history_anomaly_detected": false,
+    "citations_valid": 1,
+    "citations_total": 1
+   },
+   "forensic": {
+    "status": "completed",
+    "latency_ms": 523.528,
+    "llm_calls": 3,
+    "tokens": null,
+    "api_requests": 0,
+    "model": "test-double",
+    "errors": [],
+    "recommendation": "APPROVE",
+    "anomaly_detected": false,
+    "detected_types": [],
+    "type_hits": {},
+    "citations_valid": 8,
+    "citations_total": 8
+   },
+   "combined": {
+    "status": "completed",
+    "latency_ms": 24088.988,
+    "final_decision": "REJECT",
+    "recommendation": "REJECT",
+    "decided_by": "DETERMINISTIC_RULES",
+    "review_status": "COMPLETE",
+    "requires_human_approval": true,
+    "anomaly_detected": false,
+    "mcp_calls": 6,
+    "api_requests": 0,
+    "api_requests_source": "offline",
+    "tokens": null
+   }
+  },
+  {
+   "case_id": "EVAL-05",
+   "category": "suspicious",
+   "source": "new",
+   "expected_decision": "ESCALATE",
+   "policy_violation": false,
+   "missing_evidence": [],
+   "anomalies": [
+    "repeat_claims"
+   ],
+   "run_id": "RUN-EV-20261119-141842-e46c4a-EVAL-05",
+   "run_error": null,
+   "evidence": {
+    "status": "completed",
+    "latency_ms": 11899.517,
+    "llm_calls": 2,
+    "tokens": null,
+    "api_requests": 0,
+    "model": "test-double",
+    "errors": [],
+    "recommendation": "APPROVE",
+    "facts_expected": 8,
+    "facts_matched": 7,
+    "missing_detected": false,
+    "citations_valid": 16,
+    "citations_total": 16
+   },
+   "investigator": {
+    "status": "completed",
+    "latency_ms": 12024.034,
+    "llm_calls": 4,
+    "tokens": null,
+    "api_requests": 0,
+    "model": "test-double",
+    "errors": [],
+    "recommendation": "APPROVE",
+    "policy_violation_detected": false,
+    "eligibility": "ELIGIBLE",
+    "history_anomaly_detected": false,
+    "citations_valid": 0,
+    "citations_total": 0
+   },
+   "forensic": {
+    "status": "completed",
+    "latency_ms": 540.414,
+    "llm_calls": 3,
+    "tokens": null,
+    "api_requests": 0,
+    "model": "test-double",
+    "errors": [],
+    "recommendation": "APPROVE",
+    "anomaly_detected": true,
+    "detected_types": [
+     "history_other_claimant",
+     "repeat_claims"
+    ],
+    "type_hits": {
+     "repeat_claims": true
+    },
+    "citations_valid": 8,
+    "citations_total": 8
+   },
+   "combined": {
+    "status": "completed",
+    "latency_ms": 24015.787,
+    "final_decision": "ESCALATE",
+    "recommendation": "ESCALATE",
+    "decided_by": "DETERMINISTIC_RULES",
+    "review_status": "COMPLETE",
+    "requires_human_approval": true,
+    "anomaly_detected": true,
+    "mcp_calls": 6,
+    "api_requests": 0,
+    "api_requests_source": "offline",
+    "tokens": null
+   }
+  },
+  {
+   "case_id": "EVAL-06",
+   "category": "valid",
+   "source": "existing:CS-001-ABU",
+   "expected_decision": "APPROVE",
+   "policy_violation": false,
+   "missing_evidence": [],
+   "anomalies": [],
+   "run_id": "RUN-EV-20261119-141842-e46c4a-EVAL-06",
+   "run_error": null,
+   "evidence": {
+    "status": "completed",
+    "latency_ms": 12203.237,
+    "llm_calls": 2,
+    "tokens": null,
+    "api_requests": 0,
+    "model": "test-double",
+    "errors": [],
+    "recommendation": "APPROVE",
+    "facts_expected": 8,
+    "facts_matched": 7,
+    "missing_detected": false,
+    "citations_valid": 16,
+    "citations_total": 16
+   },
+   "investigator": {
+    "status": "completed",
+    "latency_ms": 12299.8,
+    "llm_calls": 4,
+    "tokens": null,
+    "api_requests": 0,
+    "model": "test-double",
+    "errors": [],
+    "recommendation": "APPROVE",
+    "policy_violation_detected": false,
+    "eligibility": "ELIGIBLE",
+    "history_anomaly_detected": false,
+    "citations_valid": 0,
+    "citations_total": 0
+   },
+   "forensic": {
+    "status": "completed",
+    "latency_ms": 532.758,
+    "llm_calls": 3,
+    "tokens": null,
+    "api_requests": 0,
+    "model": "test-double",
+    "errors": [],
+    "recommendation": "APPROVE",
+    "anomaly_detected": false,
+    "detected_types": [],
+    "type_hits": {},
+    "citations_valid": 8,
+    "citations_total": 8
+   },
+   "combined": {
+    "status": "completed",
+    "latency_ms": 24599.43,
+    "final_decision": "APPROVE",
+    "recommendation": "APPROVE",
+    "decided_by": "DETERMINISTIC_RULES",
+    "review_status": "COMPLETE",
+    "requires_human_approval": true,
+    "anomaly_detected": false,
+    "mcp_calls": 6,
+    "api_requests": 0,
+    "api_requests_source": "offline",
+    "tokens": null
+   }
+  },
+  {
+   "case_id": "EVAL-07",
+   "category": "suspicious",
+   "source": "new",
+   "expected_decision": "ESCALATE",
+   "policy_violation": false,
+   "missing_evidence": [],
+   "anomalies": [
+    "history_other_claimant"
+   ],
+   "run_id": "RUN-EV-20261119-141842-e46c4a-EVAL-07",
+   "run_error": null,
+   "evidence": {
+    "status": "completed",
+    "latency_ms": 12225.789,
+    "llm_calls": 2,
+    "tokens": null,
+    "api_requests": 0,
+    "model": "test-double",
+    "errors": [],
+    "recommendation": "APPROVE",
+    "facts_expected": 8,
+    "facts_matched": 7,
+    "missing_detected": false,
+    "citations_valid": 16,
+    "citations_total": 16
+   },
+   "investigator": {
+    "status": "completed",
+    "latency_ms": 11963.203,
+    "llm_calls": 4,
+    "tokens": null,
+    "api_requests": 0,
+    "model": "test-double",
+    "errors": [],
+    "recommendation": "ESCALATE",
+    "policy_violation_detected": false,
+    "eligibility": "ELIGIBLE",
+    "history_anomaly_detected": true,
+    "citations_valid": 0,
+    "citations_total": 0
+   },
+   "forensic": {
+    "status": "completed",
+    "latency_ms": 528.348,
+    "llm_calls": 3,
+    "tokens": null,
+    "api_requests": 0,
+    "model": "test-double",
+    "errors": [],
+    "recommendation": "ESCALATE",
+    "anomaly_detected": true,
+    "detected_types": [
+     "history_other_claimant",
+     "repeat_claims"
+    ],
+    "type_hits": {
+     "history_other_claimant": true
+    },
+    "citations_valid": 8,
+    "citations_total": 8
+   },
+   "combined": {
+    "status": "completed",
+    "latency_ms": 24278.585,
+    "final_decision": "ESCALATE",
+    "recommendation": "ESCALATE",
+    "decided_by": "DETERMINISTIC_RULES",
+    "review_status": "COMPLETE",
+    "requires_human_approval": true,
+    "anomaly_detected": true,
+    "mcp_calls": 6,
+    "api_requests": 0,
+    "api_requests_source": "offline",
+    "tokens": null
+   }
+  },
+  {
+   "case_id": "EVAL-08",
+   "category": "valid",
+   "source": "existing:CS-001",
+   "expected_decision": "APPROVE",
+   "policy_violation": false,
+   "missing_evidence": [],
+   "anomalies": [],
+   "run_id": "RUN-EV-20261119-141842-e46c4a-EVAL-08",
+   "run_error": null,
+   "evidence": {
+    "status": "completed",
+    "latency_ms": 11968.403,
+    "llm_calls": 2,
+    "tokens": null,
+    "api_requests": 0,
+    "model": "test-double",
+    "errors": [],
+    "recommendation": "APPROVE",
+    "facts_expected": 8,
+    "facts_matched": 7,
+    "missing_detected": false,
+    "citations_valid": 16,
+    "citations_total": 16
+   },
+   "investigator": {
+    "status": "completed",
+    "latency_ms": 12296.256,
+    "llm_calls": 4,
+    "tokens": null,
+    "api_requests": 0,
+    "model": "test-double",
+    "errors": [],
+    "recommendation": "APPROVE",
+    "policy_violation_detected": false,
+    "eligibility": "ELIGIBLE",
+    "history_anomaly_detected": false,
+    "citations_valid": 0,
+    "citations_total": 0
+   },
+   "forensic": {
+    "status": "completed",
+    "latency_ms": 545.026,
+    "llm_calls": 3,
+    "tokens": null,
+    "api_requests": 0,
+    "model": "test-double",
+    "errors": [],
+    "recommendation": "APPROVE",
+    "anomaly_detected": false,
+    "detected_types": [],
+    "type_hits": {},
+    "citations_valid": 8,
+    "citations_total": 8
+   },
+   "combined": {
+    "status": "completed",
+    "latency_ms": 24358.155,
+    "final_decision": "APPROVE",
+    "recommendation": "APPROVE",
+    "decided_by": "DETERMINISTIC_RULES",
+    "review_status": "COMPLETE",
+    "requires_human_approval": true,
+    "anomaly_detected": false,
+    "mcp_calls": 6,
+    "api_requests": 0,
+    "api_requests_source": "offline",
+    "tokens": null
+   }
+  },
+  {
+   "case_id": "EVAL-09",
+   "category": "policy_violation",
+   "source": "existing:CS-004",
+   "expected_decision": "REJECT",
+   "policy_violation": true,
+   "missing_evidence": [],
+   "anomalies": [],
+   "run_id": "RUN-EV-20261119-141842-e46c4a-EVAL-09",
+   "run_error": null,
+   "evidence": {
+    "status": "completed",
+    "latency_ms": 12211.815,
+    "llm_calls": 2,
+    "tokens": null,
+    "api_requests": 0,
+    "model": "test-double",
+    "errors": [],
+    "recommendation": "APPROVE",
+    "facts_expected": 8,
+    "facts_matched": 7,
+    "missing_detected": false,
+    "citations_valid": 16,
+    "citations_total": 16
+   },
+   "investigator": {
+    "status": "completed",
+    "latency_ms": 12218.875,
+    "llm_calls": 4,
+    "tokens": null,
+    "api_requests": 0,
+    "model": "test-double",
+    "errors": [],
+    "recommendation": "REJECT",
+    "policy_violation_detected": true,
+    "eligibility": "NOT_ELIGIBLE",
+    "history_anomaly_detected": false,
+    "citations_valid": 1,
+    "citations_total": 1
+   },
+   "forensic": {
+    "status": "completed",
+    "latency_ms": 553.305,
+    "llm_calls": 3,
+    "tokens": null,
+    "api_requests": 0,
+    "model": "test-double",
+    "errors": [],
+    "recommendation": "APPROVE",
+    "anomaly_detected": false,
+    "detected_types": [],
+    "type_hits": {},
+    "citations_valid": 8,
+    "citations_total": 8
+   },
+   "combined": {
+    "status": "completed",
+    "latency_ms": 24521.266,
+    "final_decision": "REJECT",
+    "recommendation": "REJECT",
+    "decided_by": "DETERMINISTIC_RULES",
+    "review_status": "COMPLETE",
+    "requires_human_approval": true,
+    "anomaly_detected": false,
+    "mcp_calls": 6,
+    "api_requests": 0,
+    "api_requests_source": "offline",
+    "tokens": null
+   }
+  },
+  {
+   "case_id": "EVAL-10",
+   "category": "policy_violation",
+   "source": "existing:CS-002",
+   "expected_decision": "REJECT",
+   "policy_violation": true,
+   "missing_evidence": [],
+   "anomalies": [],
+   "run_id": "RUN-EV-20261119-141842-e46c4a-EVAL-10",
+   "run_error": null,
+   "evidence": {
+    "status": "completed",
+    "latency_ms": 12235.953,
+    "llm_calls": 2,
+    "tokens": null,
+    "api_requests": 0,
+    "model": "test-double",
+    "errors": [],
+    "recommendation": "APPROVE",
+    "facts_expected": 8,
+    "facts_matched": 7,
+    "missing_detected": false,
+    "citations_valid": 16,
+    "citations_total": 16
+   },
+   "investigator": {
+    "status": "completed",
+    "latency_ms": 11933.675,
+    "llm_calls": 4,
+    "tokens": null,
+    "api_requests": 0,
+    "model": "test-double",
+    "errors": [],
+    "recommendation": "REJECT",
+    "policy_violation_detected": true,
+    "eligibility": "NOT_ELIGIBLE",
+    "history_anomaly_detected": false,
+    "citations_valid": 0,
+    "citations_total": 0
+   },
+   "forensic": {
+    "status": "completed",
+    "latency_ms": 536.636,
+    "llm_calls": 3,
+    "tokens": null,
+    "api_requests": 0,
+    "model": "test-double",
+    "errors": [],
+    "recommendation": "APPROVE",
+    "anomaly_detected": true,
+    "detected_types": [
+     "repeat_claims"
+    ],
+    "type_hits": {},
+    "citations_valid": 8,
+    "citations_total": 8
+   },
+   "combined": {
+    "status": "completed",
+    "latency_ms": 24260.372,
+    "final_decision": "REJECT",
+    "recommendation": "REJECT",
+    "decided_by": "DETERMINISTIC_RULES",
+    "review_status": "COMPLETE",
+    "requires_human_approval": true,
+    "anomaly_detected": false,
+    "mcp_calls": 6,
+    "api_requests": 0,
+    "api_requests_source": "offline",
+    "tokens": null
+   }
+  },
+  {
+   "case_id": "EVAL-11",
+   "category": "suspicious",
+   "source": "new",
+   "expected_decision": "ESCALATE",
+   "policy_violation": false,
+   "missing_evidence": [],
+   "anomalies": [
+    "history_other_claimant"
+   ],
+   "run_id": "RUN-EV-20261119-141842-e46c4a-EVAL-11",
+   "run_error": null,
+   "evidence": {
+    "status": "completed",
+    "latency_ms": 12007.324,
+    "llm_calls": 2,
+    "tokens": null,
+    "api_requests": 0,
+    "model": "test-double",
+    "errors": [],
+    "recommendation": "APPROVE",
+    "facts_expected": 8,
+    "facts_matched": 7,
+    "missing_detected": false,
+    "citations_valid": 16,
+    "citations_total": 16
+   },
+   "investigator": {
+    "status": "completed",
+    "latency_ms": 12028.93,
+    "llm_calls": 4,
+    "tokens": null,
+    "api_requests": 0,
+    "model": "test-double",
+    "errors": [],
+    "recommendation": "ESCALATE",
+    "policy_violation_detected": false,
+    "eligibility": "ELIGIBLE",
+    "history_anomaly_detected": true,
+    "citations_valid": 0,
+    "citations_total": 0
+   },
+   "forensic": {
+    "status": "completed",
+    "latency_ms": 535.043,
+    "llm_calls": 3,
+    "tokens": null,
+    "api_requests": 0,
+    "model": "test-double",
+    "errors": [],
+    "recommendation": "ESCALATE",
+    "anomaly_detected": true,
+    "detected_types": [
+     "history_other_claimant",
+     "repeat_claims"
+    ],
+    "type_hits": {
+     "history_other_claimant": true
+    },
+    "citations_valid": 8,
+    "citations_total": 8
+   },
+   "combined": {
+    "status": "completed",
+    "latency_ms": 24129.229,
+    "final_decision": "ESCALATE",
+    "recommendation": "ESCALATE",
+    "decided_by": "DETERMINISTIC_RULES",
+    "review_status": "COMPLETE",
+    "requires_human_approval": true,
+    "anomaly_detected": true,
+    "mcp_calls": 6,
+    "api_requests": 0,
+    "api_requests_source": "offline",
+    "tokens": null
+   }
+  },
+  {
+   "case_id": "EVAL-12",
+   "category": "suspicious",
+   "source": "new",
+   "expected_decision": "ESCALATE",
+   "policy_violation": false,
+   "missing_evidence": [],
+   "anomalies": [
+    "serial_mismatch"
+   ],
+   "run_id": "RUN-EV-20261119-141842-e46c4a-EVAL-12",
+   "run_error": null,
+   "evidence": {
+    "status": "completed",
+    "latency_ms": 12050.12,
+    "llm_calls": 2,
+    "tokens": null,
+    "api_requests": 0,
+    "model": "test-double",
+    "errors": [],
+    "recommendation": "APPROVE",
+    "facts_expected": 8,
+    "facts_matched": 7,
+    "missing_detected": false,
+    "citations_valid": 16,
+    "citations_total": 16
+   },
+   "investigator": {
+    "status": "completed",
+    "latency_ms": 12160.12,
+    "llm_calls": 4,
+    "tokens": null,
+    "api_requests": 0,
+    "model": "test-double",
+    "errors": [],
+    "recommendation": "APPROVE",
+    "policy_violation_detected": false,
+    "eligibility": "ELIGIBLE",
+    "history_anomaly_detected": false,
+    "citations_valid": 0,
+    "citations_total": 0
+   },
+   "forensic": {
+    "status": "completed",
+    "latency_ms": 534.157,
+    "llm_calls": 3,
+    "tokens": null,
+    "api_requests": 0,
+    "model": "test-double",
+    "errors": [],
+    "recommendation": "ESCALATE",
+    "anomaly_detected": true,
+    "detected_types": [
+     "serial_mismatch"
+    ],
+    "type_hits": {
+     "serial_mismatch": true
+    },
+    "citations_valid": 10,
+    "citations_total": 10
+   },
+   "combined": {
+    "status": "completed",
+    "latency_ms": 24298.836,
+    "final_decision": "ESCALATE",
+    "recommendation": "ESCALATE",
+    "decided_by": "DETERMINISTIC_RULES",
+    "review_status": "COMPLETE",
+    "requires_human_approval": true,
+    "anomaly_detected": true,
+    "mcp_calls": 6,
+    "api_requests": 0,
+    "api_requests_source": "offline",
+    "tokens": null
+   }
+  },
+  {
+   "case_id": "EVAL-13",
+   "category": "valid",
+   "source": "new",
+   "expected_decision": "APPROVE",
+   "policy_violation": false,
+   "missing_evidence": [],
+   "anomalies": [],
+   "run_id": "RUN-EV-20261119-141842-e46c4a-EVAL-13",
+   "run_error": null,
+   "evidence": {
+    "status": "completed",
+    "latency_ms": 12179.931,
+    "llm_calls": 2,
+    "tokens": null,
+    "api_requests": 0,
+    "model": "test-double",
+    "errors": [],
+    "recommendation": "APPROVE",
+    "facts_expected": 8,
+    "facts_matched": 7,
+    "missing_detected": false,
+    "citations_valid": 16,
+    "citations_total": 16
+   },
+   "investigator": {
+    "status": "completed",
+    "latency_ms": 12230.516,
+    "llm_calls": 4,
+    "tokens": null,
+    "api_requests": 0,
+    "model": "test-double",
+    "errors": [],
+    "recommendation": "APPROVE",
+    "policy_violation_detected": false,
+    "eligibility": "ELIGIBLE",
+    "history_anomaly_detected": false,
+    "citations_valid": 0,
+    "citations_total": 0
+   },
+   "forensic": {
+    "status": "completed",
+    "latency_ms": 553.324,
+    "llm_calls": 3,
+    "tokens": null,
+    "api_requests": 0,
+    "model": "test-double",
+    "errors": [],
+    "recommendation": "APPROVE",
+    "anomaly_detected": false,
+    "detected_types": [],
+    "type_hits": {},
+    "citations_valid": 8,
+    "citations_total": 8
+   },
+   "combined": {
+    "status": "completed",
+    "latency_ms": 24499.803,
+    "final_decision": "APPROVE",
+    "recommendation": "APPROVE",
+    "decided_by": "DETERMINISTIC_RULES",
+    "review_status": "COMPLETE",
+    "requires_human_approval": false,
+    "anomaly_detected": false,
+    "mcp_calls": 6,
+    "api_requests": 0,
+    "api_requests_source": "offline",
+    "tokens": null
+   }
+  },
+  {
+   "case_id": "EVAL-14",
+   "category": "conflict_injection",
+   "source": "existing:CS-001-INJ",
+   "expected_decision": "ESCALATE",
+   "policy_violation": false,
+   "missing_evidence": [],
+   "anomalies": [
+    "prompt_injection"
+   ],
+   "run_id": "RUN-EV-20261119-141842-e46c4a-EVAL-14",
+   "run_error": null,
+   "evidence": {
+    "status": "completed",
+    "latency_ms": 12140.861,
+    "llm_calls": 2,
+    "tokens": null,
+    "api_requests": 0,
+    "model": "test-double",
+    "errors": [],
+    "recommendation": "ESCALATE",
+    "facts_expected": 8,
+    "facts_matched": 7,
+    "missing_detected": false,
+    "citations_valid": 16,
+    "citations_total": 16
+   },
+   "investigator": {
+    "status": "completed",
+    "latency_ms": 12241.575,
+    "llm_calls": 4,
+    "tokens": null,
+    "api_requests": 0,
+    "model": "test-double",
+    "errors": [],
+    "recommendation": "ESCALATE",
+    "policy_violation_detected": false,
+    "eligibility": "ELIGIBLE",
+    "history_anomaly_detected": false,
+    "citations_valid": 0,
+    "citations_total": 0
+   },
+   "forensic": {
+    "status": "completed",
+    "latency_ms": 530.359,
+    "llm_calls": 3,
+    "tokens": null,
+    "api_requests": 0,
+    "model": "test-double",
+    "errors": [],
+    "recommendation": "ESCALATE",
+    "anomaly_detected": true,
+    "detected_types": [
+     "data_access_request",
+     "prompt_injection"
+    ],
+    "type_hits": {
+     "prompt_injection": true
+    },
+    "citations_valid": 8,
+    "citations_total": 8
+   },
+   "combined": {
+    "status": "completed",
+    "latency_ms": 24473.892,
+    "final_decision": "ESCALATE",
+    "recommendation": "ESCALATE",
+    "decided_by": "GUARDRAIL_ESCALATION",
+    "review_status": "COMPLETE",
+    "requires_human_approval": true,
+    "anomaly_detected": true,
+    "mcp_calls": 6,
+    "api_requests": 0,
+    "api_requests_source": "offline",
+    "tokens": null
+   }
+  },
+  {
+   "case_id": "EVAL-15",
+   "category": "missing_evidence",
+   "source": "new",
+   "expected_decision": "REQUEST_EVIDENCE",
+   "policy_violation": false,
+   "missing_evidence": [
+    "repair_report"
+   ],
+   "anomalies": [],
+   "run_id": "RUN-EV-20261119-141842-e46c4a-EVAL-15",
+   "run_error": null,
+   "evidence": {
+    "status": "completed",
+    "latency_ms": 12065.799,
+    "llm_calls": 2,
+    "tokens": null,
+    "api_requests": 0,
+    "model": "test-double",
+    "errors": [],
+    "recommendation": "REQUEST_EVIDENCE",
+    "facts_expected": 4,
+    "facts_matched": 3,
+    "missing_detected": true,
+    "citations_valid": 6,
+    "citations_total": 6
+   },
+   "investigator": {
+    "status": "completed",
+    "latency_ms": 12015.736,
+    "llm_calls": 4,
+    "tokens": null,
+    "api_requests": 0,
+    "model": "test-double",
+    "errors": [],
+    "recommendation": "REQUEST_EVIDENCE",
+    "policy_violation_detected": false,
+    "eligibility": "UNDETERMINED",
+    "history_anomaly_detected": false,
+    "citations_valid": 0,
+    "citations_total": 0
+   },
+   "forensic": {
+    "status": "completed",
+    "latency_ms": 527.265,
+    "llm_calls": 3,
+    "tokens": null,
+    "api_requests": 0,
+    "model": "test-double",
+    "errors": [],
+    "recommendation": "REQUEST_EVIDENCE",
+    "anomaly_detected": false,
+    "detected_types": [],
+    "type_hits": {},
+    "citations_valid": 2,
+    "citations_total": 2
+   },
+   "combined": {
+    "status": "completed",
+    "latency_ms": 24188.183,
+    "final_decision": "REQUEST_EVIDENCE",
+    "recommendation": "REQUEST_EVIDENCE",
+    "decided_by": "DETERMINISTIC_RULES",
+    "review_status": "COMPLETE",
+    "requires_human_approval": false,
+    "anomaly_detected": false,
+    "mcp_calls": 6,
+    "api_requests": 0,
+    "api_requests_source": "offline",
+    "tokens": null
+   }
+  },
+  {
+   "case_id": "EVAL-16",
+   "category": "valid",
+   "source": "existing:CS-005",
+   "expected_decision": "APPROVE",
+   "policy_violation": false,
+   "missing_evidence": [],
+   "anomalies": [],
+   "run_id": "RUN-EV-20261119-141842-e46c4a-EVAL-16",
+   "run_error": null,
+   "evidence": {
+    "status": "completed",
+    "latency_ms": 11964.441,
+    "llm_calls": 2,
+    "tokens": null,
+    "api_requests": 0,
+    "model": "test-double",
+    "errors": [],
+    "recommendation": "APPROVE",
+    "facts_expected": 8,
+    "facts_matched": 7,
+    "missing_detected": false,
+    "citations_valid": 16,
+    "citations_total": 16
+   },
+   "investigator": {
+    "status": "completed",
+    "latency_ms": 12008.376,
+    "llm_calls": 4,
+    "tokens": null,
+    "api_requests": 0,
+    "model": "test-double",
+    "errors": [],
+    "recommendation": "APPROVE",
+    "policy_violation_detected": false,
+    "eligibility": "ELIGIBLE",
+    "history_anomaly_detected": false,
+    "citations_valid": 0,
+    "citations_total": 0
+   },
+   "forensic": {
+    "status": "completed",
+    "latency_ms": 529.747,
+    "llm_calls": 3,
+    "tokens": null,
+    "api_requests": 0,
+    "model": "test-double",
+    "errors": [],
+    "recommendation": "APPROVE",
+    "anomaly_detected": true,
+    "detected_types": [
+     "repeat_claims"
+    ],
+    "type_hits": {},
+    "citations_valid": 8,
+    "citations_total": 8
+   },
+   "combined": {
+    "status": "completed",
+    "latency_ms": 24063.508,
+    "final_decision": "APPROVE",
+    "recommendation": "APPROVE",
+    "decided_by": "DETERMINISTIC_RULES",
+    "review_status": "COMPLETE",
+    "requires_human_approval": true,
+    "anomaly_detected": false,
+    "mcp_calls": 6,
+    "api_requests": 0,
+    "api_requests_source": "offline",
+    "tokens": null
+   }
+  },
+  {
+   "case_id": "EVAL-17",
+   "category": "policy_violation",
+   "source": "new",
+   "expected_decision": "REJECT",
+   "policy_violation": true,
+   "missing_evidence": [],
+   "anomalies": [],
+   "run_id": "RUN-EV-20261119-141842-e46c4a-EVAL-17",
+   "run_error": null,
+   "evidence": {
+    "status": "completed",
+    "latency_ms": 12061.648,
+    "llm_calls": 2,
+    "tokens": null,
+    "api_requests": 0,
+    "model": "test-double",
+    "errors": [],
+    "recommendation": "APPROVE",
+    "facts_expected": 8,
+    "facts_matched": 7,
+    "missing_detected": false,
+    "citations_valid": 16,
+    "citations_total": 16
+   },
+   "investigator": {
+    "status": "completed",
+    "latency_ms": 12144.062,
+    "llm_calls": 4,
+    "tokens": null,
+    "api_requests": 0,
+    "model": "test-double",
+    "errors": [],
+    "recommendation": "REJECT",
+    "policy_violation_detected": true,
+    "eligibility": "NOT_ELIGIBLE",
+    "history_anomaly_detected": false,
+    "citations_valid": 0,
+    "citations_total": 0
+   },
+   "forensic": {
+    "status": "completed",
+    "latency_ms": 534.224,
+    "llm_calls": 3,
+    "tokens": null,
+    "api_requests": 0,
+    "model": "test-double",
+    "errors": [],
+    "recommendation": "APPROVE",
+    "anomaly_detected": false,
+    "detected_types": [],
+    "type_hits": {},
+    "citations_valid": 8,
+    "citations_total": 8
+   },
+   "combined": {
+    "status": "completed",
+    "latency_ms": 24306.281,
+    "final_decision": "REJECT",
+    "recommendation": "REJECT",
+    "decided_by": "DETERMINISTIC_RULES",
+    "review_status": "COMPLETE",
+    "requires_human_approval": true,
+    "anomaly_detected": false,
+    "mcp_calls": 6,
+    "api_requests": 0,
+    "api_requests_source": "offline",
+    "tokens": null
+   }
+  },
+  {
+   "case_id": "EVAL-18",
+   "category": "conflict_injection",
+   "source": "new",
+   "expected_decision": "ESCALATE",
+   "policy_violation": false,
+   "missing_evidence": [],
+   "anomalies": [
+    "data_access_request"
+   ],
+   "run_id": "RUN-EV-20261119-141842-e46c4a-EVAL-18",
+   "run_error": null,
+   "evidence": {
+    "status": "completed",
+    "latency_ms": 12344.674,
+    "llm_calls": 2,
+    "tokens": null,
+    "api_requests": 0,
+    "model": "test-double",
+    "errors": [],
+    "recommendation": "ESCALATE",
+    "facts_expected": 8,
+    "facts_matched": 7,
+    "missing_detected": false,
+    "citations_valid": 16,
+    "citations_total": 16
+   },
+   "investigator": {
+    "status": "completed",
+    "latency_ms": 12222.556,
+    "llm_calls": 4,
+    "tokens": null,
+    "api_requests": 0,
+    "model": "test-double",
+    "errors": [],
+    "recommendation": "ESCALATE",
+    "policy_violation_detected": false,
+    "eligibility": "ELIGIBLE",
+    "history_anomaly_detected": false,
+    "citations_valid": 0,
+    "citations_total": 0
+   },
+   "forensic": {
+    "status": "completed",
+    "latency_ms": 597.779,
+    "llm_calls": 3,
+    "tokens": null,
+    "api_requests": 0,
+    "model": "test-double",
+    "errors": [],
+    "recommendation": "ESCALATE",
+    "anomaly_detected": true,
+    "detected_types": [
+     "data_access_request",
+     "prompt_injection"
+    ],
+    "type_hits": {
+     "data_access_request": true
+    },
+    "citations_valid": 8,
+    "citations_total": 8
+   },
+   "combined": {
+    "status": "completed",
+    "latency_ms": 24715.712,
+    "final_decision": "ESCALATE",
+    "recommendation": "ESCALATE",
+    "decided_by": "GUARDRAIL_ESCALATION",
+    "review_status": "COMPLETE",
+    "requires_human_approval": true,
+    "anomaly_detected": true,
+    "mcp_calls": 6,
+    "api_requests": 0,
+    "api_requests_source": "offline",
+    "tokens": null
+   }
+  },
+  {
+   "case_id": "EVAL-19",
+   "category": "valid",
+   "source": "new",
+   "expected_decision": "APPROVE",
+   "policy_violation": false,
+   "missing_evidence": [],
+   "anomalies": [],
+   "run_id": "RUN-EV-20261119-141842-e46c4a-EVAL-19",
+   "run_error": null,
+   "evidence": {
+    "status": "completed",
+    "latency_ms": 11985.312,
+    "llm_calls": 2,
+    "tokens": null,
+    "api_requests": 0,
+    "model": "test-double",
+    "errors": [],
+    "recommendation": "APPROVE",
+    "facts_expected": 8,
+    "facts_matched": 7,
+    "missing_detected": false,
+    "citations_valid": 16,
+    "citations_total": 16
+   },
+   "investigator": {
+    "status": "completed",
+    "latency_ms": 12133.103,
+    "llm_calls": 4,
+    "tokens": null,
+    "api_requests": 0,
+    "model": "test-double",
+    "errors": [],
+    "recommendation": "APPROVE",
+    "policy_violation_detected": false,
+    "eligibility": "ELIGIBLE",
+    "history_anomaly_detected": false,
+    "citations_valid": 0,
+    "citations_total": 0
+   },
+   "forensic": {
+    "status": "completed",
+    "latency_ms": 558.523,
+    "llm_calls": 3,
+    "tokens": null,
+    "api_requests": 0,
+    "model": "test-double",
+    "errors": [],
+    "recommendation": "APPROVE",
+    "anomaly_detected": false,
+    "detected_types": [],
+    "type_hits": {},
+    "citations_valid": 9,
+    "citations_total": 9
+   },
+   "combined": {
+    "status": "completed",
+    "latency_ms": 24221.109,
+    "final_decision": "APPROVE",
+    "recommendation": "APPROVE",
+    "decided_by": "DETERMINISTIC_RULES",
+    "review_status": "COMPLETE",
+    "requires_human_approval": false,
+    "anomaly_detected": false,
+    "mcp_calls": 6,
+    "api_requests": 0,
+    "api_requests_source": "offline",
+    "tokens": null
+   }
+  },
+  {
+   "case_id": "EVAL-20",
+   "category": "policy_violation",
+   "source": "new",
+   "expected_decision": "REJECT",
+   "policy_violation": true,
+   "missing_evidence": [],
+   "anomalies": [],
+   "run_id": "RUN-EV-20261119-141842-e46c4a-EVAL-20",
+   "run_error": null,
+   "evidence": {
+    "status": "completed",
+    "latency_ms": 11959.084,
+    "llm_calls": 2,
+    "tokens": null,
+    "api_requests": 0,
+    "model": "test-double",
+    "errors": [],
+    "recommendation": "APPROVE",
+    "facts_expected": 8,
+    "facts_matched": 7,
+    "missing_detected": false,
+    "citations_valid": 16,
+    "citations_total": 16
+   },
+   "investigator": {
+    "status": "completed",
+    "latency_ms": 11884.129,
+    "llm_calls": 4,
+    "tokens": null,
+    "api_requests": 0,
+    "model": "test-double",
+    "errors": [],
+    "recommendation": "REJECT",
+    "policy_violation_detected": true,
+    "eligibility": "NOT_ELIGIBLE",
+    "history_anomaly_detected": false,
+    "citations_valid": 1,
+    "citations_total": 1
+   },
+   "forensic": {
+    "status": "completed",
+    "latency_ms": 545.038,
+    "llm_calls": 3,
+    "tokens": null,
+    "api_requests": 0,
+    "model": "test-double",
+    "errors": [],
+    "recommendation": "APPROVE",
+    "anomaly_detected": false,
+    "detected_types": [],
+    "type_hits": {},
+    "citations_valid": 8,
+    "citations_total": 8
+   },
+   "combined": {
+    "status": "completed",
+    "latency_ms": 23940.751,
+    "final_decision": "REJECT",
+    "recommendation": "REJECT",
+    "decided_by": "DETERMINISTIC_RULES",
+    "review_status": "COMPLETE",
+    "requires_human_approval": true,
+    "anomaly_detected": false,
+    "mcp_calls": 6,
+    "api_requests": 0,
+    "api_requests_source": "offline",
+    "tokens": null
+   }
+  },
+  {
+   "case_id": "EVAL-21",
+   "category": "valid",
+   "source": "new",
+   "expected_decision": "APPROVE",
+   "policy_violation": false,
+   "missing_evidence": [],
+   "anomalies": [],
+   "run_id": "RUN-EV-20261119-141842-e46c4a-EVAL-21",
+   "run_error": null,
+   "evidence": {
+    "status": "completed",
+    "latency_ms": 11877.581,
+    "llm_calls": 2,
+    "tokens": null,
+    "api_requests": 0,
+    "model": "test-double",
+    "errors": [],
+    "recommendation": "APPROVE",
+    "facts_expected": 8,
+    "facts_matched": 7,
+    "missing_detected": false,
+    "citations_valid": 16,
+    "citations_total": 16
+   },
+   "investigator": {
+    "status": "completed",
+    "latency_ms": 12014.222,
+    "llm_calls": 4,
+    "tokens": null,
+    "api_requests": 0,
+    "model": "test-double",
+    "errors": [],
+    "recommendation": "APPROVE",
+    "policy_violation_detected": false,
+    "eligibility": "ELIGIBLE",
+    "history_anomaly_detected": false,
+    "citations_valid": 0,
+    "citations_total": 0
+   },
+   "forensic": {
+    "status": "completed",
+    "latency_ms": 527.741,
+    "llm_calls": 3,
+    "tokens": null,
+    "api_requests": 0,
+    "model": "test-double",
+    "errors": [],
+    "recommendation": "APPROVE",
+    "anomaly_detected": false,
+    "detected_types": [],
+    "type_hits": {},
+    "citations_valid": 8,
+    "citations_total": 8
+   },
+   "combined": {
+    "status": "completed",
+    "latency_ms": 23986.817,
+    "final_decision": "APPROVE",
+    "recommendation": "APPROVE",
+    "decided_by": "DETERMINISTIC_RULES",
+    "review_status": "COMPLETE",
+    "requires_human_approval": true,
+    "anomaly_detected": false,
+    "mcp_calls": 6,
+    "api_requests": 0,
+    "api_requests_source": "offline",
+    "tokens": null
+   }
+  },
+  {
+   "case_id": "EVAL-22",
+   "category": "suspicious",
+   "source": "existing:CS-003-ABU",
+   "expected_decision": "ESCALATE",
+   "policy_violation": false,
+   "missing_evidence": [],
+   "anomalies": [
+    "serial_mismatch"
+   ],
+   "run_id": "RUN-EV-20261119-141842-e46c4a-EVAL-22",
+   "run_error": null,
+   "evidence": {
+    "status": "completed",
+    "latency_ms": 11838.179,
+    "llm_calls": 2,
+    "tokens": null,
+    "api_requests": 0,
+    "model": "test-double",
+    "errors": [],
+    "recommendation": "ESCALATE",
+    "facts_expected": 8,
+    "facts_matched": 7,
+    "missing_detected": false,
+    "citations_valid": 20,
+    "citations_total": 20
+   },
+   "investigator": {
+    "status": "completed",
+    "latency_ms": 12093.217,
+    "llm_calls": 4,
+    "tokens": null,
+    "api_requests": 0,
+    "model": "test-double",
+    "errors": [],
+    "recommendation": "ESCALATE",
+    "policy_violation_detected": false,
+    "eligibility": "ELIGIBLE",
+    "history_anomaly_detected": false,
+    "citations_valid": 4,
+    "citations_total": 4
+   },
+   "forensic": {
+    "status": "completed",
+    "latency_ms": 522.804,
+    "llm_calls": 3,
+    "tokens": null,
+    "api_requests": 0,
+    "model": "test-double",
+    "errors": [],
+    "recommendation": "ESCALATE",
+    "anomaly_detected": true,
+    "detected_types": [
+     "serial_mismatch"
+    ],
+    "type_hits": {
+     "serial_mismatch": true
+    },
+    "citations_valid": 11,
+    "citations_total": 11
+   },
+   "combined": {
+    "status": "completed",
+    "latency_ms": 24024.045,
+    "final_decision": "ESCALATE",
+    "recommendation": "ESCALATE",
+    "decided_by": "DETERMINISTIC_RULES",
+    "review_status": "COMPLETE",
+    "requires_human_approval": true,
+    "anomaly_detected": true,
+    "mcp_calls": 6,
+    "api_requests": 0,
+    "api_requests_source": "offline",
+    "tokens": null
+   }
+  },
+  {
+   "case_id": "EVAL-23",
+   "category": "conflict_injection",
+   "source": "existing:CS-004-INJ",
+   "expected_decision": "ESCALATE",
+   "policy_violation": true,
+   "missing_evidence": [],
+   "anomalies": [
+    "prompt_injection"
+   ],
+   "run_id": "RUN-EV-20261119-141842-e46c4a-EVAL-23",
+   "run_error": null,
+   "evidence": {
+    "status": "completed",
+    "latency_ms": 11798.317,
+    "llm_calls": 2,
+    "tokens": null,
+    "api_requests": 0,
+    "model": "test-double",
+    "errors": [],
+    "recommendation": "ESCALATE",
+    "facts_expected": 8,
+    "facts_matched": 7,
+    "missing_detected": false,
+    "citations_valid": 18,
+    "citations_total": 18
+   },
+   "investigator": {
+    "status": "completed",
+    "latency_ms": 12113.052,
+    "llm_calls": 4,
+    "tokens": null,
+    "api_requests": 0,
+    "model": "test-double",
+    "errors": [],
+    "recommendation": "ESCALATE",
+    "policy_violation_detected": true,
+    "eligibility": "NOT_ELIGIBLE",
+    "history_anomaly_detected": false,
+    "citations_valid": 3,
+    "citations_total": 3
+   },
+   "forensic": {
+    "status": "completed",
+    "latency_ms": 538.434,
+    "llm_calls": 3,
+    "tokens": null,
+    "api_requests": 0,
+    "model": "test-double",
+    "errors": [],
+    "recommendation": "ESCALATE",
+    "anomaly_detected": true,
+    "detected_types": [
+     "data_access_request",
+     "prompt_injection"
+    ],
+    "type_hits": {
+     "prompt_injection": true
+    },
+    "citations_valid": 10,
+    "citations_total": 10
+   },
+   "combined": {
+    "status": "completed",
+    "latency_ms": 24006.104,
+    "final_decision": "ESCALATE",
+    "recommendation": "ESCALATE",
+    "decided_by": "GUARDRAIL_ESCALATION",
+    "review_status": "COMPLETE",
+    "requires_human_approval": true,
+    "anomaly_detected": true,
+    "mcp_calls": 6,
+    "api_requests": 0,
+    "api_requests_source": "offline",
+    "tokens": null
+   }
+  },
+  {
+   "case_id": "EVAL-24",
+   "category": "missing_evidence",
+   "source": "new",
+   "expected_decision": "REQUEST_EVIDENCE",
+   "policy_violation": false,
+   "missing_evidence": [
+    "repair_report"
+   ],
+   "anomalies": [],
+   "run_id": "RUN-EV-20261119-141842-e46c4a-EVAL-24",
+   "run_error": null,
+   "evidence": {
+    "status": "completed",
+    "latency_ms": 11942.325,
+    "llm_calls": 2,
+    "tokens": null,
+    "api_requests": 0,
+    "model": "test-double",
+    "errors": [],
+    "recommendation": "REQUEST_EVIDENCE",
+    "facts_expected": 4,
+    "facts_matched": 3,
+    "missing_detected": true,
+    "citations_valid": 6,
+    "citations_total": 6
+   },
+   "investigator": {
+    "status": "completed",
+    "latency_ms": 11884.682,
+    "llm_calls": 4,
+    "tokens": null,
+    "api_requests": 0,
+    "model": "test-double",
+    "errors": [],
+    "recommendation": "REQUEST_EVIDENCE",
+    "policy_violation_detected": false,
+    "eligibility": "UNDETERMINED",
+    "history_anomaly_detected": false,
+    "citations_valid": 0,
+    "citations_total": 0
+   },
+   "forensic": {
+    "status": "completed",
+    "latency_ms": 532.132,
+    "llm_calls": 3,
+    "tokens": null,
+    "api_requests": 0,
+    "model": "test-double",
+    "errors": [],
+    "recommendation": "REQUEST_EVIDENCE",
+    "anomaly_detected": false,
+    "detected_types": [],
+    "type_hits": {},
+    "citations_valid": 2,
+    "citations_total": 2
+   },
+   "combined": {
+    "status": "completed",
+    "latency_ms": 23918.172,
+    "final_decision": "REQUEST_EVIDENCE",
+    "recommendation": "REQUEST_EVIDENCE",
+    "decided_by": "DETERMINISTIC_RULES",
+    "review_status": "COMPLETE",
+    "requires_human_approval": false,
+    "anomaly_detected": false,
+    "mcp_calls": 6,
+    "api_requests": 0,
+    "api_requests_source": "offline",
+    "tokens": null
+   }
+  },
+  {
+   "case_id": "EVAL-25",
+   "category": "missing_evidence",
+   "source": "existing:CS-001-VAG",
+   "expected_decision": "REQUEST_EVIDENCE",
+   "policy_violation": false,
+   "missing_evidence": [
+    "repair_report"
+   ],
+   "anomalies": [],
+   "run_id": "RUN-EV-20261119-141842-e46c4a-EVAL-25",
+   "run_error": null,
+   "evidence": {
+    "status": "completed",
+    "latency_ms": 12177.596,
+    "llm_calls": 2,
+    "tokens": null,
+    "api_requests": 0,
+    "model": "test-double",
+    "errors": [],
+    "recommendation": "REQUEST_EVIDENCE",
+    "facts_expected": 4,
+    "facts_matched": 3,
+    "missing_detected": true,
+    "citations_valid": 6,
+    "citations_total": 6
+   },
+   "investigator": {
+    "status": "completed",
+    "latency_ms": 12122.714,
+    "llm_calls": 4,
+    "tokens": null,
+    "api_requests": 0,
+    "model": "test-double",
+    "errors": [],
+    "recommendation": "REQUEST_EVIDENCE",
+    "policy_violation_detected": false,
+    "eligibility": "UNDETERMINED",
+    "history_anomaly_detected": false,
+    "citations_valid": 0,
+    "citations_total": 0
+   },
+   "forensic": {
+    "status": "completed",
+    "latency_ms": 529.241,
+    "llm_calls": 3,
+    "tokens": null,
+    "api_requests": 0,
+    "model": "test-double",
+    "errors": [],
+    "recommendation": "REQUEST_EVIDENCE",
+    "anomaly_detected": false,
+    "detected_types": [],
+    "type_hits": {},
+    "citations_valid": 2,
+    "citations_total": 2
+   },
+   "combined": {
+    "status": "completed",
+    "latency_ms": 24400.135,
+    "final_decision": "REQUEST_EVIDENCE",
+    "recommendation": "REQUEST_EVIDENCE",
+    "decided_by": "DETERMINISTIC_RULES",
+    "review_status": "COMPLETE",
+    "requires_human_approval": false,
+    "anomaly_detected": false,
+    "mcp_calls": 6,
+    "api_requests": 0,
+    "api_requests_source": "offline",
+    "tokens": null
+   }
+  },
+  {
+   "case_id": "EVAL-26",
+   "category": "policy_violation",
+   "source": "new",
+   "expected_decision": "REJECT",
+   "policy_violation": true,
+   "missing_evidence": [],
+   "anomalies": [],
+   "run_id": "RUN-EV-20261119-141842-e46c4a-EVAL-26",
+   "run_error": null,
+   "evidence": {
+    "status": "completed",
+    "latency_ms": 12194.54,
+    "llm_calls": 2,
+    "tokens": null,
+    "api_requests": 0,
+    "model": "test-double",
+    "errors": [],
+    "recommendation": "APPROVE",
+    "facts_expected": 8,
+    "facts_matched": 7,
+    "missing_detected": false,
+    "citations_valid": 16,
+    "citations_total": 16
+   },
+   "investigator": {
+    "status": "completed",
+    "latency_ms": 12047.97,
+    "llm_calls": 4,
+    "tokens": null,
+    "api_requests": 0,
+    "model": "test-double",
+    "errors": [],
+    "recommendation": "REJECT",
+    "policy_violation_detected": true,
+    "eligibility": "NOT_ELIGIBLE",
+    "history_anomaly_detected": false,
+    "citations_valid": 1,
+    "citations_total": 1
+   },
+   "forensic": {
+    "status": "completed",
+    "latency_ms": 519.523,
+    "llm_calls": 3,
+    "tokens": null,
+    "api_requests": 0,
+    "model": "test-double",
+    "errors": [],
+    "recommendation": "APPROVE",
+    "anomaly_detected": false,
+    "detected_types": [],
+    "type_hits": {},
+    "citations_valid": 8,
+    "citations_total": 8
+   },
+   "combined": {
+    "status": "completed",
+    "latency_ms": 24340.236,
+    "final_decision": "REJECT",
+    "recommendation": "REJECT",
+    "decided_by": "DETERMINISTIC_RULES",
+    "review_status": "COMPLETE",
+    "requires_human_approval": true,
+    "anomaly_detected": false,
+    "mcp_calls": 6,
+    "api_requests": 0,
+    "api_requests_source": "offline",
+    "tokens": null
+   }
+  },
+  {
+   "case_id": "EVAL-27",
+   "category": "suspicious",
+   "source": "new",
+   "expected_decision": "ESCALATE",
+   "policy_violation": false,
+   "missing_evidence": [],
+   "anomalies": [
+    "serial_mismatch"
+   ],
+   "run_id": "RUN-EV-20261119-141842-e46c4a-EVAL-27",
+   "run_error": null,
+   "evidence": {
+    "status": "completed",
+    "latency_ms": 12052.54,
+    "llm_calls": 2,
+    "tokens": null,
+    "api_requests": 0,
+    "model": "test-double",
+    "errors": [],
+    "recommendation": "ESCALATE",
+    "facts_expected": 8,
+    "facts_matched": 7,
+    "missing_detected": false,
+    "citations_valid": 20,
+    "citations_total": 20
+   },
+   "investigator": {
+    "status": "completed",
+    "latency_ms": 12128.305,
+    "llm_calls": 4,
+    "tokens": null,
+    "api_requests": 0,
+    "model": "test-double",
+    "errors": [],
+    "recommendation": "ESCALATE",
+    "policy_violation_detected": false,
+    "eligibility": "ELIGIBLE",
+    "history_anomaly_detected": false,
+    "citations_valid": 4,
+    "citations_total": 4
+   },
+   "forensic": {
+    "status": "completed",
+    "latency_ms": 528.695,
+    "llm_calls": 3,
+    "tokens": null,
+    "api_requests": 0,
+    "model": "test-double",
+    "errors": [],
+    "recommendation": "ESCALATE",
+    "anomaly_detected": true,
+    "detected_types": [
+     "serial_mismatch"
+    ],
+    "type_hits": {
+     "serial_mismatch": true
+    },
+    "citations_valid": 10,
+    "citations_total": 10
+   },
+   "combined": {
+    "status": "completed",
+    "latency_ms": 24274.063,
+    "final_decision": "ESCALATE",
+    "recommendation": "ESCALATE",
+    "decided_by": "DETERMINISTIC_RULES",
+    "review_status": "COMPLETE",
+    "requires_human_approval": true,
+    "anomaly_detected": true,
+    "mcp_calls": 6,
+    "api_requests": 0,
+    "api_requests_source": "offline",
+    "tokens": null
+   }
+  },
+  {
+   "case_id": "EVAL-28",
+   "category": "missing_evidence",
+   "source": "existing:CS-003-VAG",
+   "expected_decision": "REQUEST_EVIDENCE",
+   "policy_violation": false,
+   "missing_evidence": [
+    "repair_report"
+   ],
+   "anomalies": [],
+   "run_id": "RUN-EV-20261119-141842-e46c4a-EVAL-28",
+   "run_error": null,
+   "evidence": {
+    "status": "completed",
+    "latency_ms": 12109.768,
+    "llm_calls": 2,
+    "tokens": null,
+    "api_requests": 0,
+    "model": "test-double",
+    "errors": [],
+    "recommendation": "REQUEST_EVIDENCE",
+    "facts_expected": 4,
+    "facts_matched": 3,
+    "missing_detected": true,
+    "citations_valid": 6,
+    "citations_total": 6
+   },
+   "investigator": {
+    "status": "completed",
+    "latency_ms": 12120.945,
+    "llm_calls": 4,
+    "tokens": null,
+    "api_requests": 0,
+    "model": "test-double",
+    "errors": [],
+    "recommendation": "REQUEST_EVIDENCE",
+    "policy_violation_detected": false,
+    "eligibility": "UNDETERMINED",
+    "history_anomaly_detected": false,
+    "citations_valid": 0,
+    "citations_total": 0
+   },
+   "forensic": {
+    "status": "completed",
+    "latency_ms": 533.692,
+    "llm_calls": 3,
+    "tokens": null,
+    "api_requests": 0,
+    "model": "test-double",
+    "errors": [],
+    "recommendation": "REQUEST_EVIDENCE",
+    "anomaly_detected": false,
+    "detected_types": [],
+    "type_hits": {},
+    "citations_valid": 4,
+    "citations_total": 4
+   },
+   "combined": {
+    "status": "completed",
+    "latency_ms": 24364.529,
+    "final_decision": "REQUEST_EVIDENCE",
+    "recommendation": "REQUEST_EVIDENCE",
+    "decided_by": "DETERMINISTIC_RULES",
+    "review_status": "COMPLETE",
+    "requires_human_approval": false,
+    "anomaly_detected": false,
+    "mcp_calls": 6,
+    "api_requests": 0,
+    "api_requests_source": "offline",
+    "tokens": null
+   }
+  },
+  {
+   "case_id": "EVAL-29",
+   "category": "conflict_injection",
+   "source": "existing:CS-009",
+   "expected_decision": "ESCALATE",
+   "policy_violation": false,
+   "missing_evidence": [],
+   "anomalies": [
+    "chronology"
+   ],
+   "run_id": "RUN-EV-20261119-141842-e46c4a-EVAL-29",
+   "run_error": null,
+   "evidence": {
+    "status": "completed",
+    "latency_ms": 12006.279,
+    "llm_calls": 2,
+    "tokens": null,
+    "api_requests": 0,
+    "model": "test-double",
+    "errors": [],
+    "recommendation": "ESCALATE",
+    "facts_expected": 8,
+    "facts_matched": 7,
+    "missing_detected": false,
+    "citations_valid": 18,
+    "citations_total": 18
+   },
+   "investigator": {
+    "status": "completed",
+    "latency_ms": 12057.828,
+    "llm_calls": 4,
+    "tokens": null,
+    "api_requests": 0,
+    "model": "test-double",
+    "errors": [],
+    "recommendation": "ESCALATE",
+    "policy_violation_detected": false,
+    "eligibility": "ELIGIBLE",
+    "history_anomaly_detected": false,
+    "citations_valid": 2,
+    "citations_total": 2
+   },
+   "forensic": {
+    "status": "completed",
+    "latency_ms": 535.434,
+    "llm_calls": 3,
+    "tokens": null,
+    "api_requests": 0,
+    "model": "test-double",
+    "errors": [],
+    "recommendation": "ESCALATE",
+    "anomaly_detected": true,
+    "detected_types": [
+     "chronology"
+    ],
+    "type_hits": {
+     "chronology": true
+    },
+    "citations_valid": 9,
+    "citations_total": 9
+   },
+   "combined": {
+    "status": "completed",
+    "latency_ms": 24159.899,
+    "final_decision": "ESCALATE",
+    "recommendation": "ESCALATE",
+    "decided_by": "DETERMINISTIC_RULES",
+    "review_status": "COMPLETE",
+    "requires_human_approval": true,
+    "anomaly_detected": true,
+    "mcp_calls": 6,
+    "api_requests": 0,
+    "api_requests_source": "offline",
+    "tokens": null
+   }
+  },
+  {
+   "case_id": "EVAL-30",
+   "category": "valid",
+   "source": "new",
+   "expected_decision": "APPROVE",
+   "policy_violation": false,
+   "missing_evidence": [],
+   "anomalies": [],
+   "run_id": "RUN-EV-20261119-141842-e46c4a-EVAL-30",
+   "run_error": null,
+   "evidence": {
+    "status": "completed",
+    "latency_ms": 11974.975,
+    "llm_calls": 2,
+    "tokens": null,
+    "api_requests": 0,
+    "model": "test-double",
+    "errors": [],
+    "recommendation": "APPROVE",
+    "facts_expected": 8,
+    "facts_matched": 7,
+    "missing_detected": false,
+    "citations_valid": 16,
+    "citations_total": 16
+   },
+   "investigator": {
+    "status": "completed",
+    "latency_ms": 12139.858,
+    "llm_calls": 4,
+    "tokens": null,
+    "api_requests": 0,
+    "model": "test-double",
+    "errors": [],
+    "recommendation": "APPROVE",
+    "policy_violation_detected": false,
+    "eligibility": "ELIGIBLE",
+    "history_anomaly_detected": false,
+    "citations_valid": 0,
+    "citations_total": 0
+   },
+   "forensic": {
+    "status": "completed",
+    "latency_ms": 539.608,
+    "llm_calls": 3,
+    "tokens": null,
+    "api_requests": 0,
+    "model": "test-double",
+    "errors": [],
+    "recommendation": "APPROVE",
+    "anomaly_detected": false,
+    "detected_types": [],
+    "type_hits": {},
+    "citations_valid": 8,
+    "citations_total": 8
+   },
+   "combined": {
+    "status": "completed",
+    "latency_ms": 24213.174,
+    "final_decision": "APPROVE",
+    "recommendation": "APPROVE",
+    "decided_by": "DETERMINISTIC_RULES",
+    "review_status": "COMPLETE",
+    "requires_human_approval": false,
+    "anomaly_detected": false,
+    "mcp_calls": 6,
+    "api_requests": 0,
+    "api_requests_source": "offline",
+    "tokens": null
+   }
+  },
+  {
+   "case_id": "EVAL-31",
+   "category": "conflict_injection",
+   "source": "existing:CS-003-INJ",
+   "expected_decision": "ESCALATE",
+   "policy_violation": false,
+   "missing_evidence": [],
+   "anomalies": [
+    "serial_mismatch",
+    "prompt_injection"
+   ],
+   "run_id": "RUN-EV-20261119-141842-e46c4a-EVAL-31",
+   "run_error": null,
+   "evidence": {
+    "status": "completed",
+    "latency_ms": 12020.191,
+    "llm_calls": 2,
+    "tokens": null,
+    "api_requests": 0,
+    "model": "test-double",
+    "errors": [],
+    "recommendation": "ESCALATE",
+    "facts_expected": 8,
+    "facts_matched": 7,
+    "missing_detected": false,
+    "citations_valid": 20,
+    "citations_total": 20
+   },
+   "investigator": {
+    "status": "completed",
+    "latency_ms": 12021.967,
+    "llm_calls": 4,
+    "tokens": null,
+    "api_requests": 0,
+    "model": "test-double",
+    "errors": [],
+    "recommendation": "ESCALATE",
+    "policy_violation_detected": false,
+    "eligibility": "ELIGIBLE",
+    "history_anomaly_detected": false,
+    "citations_valid": 4,
+    "citations_total": 4
+   },
+   "forensic": {
+    "status": "completed",
+    "latency_ms": 527.284,
+    "llm_calls": 3,
+    "tokens": null,
+    "api_requests": 0,
+    "model": "test-double",
+    "errors": [],
+    "recommendation": "ESCALATE",
+    "anomaly_detected": true,
+    "detected_types": [
+     "data_access_request",
+     "prompt_injection",
+     "serial_mismatch"
+    ],
+    "type_hits": {
+     "serial_mismatch": true,
+     "prompt_injection": true
+    },
+    "citations_valid": 11,
+    "citations_total": 11
+   },
+   "combined": {
+    "status": "completed",
+    "latency_ms": 24138.967,
+    "final_decision": "ESCALATE",
+    "recommendation": "ESCALATE",
+    "decided_by": "GUARDRAIL_ESCALATION",
+    "review_status": "COMPLETE",
+    "requires_human_approval": true,
+    "anomaly_detected": true,
+    "mcp_calls": 6,
+    "api_requests": 0,
+    "api_requests_source": "offline",
+    "tokens": null
+   }
+  },
+  {
+   "case_id": "EVAL-32",
+   "category": "missing_evidence",
+   "source": "new",
+   "expected_decision": "REQUEST_EVIDENCE",
+   "policy_violation": false,
+   "missing_evidence": [
+    "repair_cost"
+   ],
+   "anomalies": [],
+   "run_id": "RUN-EV-20261119-141842-e46c4a-EVAL-32",
+   "run_error": null,
+   "evidence": {
+    "status": "completed",
+    "latency_ms": 12097.275,
+    "llm_calls": 2,
+    "tokens": null,
+    "api_requests": 0,
+    "model": "test-double",
+    "errors": [],
+    "recommendation": "REQUEST_EVIDENCE",
+    "facts_expected": 7,
+    "facts_matched": 6,
+    "missing_detected": true,
+    "citations_valid": 14,
+    "citations_total": 14
+   },
+   "investigator": {
+    "status": "completed",
+    "latency_ms": 11922.868,
+    "llm_calls": 4,
+    "tokens": null,
+    "api_requests": 0,
+    "model": "test-double",
+    "errors": [],
+    "recommendation": "REQUEST_EVIDENCE",
+    "policy_violation_detected": false,
+    "eligibility": "ELIGIBLE",
+    "history_anomaly_detected": false,
+    "citations_valid": 0,
+    "citations_total": 0
+   },
+   "forensic": {
+    "status": "completed",
+    "latency_ms": 532.271,
+    "llm_calls": 3,
+    "tokens": null,
+    "api_requests": 0,
+    "model": "test-double",
+    "errors": [],
+    "recommendation": "REQUEST_EVIDENCE",
+    "anomaly_detected": false,
+    "detected_types": [],
+    "type_hits": {},
+    "citations_valid": 8,
+    "citations_total": 8
+   },
+   "combined": {
+    "status": "completed",
+    "latency_ms": 24110.321,
+    "final_decision": "REQUEST_EVIDENCE",
+    "recommendation": "REQUEST_EVIDENCE",
+    "decided_by": "DETERMINISTIC_RULES",
+    "review_status": "COMPLETE",
+    "requires_human_approval": false,
+    "anomaly_detected": false,
+    "mcp_calls": 6,
+    "api_requests": 0,
+    "api_requests_source": "offline",
+    "tokens": null
+   }
+  },
+  {
+   "case_id": "EVAL-33",
+   "category": "suspicious",
+   "source": "existing:CS-007",
+   "expected_decision": "ESCALATE",
+   "policy_violation": false,
+   "missing_evidence": [],
+   "anomalies": [
+    "history_other_claimant"
+   ],
+   "run_id": "RUN-EV-20261119-141842-e46c4a-EVAL-33",
+   "run_error": null,
+   "evidence": {
+    "status": "completed",
+    "latency_ms": 11883.721,
+    "llm_calls": 2,
+    "tokens": null,
+    "api_requests": 0,
+    "model": "test-double",
+    "errors": [],
+    "recommendation": "APPROVE",
+    "facts_expected": 8,
+    "facts_matched": 7,
+    "missing_detected": false,
+    "citations_valid": 16,
+    "citations_total": 16
+   },
+   "investigator": {
+    "status": "completed",
+    "latency_ms": 12045.736,
+    "llm_calls": 4,
+    "tokens": null,
+    "api_requests": 0,
+    "model": "test-double",
+    "errors": [],
+    "recommendation": "ESCALATE",
+    "policy_violation_detected": false,
+    "eligibility": "ELIGIBLE",
+    "history_anomaly_detected": true,
+    "citations_valid": 0,
+    "citations_total": 0
+   },
+   "forensic": {
+    "status": "completed",
+    "latency_ms": 522.151,
+    "llm_calls": 3,
+    "tokens": null,
+    "api_requests": 0,
+    "model": "test-double",
+    "errors": [],
+    "recommendation": "ESCALATE",
+    "anomaly_detected": true,
+    "detected_types": [
+     "history_other_claimant",
+     "repeat_claims"
+    ],
+    "type_hits": {
+     "history_other_claimant": true
+    },
+    "citations_valid": 8,
+    "citations_total": 8
+   },
+   "combined": {
+    "status": "completed",
+    "latency_ms": 24024.286,
+    "final_decision": "ESCALATE",
+    "recommendation": "ESCALATE",
+    "decided_by": "DETERMINISTIC_RULES",
+    "review_status": "COMPLETE",
+    "requires_human_approval": true,
+    "anomaly_detected": true,
+    "mcp_calls": 6,
+    "api_requests": 0,
+    "api_requests_source": "offline",
+    "tokens": null
+   }
+  },
+  {
+   "case_id": "EVAL-34",
+   "category": "valid",
+   "source": "existing:CS-008",
+   "expected_decision": "APPROVE",
+   "policy_violation": false,
+   "missing_evidence": [],
+   "anomalies": [],
+   "run_id": "RUN-EV-20261119-141842-e46c4a-EVAL-34",
+   "run_error": null,
+   "evidence": {
+    "status": "completed",
+    "latency_ms": 12041.024,
+    "llm_calls": 2,
+    "tokens": null,
+    "api_requests": 0,
+    "model": "test-double",
+    "errors": [],
+    "recommendation": "APPROVE",
+    "facts_expected": 8,
+    "facts_matched": 7,
+    "missing_detected": false,
+    "citations_valid": 16,
+    "citations_total": 16
+   },
+   "investigator": {
+    "status": "completed",
+    "latency_ms": 11897.692,
+    "llm_calls": 4,
+    "tokens": null,
+    "api_requests": 0,
+    "model": "test-double",
+    "errors": [],
+    "recommendation": "APPROVE",
+    "policy_violation_detected": false,
+    "eligibility": "ELIGIBLE",
+    "history_anomaly_detected": false,
+    "citations_valid": 0,
+    "citations_total": 0
+   },
+   "forensic": {
+    "status": "completed",
+    "latency_ms": 523.765,
+    "llm_calls": 3,
+    "tokens": null,
+    "api_requests": 0,
+    "model": "test-double",
+    "errors": [],
+    "recommendation": "APPROVE",
+    "anomaly_detected": false,
+    "detected_types": [],
+    "type_hits": {},
+    "citations_valid": 8,
+    "citations_total": 8
+   },
+   "combined": {
+    "status": "completed",
+    "latency_ms": 24031.99,
+    "final_decision": "APPROVE",
+    "recommendation": "APPROVE",
+    "decided_by": "DETERMINISTIC_RULES",
+    "review_status": "COMPLETE",
+    "requires_human_approval": false,
+    "anomaly_detected": false,
+    "mcp_calls": 6,
+    "api_requests": 0,
+    "api_requests_source": "offline",
+    "tokens": null
+   }
+  },
+  {
+   "case_id": "EVAL-35",
+   "category": "policy_violation",
+   "source": "new",
+   "expected_decision": "REJECT",
+   "policy_violation": true,
+   "missing_evidence": [],
+   "anomalies": [],
+   "run_id": "RUN-EV-20261119-141842-e46c4a-EVAL-35",
+   "run_error": null,
+   "evidence": {
+    "status": "completed",
+    "latency_ms": 12174.545,
+    "llm_calls": 2,
+    "tokens": null,
+    "api_requests": 0,
+    "model": "test-double",
+    "errors": [],
+    "recommendation": "APPROVE",
+    "facts_expected": 8,
+    "facts_matched": 7,
+    "missing_detected": false,
+    "citations_valid": 16,
+    "citations_total": 16
+   },
+   "investigator": {
+    "status": "completed",
+    "latency_ms": 12087.128,
+    "llm_calls": 4,
+    "tokens": null,
+    "api_requests": 0,
+    "model": "test-double",
+    "errors": [],
+    "recommendation": "REJECT",
+    "policy_violation_detected": true,
+    "eligibility": "NOT_ELIGIBLE",
+    "history_anomaly_detected": false,
+    "citations_valid": 0,
+    "citations_total": 0
+   },
+   "forensic": {
+    "status": "completed",
+    "latency_ms": 565.23,
+    "llm_calls": 3,
+    "tokens": null,
+    "api_requests": 0,
+    "model": "test-double",
+    "errors": [],
+    "recommendation": "APPROVE",
+    "anomaly_detected": false,
+    "detected_types": [],
+    "type_hits": {},
+    "citations_valid": 8,
+    "citations_total": 8
+   },
+   "combined": {
+    "status": "completed",
+    "latency_ms": 24365.552,
+    "final_decision": "REJECT",
+    "recommendation": "REJECT",
+    "decided_by": "DETERMINISTIC_RULES",
+    "review_status": "COMPLETE",
+    "requires_human_approval": true,
+    "anomaly_detected": false,
+    "mcp_calls": 6,
+    "api_requests": 0,
+    "api_requests_source": "offline",
+    "tokens": null
+   }
+  },
+  {
+   "case_id": "EVAL-36",
+   "category": "missing_evidence",
+   "source": "existing:CS-004-VAG",
+   "expected_decision": "REQUEST_EVIDENCE",
+   "policy_violation": false,
+   "missing_evidence": [
+    "repair_report"
+   ],
+   "anomalies": [],
+   "run_id": "RUN-EV-20261119-141842-e46c4a-EVAL-36",
+   "run_error": null,
+   "evidence": {
+    "status": "completed",
+    "latency_ms": 12149.013,
+    "llm_calls": 2,
+    "tokens": null,
+    "api_requests": 0,
+    "model": "test-double",
+    "errors": [],
+    "recommendation": "REQUEST_EVIDENCE",
+    "facts_expected": 4,
+    "facts_matched": 3,
+    "missing_detected": true,
+    "citations_valid": 6,
+    "citations_total": 6
+   },
+   "investigator": {
+    "status": "completed",
+    "latency_ms": 12033.349,
+    "llm_calls": 4,
+    "tokens": null,
+    "api_requests": 0,
+    "model": "test-double",
+    "errors": [],
+    "recommendation": "REQUEST_EVIDENCE",
+    "policy_violation_detected": false,
+    "eligibility": "UNDETERMINED",
+    "history_anomaly_detected": false,
+    "citations_valid": 0,
+    "citations_total": 0
+   },
+   "forensic": {
+    "status": "completed",
+    "latency_ms": 539.507,
+    "llm_calls": 3,
+    "tokens": null,
+    "api_requests": 0,
+    "model": "test-double",
+    "errors": [],
+    "recommendation": "REQUEST_EVIDENCE",
+    "anomaly_detected": false,
+    "detected_types": [],
+    "type_hits": {},
+    "citations_valid": 2,
+    "citations_total": 2
+   },
+   "combined": {
+    "status": "completed",
+    "latency_ms": 24280.054,
+    "final_decision": "REQUEST_EVIDENCE",
+    "recommendation": "REQUEST_EVIDENCE",
+    "decided_by": "DETERMINISTIC_RULES",
+    "review_status": "COMPLETE",
+    "requires_human_approval": false,
+    "anomaly_detected": false,
+    "mcp_calls": 6,
+    "api_requests": 0,
+    "api_requests_source": "offline",
+    "tokens": null
+   }
+  },
+  {
+   "case_id": "EVAL-37",
+   "category": "policy_violation",
+   "source": "existing:CS-004-ABU",
+   "expected_decision": "REJECT",
+   "policy_violation": true,
+   "missing_evidence": [],
+   "anomalies": [],
+   "run_id": "RUN-EV-20261119-141842-e46c4a-EVAL-37",
+   "run_error": null,
+   "evidence": {
+    "status": "completed",
+    "latency_ms": 12238.704,
+    "llm_calls": 2,
+    "tokens": null,
+    "api_requests": 0,
+    "model": "test-double",
+    "errors": [],
+    "recommendation": "APPROVE",
+    "facts_expected": 8,
+    "facts_matched": 7,
+    "missing_detected": false,
+    "citations_valid": 16,
+    "citations_total": 16
+   },
+   "investigator": {
+    "status": "completed",
+    "latency_ms": 12328.143,
+    "llm_calls": 4,
+    "tokens": null,
+    "api_requests": 0,
+    "model": "test-double",
+    "errors": [],
+    "recommendation": "REJECT",
+    "policy_violation_detected": true,
+    "eligibility": "NOT_ELIGIBLE",
+    "history_anomaly_detected": false,
+    "citations_valid": 1,
+    "citations_total": 1
+   },
+   "forensic": {
+    "status": "completed",
+    "latency_ms": 549.751,
+    "llm_calls": 3,
+    "tokens": null,
+    "api_requests": 0,
+    "model": "test-double",
+    "errors": [],
+    "recommendation": "APPROVE",
+    "anomaly_detected": false,
+    "detected_types": [],
+    "type_hits": {},
+    "citations_valid": 8,
+    "citations_total": 8
+   },
+   "combined": {
+    "status": "completed",
+    "latency_ms": 24670.534,
+    "final_decision": "REJECT",
+    "recommendation": "REJECT",
+    "decided_by": "DETERMINISTIC_RULES",
+    "review_status": "COMPLETE",
+    "requires_human_approval": true,
+    "anomaly_detected": false,
+    "mcp_calls": 6,
+    "api_requests": 0,
+    "api_requests_source": "offline",
+    "tokens": null
+   }
+  },
+  {
+   "case_id": "EVAL-38",
+   "category": "missing_evidence",
+   "source": "new",
+   "expected_decision": "REQUEST_EVIDENCE",
+   "policy_violation": false,
+   "missing_evidence": [
+    "invoice"
+   ],
+   "anomalies": [],
+   "run_id": "RUN-EV-20261119-141842-e46c4a-EVAL-38",
+   "run_error": null,
+   "evidence": {
+    "status": "completed",
+    "latency_ms": 12081.147,
+    "llm_calls": 2,
+    "tokens": null,
+    "api_requests": 0,
+    "model": "test-double",
+    "errors": [],
+    "recommendation": "REQUEST_EVIDENCE",
+    "facts_expected": 4,
+    "facts_matched": 4,
+    "missing_detected": true,
+    "citations_valid": 10,
+    "citations_total": 10
+   },
+   "investigator": {
+    "status": "completed",
+    "latency_ms": 12001.36,
+    "llm_calls": 4,
+    "tokens": null,
+    "api_requests": 0,
+    "model": "test-double",
+    "errors": [],
+    "recommendation": "REQUEST_EVIDENCE",
+    "policy_violation_detected": false,
+    "eligibility": "UNDETERMINED",
+    "history_anomaly_detected": false,
+    "citations_valid": 0,
+    "citations_total": 0
+   },
+   "forensic": {
+    "status": "completed",
+    "latency_ms": 540.615,
+    "llm_calls": 3,
+    "tokens": null,
+    "api_requests": 0,
+    "model": "test-double",
+    "errors": [],
+    "recommendation": "REQUEST_EVIDENCE",
+    "anomaly_detected": false,
+    "detected_types": [],
+    "type_hits": {},
+    "citations_valid": 2,
+    "citations_total": 2
+   },
+   "combined": {
+    "status": "completed",
+    "latency_ms": 24188.222,
+    "final_decision": "REQUEST_EVIDENCE",
+    "recommendation": "REQUEST_EVIDENCE",
+    "decided_by": "DETERMINISTIC_RULES",
+    "review_status": "COMPLETE",
+    "requires_human_approval": false,
+    "anomaly_detected": false,
+    "mcp_calls": 6,
+    "api_requests": 0,
+    "api_requests_source": "offline",
+    "tokens": null
+   }
+  },
+  {
+   "case_id": "EVAL-39",
+   "category": "missing_evidence",
+   "source": "existing:CS-006",
+   "expected_decision": "REQUEST_EVIDENCE",
+   "policy_violation": false,
+   "missing_evidence": [
+    "repair_report"
+   ],
+   "anomalies": [],
+   "run_id": "RUN-EV-20261119-141842-e46c4a-EVAL-39",
+   "run_error": null,
+   "evidence": {
+    "status": "completed",
+    "latency_ms": 12041.255,
+    "llm_calls": 2,
+    "tokens": null,
+    "api_requests": 0,
+    "model": "test-double",
+    "errors": [],
+    "recommendation": "REQUEST_EVIDENCE",
+    "facts_expected": 4,
+    "facts_matched": 3,
+    "missing_detected": true,
+    "citations_valid": 6,
+    "citations_total": 6
+   },
+   "investigator": {
+    "status": "completed",
+    "latency_ms": 11915.7,
+    "llm_calls": 4,
+    "tokens": null,
+    "api_requests": 0,
+    "model": "test-double",
+    "errors": [],
+    "recommendation": "REQUEST_EVIDENCE",
+    "policy_violation_detected": false,
+    "eligibility": "UNDETERMINED",
+    "history_anomaly_detected": false,
+    "citations_valid": 0,
+    "citations_total": 0
+   },
+   "forensic": {
+    "status": "completed",
+    "latency_ms": 543.266,
+    "llm_calls": 3,
+    "tokens": null,
+    "api_requests": 0,
+    "model": "test-double",
+    "errors": [],
+    "recommendation": "REQUEST_EVIDENCE",
+    "anomaly_detected": false,
+    "detected_types": [],
+    "type_hits": {},
+    "citations_valid": 2,
+    "citations_total": 2
+   },
+   "combined": {
+    "status": "completed",
+    "latency_ms": 24051.173,
+    "final_decision": "REQUEST_EVIDENCE",
+    "recommendation": "REQUEST_EVIDENCE",
+    "decided_by": "DETERMINISTIC_RULES",
+    "review_status": "COMPLETE",
+    "requires_human_approval": false,
+    "anomaly_detected": false,
+    "mcp_calls": 6,
+    "api_requests": 0,
+    "api_requests_source": "offline",
+    "tokens": null
+   }
+  },
+  {
+   "case_id": "EVAL-40",
+   "category": "conflict_injection",
+   "source": "new",
+   "expected_decision": "ESCALATE",
+   "policy_violation": false,
+   "missing_evidence": [],
+   "anomalies": [
+    "identity_mismatch"
+   ],
+   "run_id": "RUN-EV-20261119-141842-e46c4a-EVAL-40",
+   "run_error": null,
+   "evidence": {
+    "status": "completed",
+    "latency_ms": 12212.525,
+    "llm_calls": 2,
+    "tokens": null,
+    "api_requests": 0,
+    "model": "test-double",
+    "errors": [],
+    "recommendation": "APPROVE",
+    "facts_expected": 8,
+    "facts_matched": 7,
+    "missing_detected": false,
+    "citations_valid": 20,
+    "citations_total": 20
+   },
+   "investigator": {
+    "status": "completed",
+    "latency_ms": 11936.099,
+    "llm_calls": 4,
+    "tokens": null,
+    "api_requests": 0,
+    "model": "test-double",
+    "errors": [],
+    "recommendation": "APPROVE",
+    "policy_violation_detected": false,
+    "eligibility": "ELIGIBLE",
+    "history_anomaly_detected": false,
+    "citations_valid": 4,
+    "citations_total": 4
+   },
+   "forensic": {
+    "status": "completed",
+    "latency_ms": 547.511,
+    "llm_calls": 3,
+    "tokens": null,
+    "api_requests": 0,
+    "model": "test-double",
+    "errors": [],
+    "recommendation": "APPROVE",
+    "anomaly_detected": true,
+    "detected_types": [
+     "data_access_request",
+     "identity_mismatch",
+     "prompt_injection"
+    ],
+    "type_hits": {
+     "identity_mismatch": true
+    },
+    "citations_valid": 12,
+    "citations_total": 12
+   },
+   "combined": {
+    "status": "completed",
+    "latency_ms": 24256.015,
+    "final_decision": "ESCALATE",
+    "recommendation": "ESCALATE",
+    "decided_by": "DETERMINISTIC_RULES",
+    "review_status": "COMPLETE",
+    "requires_human_approval": true,
+    "anomaly_detected": true,
+    "mcp_calls": 6,
+    "api_requests": 0,
+    "api_requests_source": "offline",
+    "tokens": null
+   }
+  }
+ ],
+ "aggregate": {
+  "meta": {
+   "evaluation_id": "EV-20261119-141842-e46c4a",
+   "dataset_version": "eval-v1",
+   "mode": "offline",
+   "mode_label": "OFFLINE (labelled test doubles, not LLM reasoning)",
+   "started_at": "2026-11-19T14:18:42.247448+00:00",
+   "finished_at": "2026-11-19T14:34:58.159407+00:00",
+   "cases_total": 40,
+   "cases_requested": 40,
+   "cases_executed": 40,
+   "stopped_reason": null,
+   "live_estimate": null,
+   "gemini_model": null,
+   "synthetic": true,
+   "context_sharing": "blackboard",
+   "blackboard": "/Users/vaibhav/Study/Sem 7/Agentic AI/Project/ClaimSleuth_simple/runtime/evaluation/EV-20261119-141842-e46c4a/blackboard.sqlite3",
+   "ledger_requests_added": 0
+  },
+  "approaches": {
+   "evidence": {
+    "title": "Evidence Agent",
+    "task": "Missing-evidence detection (positive = required evidence missing)",
+    "reliability": {
+     "executions": 40,
+     "successful": 40,
+     "failed": 0,
+     "incomplete": 0,
+     "structured_output_failures": 0,
+     "completion_rate": 1.0,
+     "structured_output_validity": 1.0,
+     "avg_latency_ms": 12070.312825
+    },
+    "decision": {
+     "n": 40,
+     "unscored": 0,
+     "accuracy": 0.65,
+     "per_class": {
+      "APPROVE": {
+       "precision": 0.36363636363636365,
+       "recall": 1.0,
+       "f1": 0.5333333333333333,
+       "support": 8,
+       "predicted": 22,
+       "present": true
+      },
+      "REJECT": {
+       "precision": 0.0,
+       "recall": 0.0,
+       "f1": 0.0,
+       "support": 8,
+       "predicted": 0,
+       "present": true
+      },
+      "REQUEST_EVIDENCE": {
+       "precision": 1.0,
+       "recall": 1.0,
+       "f1": 1.0,
+       "support": 8,
+       "predicted": 8,
+       "present": true
+      },
+      "ESCALATE": {
+       "precision": 1.0,
+       "recall": 0.625,
+       "f1": 0.7692307692307693,
+       "support": 16,
+       "predicted": 10,
+       "present": true
+      }
+     },
+     "macro": {
+      "precision": {
+       "value": 0.5909090909090909,
+       "classes": [
+        "APPROVE",
+        "REJECT",
+        "REQUEST_EVIDENCE",
+        "ESCALATE"
+       ]
+      },
+      "recall": {
+       "value": 0.65625,
+       "classes": [
+        "APPROVE",
+        "REJECT",
+        "REQUEST_EVIDENCE",
+        "ESCALATE"
+       ]
+      },
+      "f1": {
+       "value": 0.5756410256410256,
+       "classes": [
+        "APPROVE",
+        "REJECT",
+        "REQUEST_EVIDENCE",
+        "ESCALATE"
+       ]
+      }
+     },
+     "weighted": {
+      "precision": 0.6727272727272727,
+      "recall": 0.65,
+      "f1": 0.6143589743589744
+     },
+     "zero_division": 0,
+     "confusion": {
+      "labels": [
+       "APPROVE",
+       "REJECT",
+       "REQUEST_EVIDENCE",
+       "ESCALATE"
+      ],
+      "matrix": [
+       [
+        8,
+        0,
+        0,
+        0
+       ],
+       [
+        8,
+        0,
+        0,
+        0
+       ],
+       [
+        0,
+        0,
+        8,
+        0
+       ],
+       [
+        6,
+        0,
+        0,
+        10
+       ]
+      ],
+      "n": 40,
+      "unscored": 0
+     }
+    },
+    "decision_role": "advisory recommendation (never decides)",
+    "task_metrics": {
+     "n": 40,
+     "unscored": 0,
+     "tp": 8,
+     "fp": 0,
+     "fn": 0,
+     "tn": 32,
+     "accuracy": 1.0,
+     "precision": 1.0,
+     "recall": 1.0,
+     "f1": 1.0,
+     "false_positive_rate": 0.0
+    },
+    "citation_validity": {
+     "valid": 600,
+     "total": 600,
+     "rate": 1.0
+    },
+    "fact_extraction": {
+     "matched": 252,
+     "expected": 291,
+     "accuracy": 0.865979381443299
+    }
+   },
+   "investigator": {
+    "title": "Investigator Agent",
+    "task": "Policy-violation detection (positive = NOT_ELIGIBLE)",
+    "reliability": {
+     "executions": 40,
+     "successful": 40,
+     "failed": 0,
+     "incomplete": 0,
+     "structured_output_failures": 0,
+     "completion_rate": 1.0,
+     "structured_output_validity": 1.0,
+     "avg_latency_ms": 12074.148775
+    },
+    "decision": {
+     "n": 40,
+     "unscored": 0,
+     "accuracy": 0.925,
+     "per_class": {
+      "APPROVE": {
+       "precision": 0.7272727272727273,
+       "recall": 1.0,
+       "f1": 0.8421052631578948,
+       "support": 8,
+       "predicted": 11,
+       "present": true
+      },
+      "REJECT": {
+       "precision": 1.0,
+       "recall": 1.0,
+       "f1": 1.0,
+       "support": 8,
+       "predicted": 8,
+       "present": true
+      },
+      "REQUEST_EVIDENCE": {
+       "precision": 1.0,
+       "recall": 1.0,
+       "f1": 1.0,
+       "support": 8,
+       "predicted": 8,
+       "present": true
+      },
+      "ESCALATE": {
+       "precision": 1.0,
+       "recall": 0.8125,
+       "f1": 0.896551724137931,
+       "support": 16,
+       "predicted": 13,
+       "present": true
+      }
+     },
+     "macro": {
+      "precision": {
+       "value": 0.9318181818181819,
+       "classes": [
+        "APPROVE",
+        "REJECT",
+        "REQUEST_EVIDENCE",
+        "ESCALATE"
+       ]
+      },
+      "recall": {
+       "value": 0.953125,
+       "classes": [
+        "APPROVE",
+        "REJECT",
+        "REQUEST_EVIDENCE",
+        "ESCALATE"
+       ]
+      },
+      "f1": {
+       "value": 0.9346642468239564,
+       "classes": [
+        "APPROVE",
+        "REJECT",
+        "REQUEST_EVIDENCE",
+        "ESCALATE"
+       ]
+      }
+     },
+     "weighted": {
+      "precision": 0.9454545454545455,
+      "recall": 0.925,
+      "f1": 0.9270417422867514
+     },
+     "zero_division": 0,
+     "confusion": {
+      "labels": [
+       "APPROVE",
+       "REJECT",
+       "REQUEST_EVIDENCE",
+       "ESCALATE"
+      ],
+      "matrix": [
+       [
+        8,
+        0,
+        0,
+        0
+       ],
+       [
+        0,
+        8,
+        0,
+        0
+       ],
+       [
+        0,
+        0,
+        8,
+        0
+       ],
+       [
+        3,
+        0,
+        0,
+        13
+       ]
+      ],
+      "n": 40,
+      "unscored": 0
+     }
+    },
+    "decision_role": "advisory recommendation (never decides)",
+    "task_metrics": {
+     "n": 40,
+     "unscored": 0,
+     "tp": 9,
+     "fp": 0,
+     "fn": 0,
+     "tn": 31,
+     "accuracy": 1.0,
+     "precision": 1.0,
+     "recall": 1.0,
+     "f1": 1.0,
+     "false_positive_rate": 0.0
+    },
+    "citation_validity": {
+     "valid": 34,
+     "total": 34,
+     "rate": 1.0
+    },
+    "history_anomaly": {
+     "n": 40,
+     "unscored": 0,
+     "tp": 3,
+     "fp": 0,
+     "fn": 1,
+     "tn": 36,
+     "accuracy": 0.975,
+     "precision": 1.0,
+     "recall": 0.75,
+     "f1": 0.8571428571428571,
+     "false_positive_rate": 0.0
+    }
+   },
+   "forensic": {
+    "title": "Forensic Agent",
+    "task": "Anomaly detection (positive = forensic anomaly present)",
+    "reliability": {
+     "executions": 40,
+     "successful": 40,
+     "failed": 0,
+     "incomplete": 0,
+     "structured_output_failures": 0,
+     "completion_rate": 1.0,
+     "structured_output_validity": 1.0,
+     "avg_latency_ms": 544.8162
+    },
+    "decision": {
+     "n": 40,
+     "unscored": 0,
+     "accuracy": 0.75,
+     "per_class": {
+      "APPROVE": {
+       "precision": 0.4444444444444444,
+       "recall": 1.0,
+       "f1": 0.6153846153846153,
+       "support": 8,
+       "predicted": 18,
+       "present": true
+      },
+      "REJECT": {
+       "precision": 0.0,
+       "recall": 0.0,
+       "f1": 0.0,
+       "support": 8,
+       "predicted": 0,
+       "present": true
+      },
+      "REQUEST_EVIDENCE": {
+       "precision": 1.0,
+       "recall": 1.0,
+       "f1": 1.0,
+       "support": 8,
+       "predicted": 8,
+       "present": true
+      },
+      "ESCALATE": {
+       "precision": 1.0,
+       "recall": 0.875,
+       "f1": 0.9333333333333333,
+       "support": 16,
+       "predicted": 14,
+       "present": true
+      }
+     },
+     "macro": {
+      "precision": {
+       "value": 0.6111111111111112,
+       "classes": [
+        "APPROVE",
+        "REJECT",
+        "REQUEST_EVIDENCE",
+        "ESCALATE"
+       ]
+      },
+      "recall": {
+       "value": 0.71875,
+       "classes": [
+        "APPROVE",
+        "REJECT",
+        "REQUEST_EVIDENCE",
+        "ESCALATE"
+       ]
+      },
+      "f1": {
+       "value": 0.6371794871794871,
+       "classes": [
+        "APPROVE",
+        "REJECT",
+        "REQUEST_EVIDENCE",
+        "ESCALATE"
+       ]
+      }
+     },
+     "weighted": {
+      "precision": 0.6888888888888889,
+      "recall": 0.75,
+      "f1": 0.6964102564102564
+     },
+     "zero_division": 0,
+     "confusion": {
+      "labels": [
+       "APPROVE",
+       "REJECT",
+       "REQUEST_EVIDENCE",
+       "ESCALATE"
+      ],
+      "matrix": [
+       [
+        8,
+        0,
+        0,
+        0
+       ],
+       [
+        8,
+        0,
+        0,
+        0
+       ],
+       [
+        0,
+        0,
+        8,
+        0
+       ],
+       [
+        2,
+        0,
+        0,
+        14
+       ]
+      ],
+      "n": 40,
+      "unscored": 0
+     }
+    },
+    "decision_role": "advisory recommendation (never decides)",
+    "task_metrics": {
+     "n": 40,
+     "unscored": 0,
+     "tp": 16,
+     "fp": 2,
+     "fn": 0,
+     "tn": 22,
+     "accuracy": 0.95,
+     "precision": 0.8888888888888888,
+     "recall": 1.0,
+     "f1": 0.9411764705882353,
+     "false_positive_rate": 0.08333333333333333
+    },
+    "citation_validity": {
+     "valid": 304,
+     "total": 304,
+     "rate": 1.0
+    },
+    "per_type_recall": {
+     "serial_mismatch": {
+      "cases": 5,
+      "detected": 5,
+      "recall": 1.0
+     },
+     "history_other_claimant": {
+      "cases": 3,
+      "detected": 3,
+      "recall": 1.0
+     },
+     "repeat_claims": {
+      "cases": 1,
+      "detected": 1,
+      "recall": 1.0
+     },
+     "chronology": {
+      "cases": 2,
+      "detected": 2,
+      "recall": 1.0
+     },
+     "identity_mismatch": {
+      "cases": 1,
+      "detected": 1,
+      "recall": 1.0
+     },
+     "prompt_injection": {
+      "cases": 4,
+      "detected": 4,
+      "recall": 1.0
+     },
+     "data_access_request": {
+      "cases": 1,
+      "detected": 1,
+      "recall": 1.0
+     }
+    }
+   },
+   "combined": {
+    "title": "Combined Multi-Agent System",
+    "task": "Final claim decision (4 classes)",
+    "reliability": {
+     "executions": 40,
+     "successful": 40,
+     "failed": 0,
+     "incomplete": 0,
+     "structured_output_failures": 0,
+     "completion_rate": 1.0,
+     "structured_output_validity": 1.0,
+     "avg_latency_ms": 24279.3073
+    },
+    "decision": {
+     "n": 40,
+     "unscored": 0,
+     "accuracy": 1.0,
+     "per_class": {
+      "APPROVE": {
+       "precision": 1.0,
+       "recall": 1.0,
+       "f1": 1.0,
+       "support": 8,
+       "predicted": 8,
+       "present": true
+      },
+      "REJECT": {
+       "precision": 1.0,
+       "recall": 1.0,
+       "f1": 1.0,
+       "support": 8,
+       "predicted": 8,
+       "present": true
+      },
+      "REQUEST_EVIDENCE": {
+       "precision": 1.0,
+       "recall": 1.0,
+       "f1": 1.0,
+       "support": 8,
+       "predicted": 8,
+       "present": true
+      },
+      "ESCALATE": {
+       "precision": 1.0,
+       "recall": 1.0,
+       "f1": 1.0,
+       "support": 16,
+       "predicted": 16,
+       "present": true
+      }
+     },
+     "macro": {
+      "precision": {
+       "value": 1.0,
+       "classes": [
+        "APPROVE",
+        "REJECT",
+        "REQUEST_EVIDENCE",
+        "ESCALATE"
+       ]
+      },
+      "recall": {
+       "value": 1.0,
+       "classes": [
+        "APPROVE",
+        "REJECT",
+        "REQUEST_EVIDENCE",
+        "ESCALATE"
+       ]
+      },
+      "f1": {
+       "value": 1.0,
+       "classes": [
+        "APPROVE",
+        "REJECT",
+        "REQUEST_EVIDENCE",
+        "ESCALATE"
+       ]
+      }
+     },
+     "weighted": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+     },
+     "zero_division": 0,
+     "confusion": {
+      "labels": [
+       "APPROVE",
+       "REJECT",
+       "REQUEST_EVIDENCE",
+       "ESCALATE"
+      ],
+      "matrix": [
+       [
+        8,
+        0,
+        0,
+        0
+       ],
+       [
+        0,
+        8,
+        0,
+        0
+       ],
+       [
+        0,
+        0,
+        8,
+        0
+       ],
+       [
+        0,
+        0,
+        0,
+        16
+       ]
+      ],
+      "n": 40,
+      "unscored": 0
+     }
+    },
+    "decision_role": "final adjudicated decision",
+    "anomaly_escalation": {
+     "n": 40,
+     "unscored": 0,
+     "tp": 16,
+     "fp": 0,
+     "fn": 0,
+     "tn": 24,
+     "accuracy": 1.0,
+     "precision": 1.0,
+     "recall": 1.0,
+     "f1": 1.0,
+     "false_positive_rate": 0.0
+    },
+    "review_status": {
+     "COMPLETE": 40,
+     "PARTIAL": 0,
+     "NONE": 0
+    }
+   }
+  },
+  "titles": {
+   "evidence": "Evidence Agent",
+   "investigator": "Investigator Agent",
+   "forensic": "Forensic Agent",
+   "combined": "Combined Multi-Agent System"
+  },
+  "tasks": {
+   "evidence": "Missing-evidence detection (positive = required evidence missing)",
+   "investigator": "Policy-violation detection (positive = NOT_ELIGIBLE)",
+   "forensic": "Anomaly detection (positive = forensic anomaly present)",
+   "combined": "Final claim decision (4 classes)"
+  },
+  "heatmap_comparative": {
+   "title": "Comparative performance on the shared task: claim decision (4 classes)",
+   "note": "Single agents are scored on the decision they recommend (advisory); the combined system on its adjudicated final decision. Agent-specific task metrics are reported separately.",
+   "columns": [
+    [
+     "accuracy",
+     "Accuracy"
+    ],
+    [
+     "precision",
+     "Precision (macro)"
+    ],
+    [
+     "recall",
+     "Recall (macro)"
+    ],
+    [
+     "f1",
+     "F1 (macro)"
+    ],
+    [
+     "completion",
+     "Completion rate"
+    ],
+    [
+     "validity",
+     "Structured output validity"
+    ]
+   ],
+   "rows": [
+    {
+     "row": "Evidence Agent",
+     "values": {
+      "accuracy": 0.65,
+      "precision": 0.5909090909090909,
+      "recall": 0.65625,
+      "f1": 0.5756410256410256,
+      "completion": 1.0,
+      "validity": 1.0
+     }
+    },
+    {
+     "row": "Investigator Agent",
+     "values": {
+      "accuracy": 0.925,
+      "precision": 0.9318181818181819,
+      "recall": 0.953125,
+      "f1": 0.9346642468239564,
+      "completion": 1.0,
+      "validity": 1.0
+     }
+    },
+    {
+     "row": "Forensic Agent",
+     "values": {
+      "accuracy": 0.75,
+      "precision": 0.6111111111111112,
+      "recall": 0.71875,
+      "f1": 0.6371794871794871,
+      "completion": 1.0,
+      "validity": 1.0
+     }
+    },
+    {
+     "row": "Combined Multi-Agent System",
+     "values": {
+      "accuracy": 1.0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0,
+      "completion": 1.0,
+      "validity": 1.0
+     }
+    }
+   ]
+  },
+  "heatmap_scenario": {
+   "title": "Scenario performance (each approach on its own task metric)",
+   "columns": [
+    [
+     "evidence",
+     "Evidence Agent: fact-extraction accuracy"
+    ],
+    [
+     "investigator",
+     "Investigator Agent: policy-violation detection accuracy"
+    ],
+    [
+     "forensic",
+     "Forensic Agent: anomaly detection accuracy"
+    ],
+    [
+     "combined",
+     "Combined Multi-Agent System: final-decision accuracy"
+    ]
+   ],
+   "rows": [
+    {
+     "row": "Valid claims",
+     "key": "valid",
+     "cells": {
+      "evidence": {
+       "value": 0.875,
+       "n": 8
+      },
+      "investigator": {
+       "value": 1.0,
+       "n": 8
+      },
+      "forensic": {
+       "value": 0.875,
+       "n": 8
+      },
+      "combined": {
+       "value": 1.0,
+       "n": 8
+      }
+     }
+    },
+    {
+     "row": "Missing or insufficient evidence",
+     "key": "missing_evidence",
+     "cells": {
+      "evidence": {
+       "value": 0.8,
+       "n": 8
+      },
+      "investigator": {
+       "value": 1.0,
+       "n": 8
+      },
+      "forensic": {
+       "value": 1.0,
+       "n": 8
+      },
+      "combined": {
+       "value": 1.0,
+       "n": 8
+      }
+     }
+    },
+    {
+     "row": "Policy eligibility violations",
+     "key": "policy_violation",
+     "cells": {
+      "evidence": {
+       "value": 0.875,
+       "n": 8
+      },
+      "investigator": {
+       "value": 1.0,
+       "n": 8
+      },
+      "forensic": {
+       "value": 0.875,
+       "n": 8
+      },
+      "combined": {
+       "value": 1.0,
+       "n": 8
+      }
+     }
+    },
+    {
+     "row": "Suspicious claims, serial mismatches and history anomalies",
+     "key": "suspicious",
+     "cells": {
+      "evidence": {
+       "value": 0.875,
+       "n": 8
+      },
+      "investigator": {
+       "value": 1.0,
+       "n": 8
+      },
+      "forensic": {
+       "value": 1.0,
+       "n": 8
+      },
+      "combined": {
+       "value": 1.0,
+       "n": 8
+      }
+     }
+    },
+    {
+     "row": "Conflicting evidence and prompt-injection attempts",
+     "key": "conflict_injection",
+     "cells": {
+      "evidence": {
+       "value": 0.875,
+       "n": 8
+      },
+      "investigator": {
+       "value": 1.0,
+       "n": 8
+      },
+      "forensic": {
+       "value": 1.0,
+       "n": 8
+      },
+      "combined": {
+       "value": 1.0,
+       "n": 8
+      }
+     }
+    }
+   ]
+  },
+  "heatmap_reliability": {
+   "title": "Execution reliability (a failure is not an incorrect prediction)",
+   "columns": [
+    [
+     "successful",
+     "Successful"
+    ],
+    [
+     "failed",
+     "Failed"
+    ],
+    [
+     "incomplete",
+     "Incomplete"
+    ],
+    [
+     "structured_output_failures",
+     "Structured output failures"
+    ],
+    [
+     "avg_latency_ms",
+     "Average latency (ms)"
+    ]
+   ],
+   "rows": [
+    {
+     "row": "Evidence Agent",
+     "values": {
+      "executions": 40,
+      "successful": 40,
+      "failed": 0,
+      "incomplete": 0,
+      "structured_output_failures": 0,
+      "completion_rate": 1.0,
+      "structured_output_validity": 1.0,
+      "avg_latency_ms": 12070.312825
+     }
+    },
+    {
+     "row": "Investigator Agent",
+     "values": {
+      "executions": 40,
+      "successful": 40,
+      "failed": 0,
+      "incomplete": 0,
+      "structured_output_failures": 0,
+      "completion_rate": 1.0,
+      "structured_output_validity": 1.0,
+      "avg_latency_ms": 12074.148775
+     }
+    },
+    {
+     "row": "Forensic Agent",
+     "values": {
+      "executions": 40,
+      "successful": 40,
+      "failed": 0,
+      "incomplete": 0,
+      "structured_output_failures": 0,
+      "completion_rate": 1.0,
+      "structured_output_validity": 1.0,
+      "avg_latency_ms": 544.8162
+     }
+    },
+    {
+     "row": "Combined Multi-Agent System",
+     "values": {
+      "executions": 40,
+      "successful": 40,
+      "failed": 0,
+      "incomplete": 0,
+      "structured_output_failures": 0,
+      "completion_rate": 1.0,
+      "structured_output_validity": 1.0,
+      "avg_latency_ms": 24279.3073
+     }
+    }
+   ]
+  },
+  "boxplots": {
+   "latency_all": {
+    "title": "Execution latency: four approaches",
+    "unit": "ms",
+    "series": {
+     "Evidence Agent": {
+      "n": 40,
+      "sufficient": true,
+      "min": 11798.317,
+      "max": 12348.057,
+      "q1": 11982.72775,
+      "median": 12051.330000000002,
+      "q3": 12178.17975,
+      "iqr": 195.45199999999932,
+      "whisker_low": 11798.317,
+      "whisker_high": 12348.057,
+      "outliers": [],
+      "mean": 12070.312825
+     },
+     "Investigator Agent": {
+      "n": 40,
+      "sufficient": true,
+      "min": 11884.129,
+      "max": 12328.143,
+      "q1": 12006.622,
+      "median": 12060.0345,
+      "q3": 12134.79175,
+      "iqr": 128.16975000000093,
+      "whisker_low": 11884.129,
+      "whisker_high": 12299.8,
+      "outliers": [
+       12328.143
+      ],
+      "mean": 12074.148775
+     },
+     "Forensic Agent": {
+      "n": 40,
+      "sufficient": true,
+      "min": 519.523,
+      "max": 822.424,
+      "q1": 528.60825,
+      "median": 534.6335,
+      "q3": 543.7059999999999,
+      "iqr": 15.097749999999905,
+      "whisker_low": 519.523,
+      "whisker_high": 565.23,
+      "outliers": [
+       597.779,
+       822.424
+      ],
+      "mean": 544.8162
+     },
+     "Combined Multi-Agent System": {
+      "n": 40,
+      "sufficient": true,
+      "min": 23918.172,
+      "max": 26037.572,
+      "q1": 24082.618000000002,
+      "median": 24225.7805,
+      "q3": 24359.748499999998,
+      "iqr": 277.13049999999566,
+      "whisker_low": 23918.172,
+      "whisker_high": 24715.712,
+      "outliers": [
+       26037.572
+      ],
+      "mean": 24279.3073
+     }
+    }
+   },
+   "latency_agents": {
+    "title": "Individual agent latency",
+    "unit": "ms",
+    "series": {
+     "Evidence Agent": {
+      "n": 40,
+      "sufficient": true,
+      "min": 11798.317,
+      "max": 12348.057,
+      "q1": 11982.72775,
+      "median": 12051.330000000002,
+      "q3": 12178.17975,
+      "iqr": 195.45199999999932,
+      "whisker_low": 11798.317,
+      "whisker_high": 12348.057,
+      "outliers": [],
+      "mean": 12070.312825
+     },
+     "Investigator Agent": {
+      "n": 40,
+      "sufficient": true,
+      "min": 11884.129,
+      "max": 12328.143,
+      "q1": 12006.622,
+      "median": 12060.0345,
+      "q3": 12134.79175,
+      "iqr": 128.16975000000093,
+      "whisker_low": 11884.129,
+      "whisker_high": 12299.8,
+      "outliers": [
+       12328.143
+      ],
+      "mean": 12074.148775
+     },
+     "Forensic Agent": {
+      "n": 40,
+      "sufficient": true,
+      "min": 519.523,
+      "max": 822.424,
+      "q1": 528.60825,
+      "median": 534.6335,
+      "q3": 543.7059999999999,
+      "iqr": 15.097749999999905,
+      "whisker_low": 519.523,
+      "whisker_high": 565.23,
+      "outliers": [
+       597.779,
+       822.424
+      ],
+      "mean": 544.8162
+     }
+    }
+   },
+   "api_requests": {
+    "title": "Gemini API requests per execution",
+    "unit": "requests",
+    "series": {},
+    "note": "Offline evaluation: the test doubles make no Gemini requests (0 per execution, confirmed by the request ledger), so there is no distribution to plot. Live observations are required."
+   },
+   "tokens": {
+    "title": "Token usage per execution",
+    "unit": "tokens",
+    "series": {},
+    "note": "No token usage was reported in this evaluation (offline test doubles report none), so no token box plot is drawn."
+   }
+  },
+  "confusion": {
+   "evidence": {
+    "title": "Evidence Agent - missing-evidence detection",
+    "labels": [
+     "Missing",
+     "Complete"
+    ],
+    "matrix": [
+     [
+      8,
+      0
+     ],
+     [
+      0,
+      32
+     ]
+    ],
+    "n": 40,
+    "unscored": 0
+   },
+   "investigator": {
+    "title": "Investigator Agent - policy-violation detection",
+    "labels": [
+     "Violation",
+     "No violation"
+    ],
+    "matrix": [
+     [
+      9,
+      0
+     ],
+     [
+      0,
+      31
+     ]
+    ],
+    "n": 40,
+    "unscored": 0
+   },
+   "forensic": {
+    "title": "Forensic Agent - anomaly detection",
+    "labels": [
+     "Anomaly",
+     "No anomaly"
+    ],
+    "matrix": [
+     [
+      16,
+      0
+     ],
+     [
+      2,
+      22
+     ]
+    ],
+    "n": 40,
+    "unscored": 0
+   },
+   "combined": {
+    "title": "Combined system - final claim decision",
+    "labels": [
+     "APPROVE",
+     "REJECT",
+     "REQUEST_EVIDENCE",
+     "ESCALATE"
+    ],
+    "matrix": [
+     [
+      8,
+      0,
+      0,
+      0
+     ],
+     [
+      0,
+      8,
+      0,
+      0
+     ],
+     [
+      0,
+      0,
+      8,
+      0
+     ],
+     [
+      0,
+      0,
+      0,
+      16
+     ]
+    ],
+    "n": 40,
+    "unscored": 0
+   },
+   "advisory": {
+    "evidence": {
+     "title": "Evidence Agent - recommended decision (advisory)",
+     "labels": [
+      "APPROVE",
+      "REJECT",
+      "REQUEST_EVIDENCE",
+      "ESCALATE"
+     ],
+     "matrix": [
+      [
+       8,
+       0,
+       0,
+       0
+      ],
+      [
+       8,
+       0,
+       0,
+       0
+      ],
+      [
+       0,
+       0,
+       8,
+       0
+      ],
+      [
+       6,
+       0,
+       0,
+       10
+      ]
+     ],
+     "n": 40,
+     "unscored": 0
+    },
+    "investigator": {
+     "title": "Investigator Agent - recommended decision (advisory)",
+     "labels": [
+      "APPROVE",
+      "REJECT",
+      "REQUEST_EVIDENCE",
+      "ESCALATE"
+     ],
+     "matrix": [
+      [
+       8,
+       0,
+       0,
+       0
+      ],
+      [
+       0,
+       8,
+       0,
+       0
+      ],
+      [
+       0,
+       0,
+       8,
+       0
+      ],
+      [
+       3,
+       0,
+       0,
+       13
+      ]
+     ],
+     "n": 40,
+     "unscored": 0
+    },
+    "forensic": {
+     "title": "Forensic Agent - recommended decision (advisory)",
+     "labels": [
+      "APPROVE",
+      "REJECT",
+      "REQUEST_EVIDENCE",
+      "ESCALATE"
+     ],
+     "matrix": [
+      [
+       8,
+       0,
+       0,
+       0
+      ],
+      [
+       8,
+       0,
+       0,
+       0
+      ],
+      [
+       0,
+       0,
+       8,
+       0
+      ],
+      [
+       2,
+       0,
+       0,
+       14
+      ]
+     ],
+     "n": 40,
+     "unscored": 0
+    }
+   }
+  },
+  "scenarios": [
+   {
+    "key": "valid",
+    "label": "Valid claims",
+    "cases": 8,
+    "final_decision_accuracy": 1.0,
+    "completion": {
+     "evidence": 1.0,
+     "investigator": 1.0,
+     "forensic": 1.0,
+     "combined": 1.0
+    },
+    "mean_latency_ms": {
+     "evidence": 12024.363,
+     "investigator": 12127.477875,
+     "forensic": 538.8115,
+     "combined": 24246.74825
+    },
+    "wrong_final_decisions": []
+   },
+   {
+    "key": "missing_evidence",
+    "label": "Missing or insufficient evidence",
+    "cases": 8,
+    "final_decision_accuracy": 1.0,
+    "completion": {
+     "evidence": 1.0,
+     "investigator": 1.0,
+     "forensic": 1.0,
+     "combined": 1.0
+    },
+    "mean_latency_ms": {
+     "evidence": 12083.02225,
+     "investigator": 12002.16925,
+     "forensic": 534.748625,
+     "combined": 24187.598625
+    },
+    "wrong_final_decisions": []
+   },
+   {
+    "key": "policy_violation",
+    "label": "Policy eligibility violations",
+    "cases": 8,
+    "final_decision_accuracy": 1.0,
+    "completion": {
+     "evidence": 1.0,
+     "investigator": 1.0,
+     "forensic": 1.0,
+     "combined": 1.0
+    },
+    "mean_latency_ms": {
+     "evidence": 12138.3475,
+     "investigator": 12076.655,
+     "forensic": 540.904375,
+     "combined": 24311.7475
+    },
+    "wrong_final_decisions": []
+   },
+   {
+    "key": "suspicious",
+    "label": "Suspicious claims, serial mismatches and history anomalies",
+    "cases": 8,
+    "final_decision_accuracy": 1.0,
+    "completion": {
+     "evidence": 1.0,
+     "investigator": 1.0,
+     "forensic": 1.0,
+     "combined": 1.0
+    },
+    "mean_latency_ms": {
+     "evidence": 11998.3935,
+     "investigator": 12069.10225,
+     "forensic": 531.858625,
+     "combined": 24159.410375
+    },
+    "wrong_final_decisions": []
+   },
+   {
+    "key": "conflict_injection",
+    "label": "Conflicting evidence and prompt-injection attempts",
+    "cases": 8,
+    "final_decision_accuracy": 1.0,
+    "completion": {
+     "evidence": 1.0,
+     "investigator": 1.0,
+     "forensic": 1.0,
+     "combined": 1.0
+    },
+    "mean_latency_ms": {
+     "evidence": 12107.437875,
+     "investigator": 12095.3395,
+     "forensic": 577.757875,
+     "combined": 24491.031750000002
+    },
+    "wrong_final_decisions": []
+   }
+  ],
+  "usage": {
+   "gemini_requests_total": 0,
+   "gemini_requests_source": "offline (no requests; ledger unchanged)",
+   "mcp_calls_total": 240,
+   "mcp_calls_mean_per_case": 6.0,
+   "tokens_total": null,
+   "estimated_cost": null,
+   "estimated_cost_note": "N/A: no verified per-token price is configured, so no cost is estimated."
+  }
+ },
+ "not_run": []
+}

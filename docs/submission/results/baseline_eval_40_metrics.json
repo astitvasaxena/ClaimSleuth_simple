@@ -1,0 +1,1420 @@
+{
+  "meta": {
+    "evaluation_id": "EV-20261119-141842-e46c4a",
+    "dataset_version": "eval-v1",
+    "mode": "offline",
+    "mode_label": "OFFLINE (labelled test doubles, not LLM reasoning)",
+    "started_at": "2026-11-19T14:18:42.247448+00:00",
+    "finished_at": "2026-11-19T14:34:58.159407+00:00",
+    "cases_total": 40,
+    "cases_requested": 40,
+    "cases_executed": 40,
+    "stopped_reason": null,
+    "live_estimate": null,
+    "gemini_model": null,
+    "synthetic": true,
+    "context_sharing": "blackboard",
+    "blackboard": "/Users/vaibhav/Study/Sem 7/Agentic AI/Project/ClaimSleuth_simple/runtime/evaluation/EV-20261119-141842-e46c4a/blackboard.sqlite3",
+    "ledger_requests_added": 0
+  },
+  "aggregate": {
+    "meta": {
+      "evaluation_id": "EV-20261119-141842-e46c4a",
+      "dataset_version": "eval-v1",
+      "mode": "offline",
+      "mode_label": "OFFLINE (labelled test doubles, not LLM reasoning)",
+      "started_at": "2026-11-19T14:18:42.247448+00:00",
+      "finished_at": "2026-11-19T14:34:58.159407+00:00",
+      "cases_total": 40,
+      "cases_requested": 40,
+      "cases_executed": 40,
+      "stopped_reason": null,
+      "live_estimate": null,
+      "gemini_model": null,
+      "synthetic": true,
+      "context_sharing": "blackboard",
+      "blackboard": "/Users/vaibhav/Study/Sem 7/Agentic AI/Project/ClaimSleuth_simple/runtime/evaluation/EV-20261119-141842-e46c4a/blackboard.sqlite3",
+      "ledger_requests_added": 0
+    },
+    "approaches": {
+      "evidence": {
+        "title": "Evidence Agent",
+        "task": "Missing-evidence detection (positive = required evidence missing)",
+        "reliability": {
+          "executions": 40,
+          "successful": 40,
+          "failed": 0,
+          "incomplete": 0,
+          "structured_output_failures": 0,
+          "completion_rate": 1.0,
+          "structured_output_validity": 1.0,
+          "avg_latency_ms": 12070.312825
+        },
+        "decision": {
+          "n": 40,
+          "unscored": 0,
+          "accuracy": 0.65,
+          "per_class": {
+            "APPROVE": {
+              "precision": 0.36363636363636365,
+              "recall": 1.0,
+              "f1": 0.5333333333333333,
+              "support": 8,
+              "predicted": 22,
+              "present": true
+            },
+            "REJECT": {
+              "precision": 0.0,
+              "recall": 0.0,
+              "f1": 0.0,
+              "support": 8,
+              "predicted": 0,
+              "present": true
+            },
+            "REQUEST_EVIDENCE": {
+              "precision": 1.0,
+              "recall": 1.0,
+              "f1": 1.0,
+              "support": 8,
+              "predicted": 8,
+              "present": true
+            },
+            "ESCALATE": {
+              "precision": 1.0,
+              "recall": 0.625,
+              "f1": 0.7692307692307693,
+              "support": 16,
+              "predicted": 10,
+              "present": true
+            }
+          },
+          "macro": {
+            "precision": {
+              "value": 0.5909090909090909,
+              "classes": [
+                "APPROVE",
+                "REJECT",
+                "REQUEST_EVIDENCE",
+                "ESCALATE"
+              ]
+            },
+            "recall": {
+              "value": 0.65625,
+              "classes": [
+                "APPROVE",
+                "REJECT",
+                "REQUEST_EVIDENCE",
+                "ESCALATE"
+              ]
+            },
+            "f1": {
+              "value": 0.5756410256410256,
+              "classes": [
+                "APPROVE",
+                "REJECT",
+                "REQUEST_EVIDENCE",
+                "ESCALATE"
+              ]
+            }
+          },
+          "weighted": {
+            "precision": 0.6727272727272727,
+            "recall": 0.65,
+            "f1": 0.6143589743589744
+          },
+          "zero_division": 0,
+          "confusion": {
+            "labels": [
+              "APPROVE",
+              "REJECT",
+              "REQUEST_EVIDENCE",
+              "ESCALATE"
+            ],
+            "matrix": [
+              [
+                8,
+                0,
+                0,
+                0
+              ],
+              [
+                8,
+                0,
+                0,
+                0
+              ],
+              [
+                0,
+                0,
+                8,
+                0
+              ],
+              [
+                6,
+                0,
+                0,
+                10
+              ]
+            ],
+            "n": 40,
+            "unscored": 0
+          }
+        },
+        "decision_role": "advisory recommendation (never decides)",
+        "task_metrics": {
+          "n": 40,
+          "unscored": 0,
+          "tp": 8,
+          "fp": 0,
+          "fn": 0,
+          "tn": 32,
+          "accuracy": 1.0,
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0,
+          "false_positive_rate": 0.0
+        },
+        "citation_validity": {
+          "valid": 600,
+          "total": 600,
+          "rate": 1.0
+        },
+        "fact_extraction": {
+          "matched": 252,
+          "expected": 291,
+          "accuracy": 0.865979381443299
+        }
+      },
+      "investigator": {
+        "title": "Investigator Agent",
+        "task": "Policy-violation detection (positive = NOT_ELIGIBLE)",
+        "reliability": {
+          "executions": 40,
+          "successful": 40,
+          "failed": 0,
+          "incomplete": 0,
+          "structured_output_failures": 0,
+          "completion_rate": 1.0,
+          "structured_output_validity": 1.0,
+          "avg_latency_ms": 12074.148775
+        },
+        "decision": {
+          "n": 40,
+          "unscored": 0,
+          "accuracy": 0.925,
+          "per_class": {
+            "APPROVE": {
+              "precision": 0.7272727272727273,
+              "recall": 1.0,
+              "f1": 0.8421052631578948,
+              "support": 8,
+              "predicted": 11,
+              "present": true
+            },
+            "REJECT": {
+              "precision": 1.0,
+              "recall": 1.0,
+              "f1": 1.0,
+              "support": 8,
+              "predicted": 8,
+              "present": true
+            },
+            "REQUEST_EVIDENCE": {
+              "precision": 1.0,
+              "recall": 1.0,
+              "f1": 1.0,
+              "support": 8,
+              "predicted": 8,
+              "present": true
+            },
+            "ESCALATE": {
+              "precision": 1.0,
+              "recall": 0.8125,
+              "f1": 0.896551724137931,
+              "support": 16,
+              "predicted": 13,
+              "present": true
+            }
+          },
+          "macro": {
+            "precision": {
+              "value": 0.9318181818181819,
+              "classes": [
+                "APPROVE",
+                "REJECT",
+                "REQUEST_EVIDENCE",
+                "ESCALATE"
+              ]
+            },
+            "recall": {
+              "value": 0.953125,
+              "classes": [
+                "APPROVE",
+                "REJECT",
+                "REQUEST_EVIDENCE",
+                "ESCALATE"
+              ]
+            },
+            "f1": {
+              "value": 0.9346642468239564,
+              "classes": [
+                "APPROVE",
+                "REJECT",
+                "REQUEST_EVIDENCE",
+                "ESCALATE"
+              ]
+            }
+          },
+          "weighted": {
+            "precision": 0.9454545454545455,
+            "recall": 0.925,
+            "f1": 0.9270417422867514
+          },
+          "zero_division": 0,
+          "confusion": {
+            "labels": [
+              "APPROVE",
+              "REJECT",
+              "REQUEST_EVIDENCE",
+              "ESCALATE"
+            ],
+            "matrix": [
+              [
+                8,
+                0,
+                0,
+                0
+              ],
+              [
+                0,
+                8,
+                0,
+                0
+              ],
+              [
+                0,
+                0,
+                8,
+                0
+              ],
+              [
+                3,
+                0,
+                0,
+                13
+              ]
+            ],
+            "n": 40,
+            "unscored": 0
+          }
+        },
+        "decision_role": "advisory recommendation (never decides)",
+        "task_metrics": {
+          "n": 40,
+          "unscored": 0,
+          "tp": 9,
+          "fp": 0,
+          "fn": 0,
+          "tn": 31,
+          "accuracy": 1.0,
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0,
+          "false_positive_rate": 0.0
+        },
+        "citation_validity": {
+          "valid": 34,
+          "total": 34,
+          "rate": 1.0
+        },
+        "history_anomaly": {
+          "n": 40,
+          "unscored": 0,
+          "tp": 3,
+          "fp": 0,
+          "fn": 1,
+          "tn": 36,
+          "accuracy": 0.975,
+          "precision": 1.0,
+          "recall": 0.75,
+          "f1": 0.8571428571428571,
+          "false_positive_rate": 0.0
+        }
+      },
+      "forensic": {
+        "title": "Forensic Agent",
+        "task": "Anomaly detection (positive = forensic anomaly present)",
+        "reliability": {
+          "executions": 40,
+          "successful": 40,
+          "failed": 0,
+          "incomplete": 0,
+          "structured_output_failures": 0,
+          "completion_rate": 1.0,
+          "structured_output_validity": 1.0,
+          "avg_latency_ms": 544.8162
+        },
+        "decision": {
+          "n": 40,
+          "unscored": 0,
+          "accuracy": 0.75,
+          "per_class": {
+            "APPROVE": {
+              "precision": 0.4444444444444444,
+              "recall": 1.0,
+              "f1": 0.6153846153846153,
+              "support": 8,
+              "predicted": 18,
+              "present": true
+            },
+            "REJECT": {
+              "precision": 0.0,
+              "recall": 0.0,
+              "f1": 0.0,
+              "support": 8,
+              "predicted": 0,
+              "present": true
+            },
+            "REQUEST_EVIDENCE": {
+              "precision": 1.0,
+              "recall": 1.0,
+              "f1": 1.0,
+              "support": 8,
+              "predicted": 8,
+              "present": true
+            },
+            "ESCALATE": {
+              "precision": 1.0,
+              "recall": 0.875,
+              "f1": 0.9333333333333333,
+              "support": 16,
+              "predicted": 14,
+              "present": true
+            }
+          },
+          "macro": {
+            "precision": {
+              "value": 0.6111111111111112,
+              "classes": [
+                "APPROVE",
+                "REJECT",
+                "REQUEST_EVIDENCE",
+                "ESCALATE"
+              ]
+            },
+            "recall": {
+              "value": 0.71875,
+              "classes": [
+                "APPROVE",
+                "REJECT",
+                "REQUEST_EVIDENCE",
+                "ESCALATE"
+              ]
+            },
+            "f1": {
+              "value": 0.6371794871794871,
+              "classes": [
+                "APPROVE",
+                "REJECT",
+                "REQUEST_EVIDENCE",
+                "ESCALATE"
+              ]
+            }
+          },
+          "weighted": {
+            "precision": 0.6888888888888889,
+            "recall": 0.75,
+            "f1": 0.6964102564102564
+          },
+          "zero_division": 0,
+          "confusion": {
+            "labels": [
+              "APPROVE",
+              "REJECT",
+              "REQUEST_EVIDENCE",
+              "ESCALATE"
+            ],
+            "matrix": [
+              [
+                8,
+                0,
+                0,
+                0
+              ],
+              [
+                8,
+                0,
+                0,
+                0
+              ],
+              [
+                0,
+                0,
+                8,
+                0
+              ],
+              [
+                2,
+                0,
+                0,
+                14
+              ]
+            ],
+            "n": 40,
+            "unscored": 0
+          }
+        },
+        "decision_role": "advisory recommendation (never decides)",
+        "task_metrics": {
+          "n": 40,
+          "unscored": 0,
+          "tp": 16,
+          "fp": 2,
+          "fn": 0,
+          "tn": 22,
+          "accuracy": 0.95,
+          "precision": 0.8888888888888888,
+          "recall": 1.0,
+          "f1": 0.9411764705882353,
+          "false_positive_rate": 0.08333333333333333
+        },
+        "citation_validity": {
+          "valid": 304,
+          "total": 304,
+          "rate": 1.0
+        },
+        "per_type_recall": {
+          "serial_mismatch": {
+            "cases": 5,
+            "detected": 5,
+            "recall": 1.0
+          },
+          "history_other_claimant": {
+            "cases": 3,
+            "detected": 3,
+            "recall": 1.0
+          },
+          "repeat_claims": {
+            "cases": 1,
+            "detected": 1,
+            "recall": 1.0
+          },
+          "chronology": {
+            "cases": 2,
+            "detected": 2,
+            "recall": 1.0
+          },
+          "identity_mismatch": {
+            "cases": 1,
+            "detected": 1,
+            "recall": 1.0
+          },
+          "prompt_injection": {
+            "cases": 4,
+            "detected": 4,
+            "recall": 1.0
+          },
+          "data_access_request": {
+            "cases": 1,
+            "detected": 1,
+            "recall": 1.0
+          }
+        }
+      },
+      "combined": {
+        "title": "Combined Multi-Agent System",
+        "task": "Final claim decision (4 classes)",
+        "reliability": {
+          "executions": 40,
+          "successful": 40,
+          "failed": 0,
+          "incomplete": 0,
+          "structured_output_failures": 0,
+          "completion_rate": 1.0,
+          "structured_output_validity": 1.0,
+          "avg_latency_ms": 24279.3073
+        },
+        "decision": {
+          "n": 40,
+          "unscored": 0,
+          "accuracy": 1.0,
+          "per_class": {
+            "APPROVE": {
+              "precision": 1.0,
+              "recall": 1.0,
+              "f1": 1.0,
+              "support": 8,
+              "predicted": 8,
+              "present": true
+            },
+            "REJECT": {
+              "precision": 1.0,
+              "recall": 1.0,
+              "f1": 1.0,
+              "support": 8,
+              "predicted": 8,
+              "present": true
+            },
+            "REQUEST_EVIDENCE": {
+              "precision": 1.0,
+              "recall": 1.0,
+              "f1": 1.0,
+              "support": 8,
+              "predicted": 8,
+              "present": true
+            },
+            "ESCALATE": {
+              "precision": 1.0,
+              "recall": 1.0,
+              "f1": 1.0,
+              "support": 16,
+              "predicted": 16,
+              "present": true
+            }
+          },
+          "macro": {
+            "precision": {
+              "value": 1.0,
+              "classes": [
+                "APPROVE",
+                "REJECT",
+                "REQUEST_EVIDENCE",
+                "ESCALATE"
+              ]
+            },
+            "recall": {
+              "value": 1.0,
+              "classes": [
+                "APPROVE",
+                "REJECT",
+                "REQUEST_EVIDENCE",
+                "ESCALATE"
+              ]
+            },
+            "f1": {
+              "value": 1.0,
+              "classes": [
+                "APPROVE",
+                "REJECT",
+                "REQUEST_EVIDENCE",
+                "ESCALATE"
+              ]
+            }
+          },
+          "weighted": {
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1": 1.0
+          },
+          "zero_division": 0,
+          "confusion": {
+            "labels": [
+              "APPROVE",
+              "REJECT",
+              "REQUEST_EVIDENCE",
+              "ESCALATE"
+            ],
+            "matrix": [
+              [
+                8,
+                0,
+                0,
+                0
+              ],
+              [
+                0,
+                8,
+                0,
+                0
+              ],
+              [
+                0,
+                0,
+                8,
+                0
+              ],
+              [
+                0,
+                0,
+                0,
+                16
+              ]
+            ],
+            "n": 40,
+            "unscored": 0
+          }
+        },
+        "decision_role": "final adjudicated decision",
+        "anomaly_escalation": {
+          "n": 40,
+          "unscored": 0,
+          "tp": 16,
+          "fp": 0,
+          "fn": 0,
+          "tn": 24,
+          "accuracy": 1.0,
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0,
+          "false_positive_rate": 0.0
+        },
+        "review_status": {
+          "COMPLETE": 40,
+          "PARTIAL": 0,
+          "NONE": 0
+        }
+      }
+    },
+    "titles": {
+      "evidence": "Evidence Agent",
+      "investigator": "Investigator Agent",
+      "forensic": "Forensic Agent",
+      "combined": "Combined Multi-Agent System"
+    },
+    "tasks": {
+      "evidence": "Missing-evidence detection (positive = required evidence missing)",
+      "investigator": "Policy-violation detection (positive = NOT_ELIGIBLE)",
+      "forensic": "Anomaly detection (positive = forensic anomaly present)",
+      "combined": "Final claim decision (4 classes)"
+    },
+    "heatmap_comparative": {
+      "title": "Comparative performance on the shared task: claim decision (4 classes)",
+      "note": "Single agents are scored on the decision they recommend (advisory); the combined system on its adjudicated final decision. Agent-specific task metrics are reported separately.",
+      "columns": [
+        [
+          "accuracy",
+          "Accuracy"
+        ],
+        [
+          "precision",
+          "Precision (macro)"
+        ],
+        [
+          "recall",
+          "Recall (macro)"
+        ],
+        [
+          "f1",
+          "F1 (macro)"
+        ],
+        [
+          "completion",
+          "Completion rate"
+        ],
+        [
+          "validity",
+          "Structured output validity"
+        ]
+      ],
+      "rows": [
+        {
+          "row": "Evidence Agent",
+          "values": {
+            "accuracy": 0.65,
+            "precision": 0.5909090909090909,
+            "recall": 0.65625,
+            "f1": 0.5756410256410256,
+            "completion": 1.0,
+            "validity": 1.0
+          }
+        },
+        {
+          "row": "Investigator Agent",
+          "values": {
+            "accuracy": 0.925,
+            "precision": 0.9318181818181819,
+            "recall": 0.953125,
+            "f1": 0.9346642468239564,
+            "completion": 1.0,
+            "validity": 1.0
+          }
+        },
+        {
+          "row": "Forensic Agent",
+          "values": {
+            "accuracy": 0.75,
+            "precision": 0.6111111111111112,
+            "recall": 0.71875,
+            "f1": 0.6371794871794871,
+            "completion": 1.0,
+            "validity": 1.0
+          }
+        },
+        {
+          "row": "Combined Multi-Agent System",
+          "values": {
+            "accuracy": 1.0,
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1": 1.0,
+            "completion": 1.0,
+            "validity": 1.0
+          }
+        }
+      ]
+    },
+    "heatmap_scenario": {
+      "title": "Scenario performance (each approach on its own task metric)",
+      "columns": [
+        [
+          "evidence",
+          "Evidence Agent: fact-extraction accuracy"
+        ],
+        [
+          "investigator",
+          "Investigator Agent: policy-violation detection accuracy"
+        ],
+        [
+          "forensic",
+          "Forensic Agent: anomaly detection accuracy"
+        ],
+        [
+          "combined",
+          "Combined Multi-Agent System: final-decision accuracy"
+        ]
+      ],
+      "rows": [
+        {
+          "row": "Valid claims",
+          "key": "valid",
+          "cells": {
+            "evidence": {
+              "value": 0.875,
+              "n": 8
+            },
+            "investigator": {
+              "value": 1.0,
+              "n": 8
+            },
+            "forensic": {
+              "value": 0.875,
+              "n": 8
+            },
+            "combined": {
+              "value": 1.0,
+              "n": 8
+            }
+          }
+        },
+        {
+          "row": "Missing or insufficient evidence",
+          "key": "missing_evidence",
+          "cells": {
+            "evidence": {
+              "value": 0.8,
+              "n": 8
+            },
+            "investigator": {
+              "value": 1.0,
+              "n": 8
+            },
+            "forensic": {
+              "value": 1.0,
+              "n": 8
+            },
+            "combined": {
+              "value": 1.0,
+              "n": 8
+            }
+          }
+        },
+        {
+          "row": "Policy eligibility violations",
+          "key": "policy_violation",
+          "cells": {
+            "evidence": {
+              "value": 0.875,
+              "n": 8
+            },
+            "investigator": {
+              "value": 1.0,
+              "n": 8
+            },
+            "forensic": {
+              "value": 0.875,
+              "n": 8
+            },
+            "combined": {
+              "value": 1.0,
+              "n": 8
+            }
+          }
+        },
+        {
+          "row": "Suspicious claims, serial mismatches and history anomalies",
+          "key": "suspicious",
+          "cells": {
+            "evidence": {
+              "value": 0.875,
+              "n": 8
+            },
+            "investigator": {
+              "value": 1.0,
+              "n": 8
+            },
+            "forensic": {
+              "value": 1.0,
+              "n": 8
+            },
+            "combined": {
+              "value": 1.0,
+              "n": 8
+            }
+          }
+        },
+        {
+          "row": "Conflicting evidence and prompt-injection attempts",
+          "key": "conflict_injection",
+          "cells": {
+            "evidence": {
+              "value": 0.875,
+              "n": 8
+            },
+            "investigator": {
+              "value": 1.0,
+              "n": 8
+            },
+            "forensic": {
+              "value": 1.0,
+              "n": 8
+            },
+            "combined": {
+              "value": 1.0,
+              "n": 8
+            }
+          }
+        }
+      ]
+    },
+    "heatmap_reliability": {
+      "title": "Execution reliability (a failure is not an incorrect prediction)",
+      "columns": [
+        [
+          "successful",
+          "Successful"
+        ],
+        [
+          "failed",
+          "Failed"
+        ],
+        [
+          "incomplete",
+          "Incomplete"
+        ],
+        [
+          "structured_output_failures",
+          "Structured output failures"
+        ],
+        [
+          "avg_latency_ms",
+          "Average latency (ms)"
+        ]
+      ],
+      "rows": [
+        {
+          "row": "Evidence Agent",
+          "values": {
+            "executions": 40,
+            "successful": 40,
+            "failed": 0,
+            "incomplete": 0,
+            "structured_output_failures": 0,
+            "completion_rate": 1.0,
+            "structured_output_validity": 1.0,
+            "avg_latency_ms": 12070.312825
+          }
+        },
+        {
+          "row": "Investigator Agent",
+          "values": {
+            "executions": 40,
+            "successful": 40,
+            "failed": 0,
+            "incomplete": 0,
+            "structured_output_failures": 0,
+            "completion_rate": 1.0,
+            "structured_output_validity": 1.0,
+            "avg_latency_ms": 12074.148775
+          }
+        },
+        {
+          "row": "Forensic Agent",
+          "values": {
+            "executions": 40,
+            "successful": 40,
+            "failed": 0,
+            "incomplete": 0,
+            "structured_output_failures": 0,
+            "completion_rate": 1.0,
+            "structured_output_validity": 1.0,
+            "avg_latency_ms": 544.8162
+          }
+        },
+        {
+          "row": "Combined Multi-Agent System",
+          "values": {
+            "executions": 40,
+            "successful": 40,
+            "failed": 0,
+            "incomplete": 0,
+            "structured_output_failures": 0,
+            "completion_rate": 1.0,
+            "structured_output_validity": 1.0,
+            "avg_latency_ms": 24279.3073
+          }
+        }
+      ]
+    },
+    "boxplots": {
+      "latency_all": {
+        "title": "Execution latency: four approaches",
+        "unit": "ms",
+        "series": {
+          "Evidence Agent": {
+            "n": 40,
+            "sufficient": true,
+            "min": 11798.317,
+            "max": 12348.057,
+            "q1": 11982.72775,
+            "median": 12051.330000000002,
+            "q3": 12178.17975,
+            "iqr": 195.45199999999932,
+            "whisker_low": 11798.317,
+            "whisker_high": 12348.057,
+            "outliers": [],
+            "mean": 12070.312825
+          },
+          "Investigator Agent": {
+            "n": 40,
+            "sufficient": true,
+            "min": 11884.129,
+            "max": 12328.143,
+            "q1": 12006.622,
+            "median": 12060.0345,
+            "q3": 12134.79175,
+            "iqr": 128.16975000000093,
+            "whisker_low": 11884.129,
+            "whisker_high": 12299.8,
+            "outliers": [
+              12328.143
+            ],
+            "mean": 12074.148775
+          },
+          "Forensic Agent": {
+            "n": 40,
+            "sufficient": true,
+            "min": 519.523,
+            "max": 822.424,
+            "q1": 528.60825,
+            "median": 534.6335,
+            "q3": 543.7059999999999,
+            "iqr": 15.097749999999905,
+            "whisker_low": 519.523,
+            "whisker_high": 565.23,
+            "outliers": [
+              597.779,
+              822.424
+            ],
+            "mean": 544.8162
+          },
+          "Combined Multi-Agent System": {
+            "n": 40,
+            "sufficient": true,
+            "min": 23918.172,
+            "max": 26037.572,
+            "q1": 24082.618000000002,
+            "median": 24225.7805,
+            "q3": 24359.748499999998,
+            "iqr": 277.13049999999566,
+            "whisker_low": 23918.172,
+            "whisker_high": 24715.712,
+            "outliers": [
+              26037.572
+            ],
+            "mean": 24279.3073
+          }
+        }
+      },
+      "latency_agents": {
+        "title": "Individual agent latency",
+        "unit": "ms",
+        "series": {
+          "Evidence Agent": {
+            "n": 40,
+            "sufficient": true,
+            "min": 11798.317,
+            "max": 12348.057,
+            "q1": 11982.72775,
+            "median": 12051.330000000002,
+            "q3": 12178.17975,
+            "iqr": 195.45199999999932,
+            "whisker_low": 11798.317,
+            "whisker_high": 12348.057,
+            "outliers": [],
+            "mean": 12070.312825
+          },
+          "Investigator Agent": {
+            "n": 40,
+            "sufficient": true,
+            "min": 11884.129,
+            "max": 12328.143,
+            "q1": 12006.622,
+            "median": 12060.0345,
+            "q3": 12134.79175,
+            "iqr": 128.16975000000093,
+            "whisker_low": 11884.129,
+            "whisker_high": 12299.8,
+            "outliers": [
+              12328.143
+            ],
+            "mean": 12074.148775
+          },
+          "Forensic Agent": {
+            "n": 40,
+            "sufficient": true,
+            "min": 519.523,
+            "max": 822.424,
+            "q1": 528.60825,
+            "median": 534.6335,
+            "q3": 543.7059999999999,
+            "iqr": 15.097749999999905,
+            "whisker_low": 519.523,
+            "whisker_high": 565.23,
+            "outliers": [
+              597.779,
+              822.424
+            ],
+            "mean": 544.8162
+          }
+        }
+      },
+      "api_requests": {
+        "title": "Gemini API requests per execution",
+        "unit": "requests",
+        "series": {},
+        "note": "Offline evaluation: the test doubles make no Gemini requests (0 per execution, confirmed by the request ledger), so there is no distribution to plot. Live observations are required."
+      },
+      "tokens": {
+        "title": "Token usage per execution",
+        "unit": "tokens",
+        "series": {},
+        "note": "No token usage was reported in this evaluation (offline test doubles report none), so no token box plot is drawn."
+      }
+    },
+    "confusion": {
+      "evidence": {
+        "title": "Evidence Agent - missing-evidence detection",
+        "labels": [
+          "Missing",
+          "Complete"
+        ],
+        "matrix": [
+          [
+            8,
+            0
+          ],
+          [
+            0,
+            32
+          ]
+        ],
+        "n": 40,
+        "unscored": 0
+      },
+      "investigator": {
+        "title": "Investigator Agent - policy-violation detection",
+        "labels": [
+          "Violation",
+          "No violation"
+        ],
+        "matrix": [
+          [
+            9,
+            0
+          ],
+          [
+            0,
+            31
+          ]
+        ],
+        "n": 40,
+        "unscored": 0
+      },
+      "forensic": {
+        "title": "Forensic Agent - anomaly detection",
+        "labels": [
+          "Anomaly",
+          "No anomaly"
+        ],
+        "matrix": [
+          [
+            16,
+            0
+          ],
+          [
+            2,
+            22
+          ]
+        ],
+        "n": 40,
+        "unscored": 0
+      },
+      "combined": {
+        "title": "Combined system - final claim decision",
+        "labels": [
+          "APPROVE",
+          "REJECT",
+          "REQUEST_EVIDENCE",
+          "ESCALATE"
+        ],
+        "matrix": [
+          [
+            8,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            8,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            8,
+            0
+          ],
+          [
+            0,
+            0,
+            0,
+            16
+          ]
+        ],
+        "n": 40,
+        "unscored": 0
+      },
+      "advisory": {
+        "evidence": {
+          "title": "Evidence Agent - recommended decision (advisory)",
+          "labels": [
+            "APPROVE",
+            "REJECT",
+            "REQUEST_EVIDENCE",
+            "ESCALATE"
+          ],
+          "matrix": [
+            [
+              8,
+              0,
+              0,
+              0
+            ],
+            [
+              8,
+              0,
+              0,
+              0
+            ],
+            [
+              0,
+              0,
+              8,
+              0
+            ],
+            [
+              6,
+              0,
+              0,
+              10
+            ]
+          ],
+          "n": 40,
+          "unscored": 0
+        },
+        "investigator": {
+          "title": "Investigator Agent - recommended decision (advisory)",
+          "labels": [
+            "APPROVE",
+            "REJECT",
+            "REQUEST_EVIDENCE",
+            "ESCALATE"
+          ],
+          "matrix": [
+            [
+              8,
+              0,
+              0,
+              0
+            ],
+            [
+              0,
+              8,
+              0,
+              0
+            ],
+            [
+              0,
+              0,
+              8,
+              0
+            ],
+            [
+              3,
+              0,
+              0,
+              13
+            ]
+          ],
+          "n": 40,
+          "unscored": 0
+        },
+        "forensic": {
+          "title": "Forensic Agent - recommended decision (advisory)",
+          "labels": [
+            "APPROVE",
+            "REJECT",
+            "REQUEST_EVIDENCE",
+            "ESCALATE"
+          ],
+          "matrix": [
+            [
+              8,
+              0,
+              0,
+              0
+            ],
+            [
+              8,
+              0,
+              0,
+              0
+            ],
+            [
+              0,
+              0,
+              8,
+              0
+            ],
+            [
+              2,
+              0,
+              0,
+              14
+            ]
+          ],
+          "n": 40,
+          "unscored": 0
+        }
+      }
+    },
+    "scenarios": [
+      {
+        "key": "valid",
+        "label": "Valid claims",
+        "cases": 8,
+        "final_decision_accuracy": 1.0,
+        "completion": {
+          "evidence": 1.0,
+          "investigator": 1.0,
+          "forensic": 1.0,
+          "combined": 1.0
+        },
+        "mean_latency_ms": {
+          "evidence": 12024.363,
+          "investigator": 12127.477875,
+          "forensic": 538.8115,
+          "combined": 24246.74825
+        },
+        "wrong_final_decisions": []
+      },
+      {
+        "key": "missing_evidence",
+        "label": "Missing or insufficient evidence",
+        "cases": 8,
+        "final_decision_accuracy": 1.0,
+        "completion": {
+          "evidence": 1.0,
+          "investigator": 1.0,
+          "forensic": 1.0,
+          "combined": 1.0
+        },
+        "mean_latency_ms": {
+          "evidence": 12083.02225,
+          "investigator": 12002.16925,
+          "forensic": 534.748625,
+          "combined": 24187.598625
+        },
+        "wrong_final_decisions": []
+      },
+      {
+        "key": "policy_violation",
+        "label": "Policy eligibility violations",
+        "cases": 8,
+        "final_decision_accuracy": 1.0,
+        "completion": {
+          "evidence": 1.0,
+          "investigator": 1.0,
+          "forensic": 1.0,
+          "combined": 1.0
+        },
+        "mean_latency_ms": {
+          "evidence": 12138.3475,
+          "investigator": 12076.655,
+          "forensic": 540.904375,
+          "combined": 24311.7475
+        },
+        "wrong_final_decisions": []
+      },
+      {
+        "key": "suspicious",
+        "label": "Suspicious claims, serial mismatches and history anomalies",
+        "cases": 8,
+        "final_decision_accuracy": 1.0,
+        "completion": {
+          "evidence": 1.0,
+          "investigator": 1.0,
+          "forensic": 1.0,
+          "combined": 1.0
+        },
+        "mean_latency_ms": {
+          "evidence": 11998.3935,
+          "investigator": 12069.10225,
+          "forensic": 531.858625,
+          "combined": 24159.410375
+        },
+        "wrong_final_decisions": []
+      },
+      {
+        "key": "conflict_injection",
+        "label": "Conflicting evidence and prompt-injection attempts",
+        "cases": 8,
+        "final_decision_accuracy": 1.0,
+        "completion": {
+          "evidence": 1.0,
+          "investigator": 1.0,
+          "forensic": 1.0,
+          "combined": 1.0
+        },
+        "mean_latency_ms": {
+          "evidence": 12107.437875,
+          "investigator": 12095.3395,
+          "forensic": 577.757875,
+          "combined": 24491.031750000002
+        },
+        "wrong_final_decisions": []
+      }
+    ],
+    "usage": {
+      "gemini_requests_total": 0,
+      "gemini_requests_source": "offline (no requests; ledger unchanged)",
+      "mcp_calls_total": 240,
+      "mcp_calls_mean_per_case": 6.0,
+      "tokens_total": null,
+      "estimated_cost": null,
+      "estimated_cost_note": "N/A: no verified per-token price is configured, so no cost is estimated."
+    }
+  }
+}

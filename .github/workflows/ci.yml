@@ -1,0 +1,37 @@
+name: CI
+# Fast gate on every PR and push to main (a few minutes). The VM deploys whatever lands on main
+# (deploy/auto_update.sh), so merge only green PRs. The full pytest suites (about 45 min, they start real
+# services) are not run here: run them locally before a release.
+on:
+  pull_request:
+  push:
+    branches: [main]
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+permissions: {contents: read}
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: "3.12"}
+      - name: Python compiles
+        run: python -m compileall -q src tests
+      - name: Shell scripts parse
+        run: for f in deploy/*.sh deploy/aws/*.sh deploy/gcp/*.sh; do bash -n "$f"; done
+      - name: No secrets committed
+        run: |
+          ! git ls-files | grep -E '(^|/)\.env$|\.pem$|\.tgz$'
+          ! git grep -nE 'AKIA[0-9A-Z]{16}|AIza[0-9A-Za-z_-]{35}' -- . ':!tests'
+      - uses: docker/setup-buildx-action@v3
+      - name: Production image builds
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: Dockerfile.single
+          push: false
+          cache-from: type=gha
+          cache-to: type=gha,mode=max

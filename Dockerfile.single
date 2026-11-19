@@ -1,0 +1,49 @@
+# SINGLE-container image: used by the one-VM deployment (docker-compose.yml, behind Caddy) and by Hugging Face Spaces.
+# It contains BOTH Python environments: /app/.venv (dashboard, ADK, MCP) and /app/.venv-crew (CrewAI A2A service).
+# `python -m claimsleuth.dashboard` starts the MCP server (.venv) and the CrewAI service (.venv-crew) itself, on
+# 127.0.0.1 inside this container, so no second container is needed.
+# Multi-stage: the builder installs and prunes the two venvs; the runtime stage copies only the venvs, src and data
+# (no pip cache, no pip, no pytest, no chromadb back-ends that crewai never uses here, no tests directories).
+# Hugging Face conventions: app port 7860, non-root user with uid 1000, ephemeral disk (runs vanish on restart).
+# Offline by default (no key needed). For live mode set EXECUTION_MODE=live and GOOGLE_API_KEY.
+
+FROM python:3.12-slim AS builder
+ENV PIP_NO_CACHE_DIR=1 PIP_DISABLE_PIP_VERSION_CHECK=1
+WORKDIR /app
+COPY requirements/main.txt requirements/crew.txt requirements/
+RUN python -m venv /app/.venv && /app/.venv/bin/pip install -r requirements/main.txt
+RUN python -m venv /app/.venv-crew && /app/.venv-crew/bin/pip install -r requirements/crew.txt
+COPY pyproject.toml ./
+COPY src src
+RUN /app/.venv/bin/pip install --no-deps -e . && /app/.venv-crew/bin/pip install --no-deps -e .
+# Prune. Every package removed here was checked: the CrewAI service and the ADK/MCP code import without it, and the
+# 4 sample claims run end to end (docs/submission/results/deploy_test.md). pytest is only for development; the rest
+# are optional crewai/chromadb back-ends (vector stores, Kubernetes client, ONNX embeddings, PDF/Excel/TUI helpers).
+RUN /app/.venv-crew/bin/pip uninstall -y pytest kubernetes onnxruntime lancedb pyarrow lance-namespace \
+      lance-namespace-urllib3-client chromadb-rust-bindings textual pdfplumber pdfminer-six pypdfium2 openpyxl \
+      hf-xet uvloop \
+ && /app/.venv/bin/pip uninstall -y pytest \
+ && /app/.venv/bin/pip --version >/dev/null \
+ && for v in .venv .venv-crew; do \
+      /app/$v/bin/python -m pip uninstall -y pip >/dev/null 2>&1 || true; \
+      find /app/$v/lib -type d \( -name tests -o -name test \) -prune -exec rm -rf {} + ; \
+      find /app/$v/lib -name '*.pyi' -delete ; \
+    done \
+ && find /app/src -name __pycache__ -prune -exec rm -rf {} +
+
+FROM python:3.12-slim
+ENV PYTHONUNBUFFERED=1
+RUN useradd --uid 1000 --create-home user
+WORKDIR /app
+COPY --from=builder /app/.venv /app/.venv
+COPY --from=builder /app/.venv-crew /app/.venv-crew
+COPY --from=builder /app/src /app/src
+COPY pyproject.toml ./
+COPY data data
+RUN mkdir -p /app/runtime && chown -R user:user /app/runtime
+USER user
+ENV PATH=/app/.venv/bin:$PATH CLAIMSLEUTH_HOST=0.0.0.0 CLAIMSLEUTH_RUNTIME_DIR=/app/runtime HOME=/home/user
+EXPOSE 7860
+HEALTHCHECK --interval=30s --timeout=10s --start-period=120s --retries=5 \
+  CMD python -c "import urllib.request as u; u.urlopen('http://127.0.0.1:7860/', timeout=5)"
+CMD ["python", "-m", "claimsleuth.dashboard", "--host", "0.0.0.0", "--port", "7860"]

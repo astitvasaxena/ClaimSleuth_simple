@@ -26,6 +26,16 @@ service. No test sent a Gemini request.
 
 Deselected tests are marked `live`, need a real model, and were not run.
 
+**Rerun on macOS, 2026-11-19** (fresh venvs, Python 3.12.2, offline; `docs/submission/results/test_run.txt`):
+
+| Suite | Result |
+|---|---|
+| Main suite (`.venv`) | **795 passed, 1 failed**, 5 skipped, 1 deselected (4,537 s) |
+| CrewAI suite (`.venv-crew`) | **155 passed**, 2 deselected (79 s) |
+| `tests/test_experiments.py` (8 new tests, run alone) | 8 passed; the full suite was not re-run after they were added |
+
+The one failure is the existing `tests/test_provider_reliability.py::test_the_managers_deadline_keeps_the_agents_record` (StopIteration: no `model.call` error event in the trace). It fails when run alone, was not edited and its cause is not investigated. It passed in the Windows run above; the difference between the two machines is not explained.
+
 The counts below come from the single main run, so they are part of the 801, not extra tests:
 
 | Area | Passed | Test files |
@@ -68,6 +78,21 @@ developers. It shows that the pipeline and deterministic rules work as designed 
 | Approval status | 28 PENDING, 12 NOT_REQUIRED |
 | Review status | COMPLETE on all 40 |
 | Gemini requests | 0 |
+
+## Final experiments (2026-11-19)
+
+All offline (rule-based test doubles), macOS laptop, 0 Gemini requests, synthetic data. Source: `docs/submission/results/` (`summary.json`, `README.md`, CSVs, `boxplot_latency.png`, `heatmap_agent_latency.png`).
+
+| Measure | Result |
+|---|---|
+| Baseline rerun `EV-20261119-141842-e46c4a` | Combined 40 of 40; single agents on the decision: Evidence 65.0%, Investigator 92.5%, Forensic 75.0%. Reference = stored expected decision, no LLM-as-judge |
+| E3 architecture, 40 cases each | 40/40 each; median wall 24.7 s sequential, 12.2 s parallel-only, 24.3 s hierarchical + blackboard; 9 model calls per claim in all |
+| E4 messaging, 40 cases each | 40/40 each; median 24.3 s blackboard, 24.1 s direct, 12.2 s no sharing; context shared 4,740 / 2,370 / 0 chars |
+| E5 persona x prompt structure | 116 runs (honest 38, vague 6, abusive 6, injection 8 per structure; unbalanced), all matched ground truth; 0 of 58 paired comparisons changed decision |
+| Per-agent median latency, 236 runs | Evidence 12.1 s, Investigator 12.1 s, Forensic 0.54 s, system 24.3 s (laptop) |
+| Cost | Offline INR 0. Live not measured: 4 live runs used 9, 6, 7, 7 requests; 40 live runs would need about 240 to 360 |
+
+Limits: accuracy is identical across configurations by construction (the doubles ignore other agents' reports and prompt wording), so the architecture and messaging choice rests on time, calls, context shared and design heuristics, not accuracy. A pub/sub broadcast arm was not built. Laptop latencies are not deployment numbers: on the macOS laptop (Docker or native) a claim takes about 24 s with about 12 s per ADK agent, cause not isolated; on the AWS VM agent latencies were 445, 266 and 1,142 ms and a claim took about 3 s (`RUN-dash-6ac716c9bd`, 2026-11-19; record saved as `docs/submission/results/aws_run_RUN-dash-6ac716c9bd.json`).
 
 ## Live runs
 
@@ -115,9 +140,9 @@ What the tests show:
 - **Live evidence:** four complete runs on two sample claims. There is no measure of live accuracy.
 - **Prompt injection:** the screen is a pattern list. The controlled tests show the safeguards around a manipulated test double,
   not how a real model behaves.
-- **Deployment:** local only, on one machine. Windows 11 and Python 3.12.10 are the only tested platform.
-- **Teacher criteria:** the status of each criterion is in `CHECKLIST.md`. Cloud deployment is not done. The comparisons of messaging
-  styles and design patterns are not done.
+- **Deployment:** deployed and verified on AWS EC2 (t4g.small, Ubuntu 24.04 ARM, ap-south-1) on 2026-11-19, offline mode only; evidence in `docs/submission/DEPLOYED.txt`. The URL changes after a stop/start (no Elastic IP). Live mode was not enabled on the VM. The test suites were run only on Windows 11 with Python 3.12.10 (plus 8 tests on macOS); the VM was checked by the four sample claims, not by the suites.
+- **Teacher criteria:** the status of each criterion is in `CHECKLIST.md`. Cloud deployment is done (2026-11-19). The messaging and architecture comparisons
+  were run on 2026-11-19 (see Final experiments above); a broadcast arm and live cost over 40 runs are not done.
 
 ## Presentation
 

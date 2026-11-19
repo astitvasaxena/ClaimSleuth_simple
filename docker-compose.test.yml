@@ -1,0 +1,9 @@
+# LOCAL TEST OVERRIDE (not for production): drops Caddy and publishes the dashboard directly on localhost:8110.
+#   docker compose -f docker-compose.yml -f docker-compose.test.yml up -d --build
+# BASIC_AUTH_HASH is only needed by the production caddy service, so a dummy is supplied for variable interpolation.
+# Dashboard is then on http://127.0.0.1:8110 (container port 7860).
+services:
+  app:
+    ports: ["127.0.0.1:8110:7860"]
+  caddy:
+    profiles: ["disabled"]

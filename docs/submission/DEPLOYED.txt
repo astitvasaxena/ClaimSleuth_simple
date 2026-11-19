@@ -1,0 +1,9 @@
+Platform: AWS EC2, region ap-south-1 (Mumbai)
+Instance: t4g.small (2 vCPU ARM, 2 GB RAM + 2 GB swap), Ubuntu 24.04, 20 GB gp3 encrypted, IMDSv2 required, no Elastic IP
+Instance id: i-01e12e3df2c70f60f
+Stack: Docker Compose on the single VM: caddy:2-alpine (HTTPS via Let's Encrypt on <ip>.sslip.io, basic auth) + claimsleuth-single image (911 MB; dashboard, ADK agents, MCP server, CrewAI A2A service)
+Mode: OFFLINE (labelled test doubles); live mode not enabled
+URL on 2026-11-19 (changes after a stop/start, see deploy/boot.sh): https://65-2-175-255.sslip.io/
+Verified on 2026-11-19 over HTTPS with the login: wrong password rejected (401); the four sample claims gave APPROVE, ESCALATE, ESCALATE, REQUEST_EVIDENCE (about 3 s each); after stop/start the public IP changed and the site came back by itself on the new sslip.io hostname; the blackboard run after the restart completed.
+Cost: about 0.0112 USD/h instance + 0.005 USD/h public IPv4 + disk; account on the AWS Free plan (credits)
+Teardown: deploy/aws/teardown.sh

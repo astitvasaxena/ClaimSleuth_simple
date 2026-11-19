@@ -46,3 +46,4 @@ desktop.ini
 # Temporary files (e.g. VS Code Code Runner)
 tempCodeRunnerFile*
 *.tmp
+docs/submission/render/

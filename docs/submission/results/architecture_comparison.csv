@@ -1,0 +1,4 @@
+architecture,runs,correct,accuracy,wall_ms_mean,wall_ms_median,wall_ms_stdev,wall_ms_p95,agents_run,llm_calls,agent_tool_calls,mcp_calls_logged,a2a_messages,blackboard_reads,context_chars_shared,investigator_saw_evidence_runs,forensic_saw_evidence_runs,adk_crew_overlap_ms
+seq_direct,40,40,1.0,24266.5,24747.4,2862.0,25042.2,3.0,9.0,8.0,6.0,2.0,0.0,2370.15,40,0,0.0
+par_direct,40,40,1.0,11986.1,12203.5,1406.6,12367.3,3.0,9.0,8.0,6.0,2.0,0.0,0.0,0,0,542.72
+hier_blackboard,40,40,1.0,23415.7,24252.0,3974.8,24601.3,3.0,9.0,8.0,6.0,2.0,2.0,4740.3,40,40,563.65
