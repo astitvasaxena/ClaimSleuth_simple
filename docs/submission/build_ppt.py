@@ -322,9 +322,11 @@ table(s, req, [0.8, 8.0, 3.5], y=1.1, pt=14)
 # ================================================================ slide 4
 s = new_slide(4, "MAS architecture: hierarchical manager",
               "Walk left to right. The manager plans, runs Evidence first (sequential), then releases Investigator and dispatches Forensic at "
-              "the same time (parallel), monitors, and passes only verified reports to the adjudicator. Name the architecture: hierarchical "
-              "manager with sequential and parallel stages. Evidence and Investigator are ADK agents in one process; Forensic is CrewAI in a "
-              "second Python environment because the two dependency sets cannot merge.",
+              "the same time (parallel; Forensic over A2A), and monitors. Name the architecture: hierarchical manager with sequential and "
+              "parallel stages. Evidence and Investigator are ADK agents in one process; Forensic is CrewAI in a second Python environment "
+              "because the two dependency sets cannot merge. All three agents call the MCP server (Evidence: policy search; Investigator: "
+              "both tools; Forensic: claim history). Reports go to the blackboard; the adjudicator reads only the reports that verify on the "
+              "sealed run, never an agent directly.",
               "Hierarchical manager with sequential and parallel stages")
 box(s, 0.4, 1.3, 1.9, 1.0, "Claim PDF\nupload", GREY, DGREY)
 box(s, 2.7, 1.3, 2.5, 1.0, "Investigation Manager\nplan, dispatch, monitor", NAVY, NAVY, 14, True, WHITE)
@@ -339,7 +341,7 @@ box(s, 2.7, 4.35, 2.5, 0.8, "Blackboard (SQLite)\nverified, receipted", PURPLE, 
 arrow(s, 3.95, 3.85, 3.95, 4.35, both=True)
 # stage 2 parallel
 box(s, 5.9, 2.65, 2.6, 0.95, "Stage 2 (parallel)\nInvestigator (ADK)", LBLUE, BLUE, 14, True)
-box(s, 5.9, 3.95, 2.6, 0.95, "Stage 2 (parallel)\nForensic (CrewAI, A2A)", GREEN, DGREEN, 14, True)
+box(s, 5.9, 3.95, 2.6, 0.95, "Stage 2 (parallel)\nForensic (CrewAI) via A2A", GREEN, DGREEN, 14, True)
 arrow(s, 5.2, 4.75, 5.9, 4.4, both=True, color=RGBColor(0x6D, 0x28, 0xD9))
 arrow(s, 5.2, 4.55, 5.9, 3.2, both=True, color=RGBColor(0x6D, 0x28, 0xD9))
 arrow(s, 3.95, 2.3, 5.9, 3.1, dashed=True)
@@ -348,19 +350,20 @@ arrow(s, 3.95, 2.3, 5.9, 4.1, dashed=True)
 box(s, 9.2, 3.15, 2.0, 1.1, "MCP server\n2 tools", AMBER, DAMBER, 14, True)
 arrow(s, 8.5, 3.15, 9.2, 3.5, both=True)
 arrow(s, 8.5, 4.4, 9.2, 3.95, both=True)
+arrow(s, 5.2, 3.77, 9.2, 3.77, both=True)      # Evidence Agent -> MCP (policy search), through the gap between the stage-2 boxes
 box(s, 11.4, 2.85, 1.6, 0.8, "Policies", GREY, DGREY)
 box(s, 11.4, 3.85, 1.6, 0.8, "Claim history", GREY, DGREY)
 arrow(s, 11.2, 3.5, 11.4, 3.25)
 arrow(s, 11.2, 3.9, 11.4, 4.25)
 # adjudicator
-box(s, 5.9, 5.45, 2.6, 0.9, "Adjudicator\nonly decision-maker", RED, RGBColor(0xB9, 0x1C, 0x1C), 14, True)
-arrow(s, 7.2, 4.9, 7.2, 5.45)
+box(s, 5.9, 5.45, 2.6, 0.9, "Adjudicator\ndecides; reads only\nverified reports", RED, RGBColor(0xB9, 0x1C, 0x1C), 14, True)
+arrow(s, 5.2, 5.0, 5.9, 5.6, color=RGBColor(0x6D, 0x28, 0xD9))   # blackboard -> adjudicator (verified reports only)
 box(s, 9.2, 5.45, 2.2, 0.9, "Human review\nand report", GREY, DGREY)
 arrow(s, 8.5, 5.9, 9.2, 5.9)
 box(s, 0.4, 5.45, 4.8, 0.9, "Callbacks and trace: every agent, model and tool call\nrecorded; guardrails on inputs and outputs", GREEN, DGREEN, 14)
 arrow(s, 5.2, 5.9, 5.9, 5.9, dashed=True)
-text(s, 8.7, 1.25, 4.3, 1.4, "Dashed = dispatch by manager. Purple = blackboard read/write. "
-     "Agents recommend; the adjudicator decides.", 14, False, DGREY)
+text(s, 8.7, 1.2, 4.4, 1.45, "Dashed = dispatch by the manager (Forensic over A2A). Purple = blackboard: reports in, "
+     "verified reports out to the adjudicator. Grey to MCP = tool calls. Agents recommend; the adjudicator decides.", 13, False, DGREY)
 
 # ================================================================ slide 5
 def _s(ms):
@@ -371,7 +374,7 @@ def _cfg(key, grp="e3_architecture"):
     return SUMMARY[grp][key] if SUMMARY else None
 
 
-s = new_slide(5, "Architecture evaluation: which orchestration is best",
+s = new_slide(5, "Architecture comparison (E3): time, calls, context",
               "Three orchestrations were run on the same 40 cases, offline, on a macOS laptop (results/architecture_comparison.csv). "
               "Accuracy is 40 of 40 for all three BY CONSTRUCTION: the offline test doubles ignore other agents' reports, so accuracy cannot "
               "separate the designs. Say this openly. The choice rests on measured time, calls and context shared, plus design heuristics: "
@@ -403,12 +406,14 @@ text(s, 0.5, 3.55, 12.3, 3.4, [
 # ================================================================ slide 6
 s = new_slide(6, "Agent-tool communication via MCP",
               "Deployment: the MCP server runs inside the single container on 127.0.0.1 on the AWS EC2 VM, behind Caddy; only 80/443 are public. Two tools on a separate MCP server using Streamable HTTP: warranty_policy_search and claim_history_lookup. ADK connects with "
-              "McpToolset; CrewAI connects with the MCP client in its own environment. The run id travels in a header set by framework code, "
-              "not by the model, so a model cannot ask for another claim's history. Every call is logged and checked against what the agent "
-              "reported.")
-box(s, 0.5, 1.5, 2.9, 1.1, "Evidence Agent\n(ADK)", LBLUE, BLUE, 14, True)
-box(s, 0.5, 2.9, 2.9, 1.1, "Investigator Agent\n(ADK)", LBLUE, BLUE, 14, True)
-box(s, 0.5, 4.3, 2.9, 1.1, "Forensic Agent\n(CrewAI, via A2A)", GREEN, DGREEN, 14, True)
+              "McpToolset; CrewAI connects with its own MCPServerHTTP client, directly from its process (A2A is only how the ADK side "
+              "reaches the Forensic Agent, not how it reaches MCP). Each agent sees only its tools (tool_filter): Evidence the policy search, "
+              "Investigator both, Forensic the claim history. The run id and claim id travel in headers set by framework code, not by the "
+              "model, and claim_history_lookup answers only for this claim's claimant and serials, so a model cannot ask for another "
+              "customer's history (the WC-2026-0413 sample). Every call is logged and checked against what the agent reported.")
+box(s, 0.5, 1.5, 2.9, 1.1, "Evidence Agent (ADK)\npolicy search only", LBLUE, BLUE, 14, True)
+box(s, 0.5, 2.9, 2.9, 1.1, "Investigator Agent (ADK)\nboth tools", LBLUE, BLUE, 14, True)
+box(s, 0.5, 4.3, 2.9, 1.1, "Forensic Agent (CrewAI)\nclaim history only", GREEN, DGREEN, 14, True)
 box(s, 5.0, 2.2, 3.3, 2.5, "MCP server\nStreamable HTTP\nvalidates inputs and outputs\nscopes history to the claim\nlogs every call (JSONL)",
     AMBER, DAMBER, 14, True)
 box(s, 9.9, 1.9, 2.9, 1.0, "warranty_policy_search\n(policies.json)", GREY, DGREY)
@@ -418,15 +423,16 @@ for y in (2.05, 3.45):
 arrow(s, 3.4, 4.85, 5.0, 4.2, both=True)
 arrow(s, 8.3, 2.9, 9.9, 2.4, both=True)
 arrow(s, 8.3, 4.0, 9.9, 4.4, both=True)
-label(s, 3.3, 1.2, 1.9, "McpToolset", 14, DGREY)
-label(s, 3.3, 5.05, 2.0, "MCP client", 14, DGREY)
-text(s, 0.5, 5.7, 12.3, 1.2, [
-    "- Run id and claim id come from framework headers, not model output.",
-    "- An agent that did not complete its required MCP call does not count as completed; MCP log is cross-checked against agent records.",
-], 15)
+label(s, 3.3, 1.2, 2.4, "McpToolset (ADK)", 14, DGREY)
+label(s, 3.3, 5.05, 3.4, "MCPServerHTTP (CrewAI process)", 14, DGREY)
+text(s, 0.5, 5.5, 12.3, 1.45, [
+    "- Each agent sees only its own tools (tool_filter). Run id and claim id come from framework headers, not model output.",
+    "- claim_history_lookup answers only for this claim's claimant and serials; anything else is refused as out of scope.",
+    "- An agent that did not complete its required MCP call does not count as completed; the MCP log is cross-checked against agent records.",
+], 14)
 
 # ================================================================ slide 7
-s = new_slide(7, "Messaging pattern: blackboard versus peer-to-peer",
+s = new_slide(7, "Messaging (E4): blackboard vs direct passing",
               "Three messaging styles were measured on the same 40 cases offline (results/messaging_comparison.csv): blackboard (the product), "
               "direct message passing (ADK session state, Evidence to Investigator only) and no sharing. Accuracy is 40 of 40 in all three by "
               "construction; the doubles ignore what other agents say. Differences are time, context shared and what is recorded: only the "
@@ -474,36 +480,40 @@ sec = [
     ["Verification", "Quotes must be on the cited line; MCP references must match the server log; Pydantic extra=forbid"],
     ["Integrity", "Blackboard entries hashed and HMAC-signed, append-only; tampering sends the run to a human"],
     ["Containment", "CrewAI network guard blocks non-local connections; services bind to 127.0.0.1"],
+    ["Data scope", "MCP claim_history_lookup answers only for this claim's claimant and serials; other customers' data is refused"],
+    ["Human gate", "REJECT, ESCALATE and payouts of INR 15,000 or more need a reviewer; a review never changes the automated decision"],
 ]
 table(s, sec, [2.4, 9.9], y=1.2, pt=14, first_col_bold=True)
 
 # ================================================================ slide 9
 s = new_slide(9, "Experimental design",
-              "Dataset: 40 synthetic cases, 8 per category, ground truth stored apart from the agents' data. E3 architecture and E4 messaging each "
-              "use 3 x 40 runs and share runs; E5 uses the 40 cases plus 18 sample claims under two prompt structures (standard and "
-              "evidence-first ReAct), 116 runs. Persona counts are unbalanced: honest 38, vague 6, abusive 6, injection 8 per structure. "
+              "Dataset: 40 synthetic cases, 8 per category, ground truth stored apart from the agents' data. Run accounting (236 runs): "
+              "E3 is 3 x 40 = 120 runs; E4 adds 40 direct-passing runs, because its blackboard and no-sharing arms are the E3 hierarchical "
+              "and parallel-only runs; E5 runs the 40 cases plus 18 sample claims under two prompt structures (standard and "
+              "evidence-first ReAct), 116 runs, of which 76 are new because its 40 standard dataset runs are E3 rows. Persona counts are unbalanced: honest 38, vague 6, abusive 6, injection 8 per structure. "
               "Decision variance is zero by construction because the offline doubles ignore prompt wording: 0 of 58 paired comparisons changed. "
               "Boxplot: system latency per claim, measured on a macOS laptop, offline. Cost: offline INR 0, 0 Gemini requests. Live cost was "
-              "not measured: the 4 live runs used 9, 6, 7 and 7 requests, so 40 live runs would need about 240 to 360 requests against a free "
-              "tier of 20 per day per model. No token counts or prices exist for the live runs.")
+              "not measured: the 4 complete live runs used 9, 6, 7 and 7 requests, so 40 live runs would need about 240 to 360 requests "
+              "against a free tier of 20 per day per model. Token counts are in the live run records, but no verified price table is "
+              "configured, so no live cost was computed.")
 d9 = [
     ["Design element", "Value"],
     ["Cases and categories", "40 synthetic, 8 per category (valid, missing evidence, policy violation, suspicious, conflict/injection)"],
-    ["Runs", "236 offline runs, 0 failed: E3 architecture 3 x 40, E4 messaging 3 x 40 (shared), E5 persona x prompt structure 116"],
+    ["Runs", "236 offline runs, 0 failed: E3 120 (3 x 40); E4 40 direct-passing (other arms reuse E3); E5 76 new (116 with its 40 E3 rows)"],
     ["E5 personas (per structure)", "honest 38, vague 6, abusive 6, injection 8 (unbalanced); 0 of 58 paired decisions changed"],
-    ["Cost", "Offline INR 0. Live not measured: 4 live runs used 9, 6, 7, 7 requests; 40 live runs need about 240 to 360"],
+    ["Cost", "Offline INR 0. Live not measured: 4 complete live runs used 9, 6, 7, 7 requests; 40 live runs need about 240 to 360"],
 ]
 h9 = table(s, d9, [2.9, 9.4], y=1.15, pt=12, first_col_bold=True)
 pic9 = RES / "boxplot_latency.png"
 y9 = 1.15 + h9 + 0.3
 if pic9.exists():
-    pw = (BOTTOM - 0.35 - y9) * 2240 / 832
+    pw = (BOTTOM - 0.5 - y9) * 2240 / 832
     s.shapes.add_picture(str(pic9), Inches(0.5), Inches(y9), width=Inches(min(pw, 8.6)))
     text(s, 9.25, y9, 3.6, 3.2, [
         "System latency per claim, offline doubles, macOS laptop. Not the deployment numbers (AWS VM, offline mode: about 3 s per claim).",
         "Parallel-only is about 12 s; all other wirings about 24 s.",
     ], 12, False, DGREY)
-text(s, 0.5, BOTTOM - 0.35, 12.3, 0.3, "Variance: decisions identical by construction; only latency varies.", 12, False, DAMBER)
+text(s, 0.5, BOTTOM - 0.48, 12.3, 0.3, "Variance: decisions identical by construction; only latency varies.", 12, False, DAMBER)
 
 # ================================================================ slide 10
 s = new_slide(10, "Validation: does it work as expected",
@@ -541,7 +551,7 @@ box(s, 0.5, 1.15 + h + 0.3, 12.3, 1.3,
 # ================================================================ slide 11
 s = new_slide(11, "Team responsibility matrix",
               "Lead and Support per activity come from TEAM.json (matrix). Each activity has one lead and one supporting member; "
-              "the repository history shows one committer, so the split is by area of work. It is a PROPOSED split, to be confirmed by the team (TEAM.json matrix_note). Be ready to name "
+              "the repository history shows one committer, so the split is by area of work; the team confirmed it (TEAM.json matrix_note). Be ready to name "
               "who did what if asked.")
 ACT = list(TEAM.get("matrix", {}).keys())
 short = [m.get("name", "").split()[0] for m in members]
@@ -550,12 +560,15 @@ for act in ACT:
     ent = TEAM["matrix"][act]
     mrows11.append([act.replace("/ (", "(")] + [("Lead" if ent.get("L") == m["name"] else "Support" if ent.get("S") == m["name"] else "") for m in members])
 table(s, mrows11, [5.3, 1.75, 1.75, 1.75, 1.75][:1 + len(members)], y=1.1, pt=11)
-text(s, 0.5, 6.7, 12.3, 0.4, "Lead = main owner, Support = second member. PROPOSED split, to be confirmed by the team.", 12, False, DGREY)
+text(s, 0.5, 6.7, 12.3, 0.4, "Lead = main owner, Support = second member. Split by area of work, confirmed by the team.", 12, False, DGREY)
 
 # ================================================================ slide 12
 s = new_slide(12, "Demo screenshots",
-              "Screenshots in docs/screenshots/ are from 1 November 2026, before the dashboard was simplified; the findings are the same. "
-              "The right-hand box is the deployment architecture: AWS EC2 t4g.small (ARM, 2 GB RAM + 2 GB swap, Ubuntu 24.04, ap-south-1), Docker Compose, "
+              "The two panels are from the current dashboard, captured on 2026-11-20 from the stored live reference run RUN-dash-bcdbabaf97 "
+              "(WC-2026-0412, Gemini for all three agents, 6 November): the three agent reports side by side, and the execution overview "
+              "with the blackboard record (seal, authenticated entries, signed read receipts). They were opened read-only in an offline "
+              "viewer; no investigation was run and no model was called (docs/submission/capture_screenshots.py). The agents recommend "
+              "ESCALATE, but the decision comes from the adjudicator's security rule. The right-hand box is the deployment architecture: AWS EC2 t4g.small (ARM, 2 GB RAM + 2 GB swap, Ubuntu 24.04, ap-south-1), Docker Compose, "
               "Caddy with Let's Encrypt HTTPS on 13-204-3-14.sslip.io (Elastic IP 13.204.3.14) and basic auth, the single image (911 MB) with dashboard, ADK agents, MCP server and "
               "CrewAI A2A service, and one volume for the SQLite blackboard. "
               "VERIFIED ON 2026-11-19 over HTTPS in OFFLINE mode (docs/submission/DEPLOYED.txt): wrong password rejected (401); the four sample claims gave "
@@ -568,38 +581,49 @@ s = new_slide(12, "Demo screenshots",
               "CI/CD: GitHub Actions ci.yml on every PR and push to main (compile, bash -n, secret grep, Docker build, no pytest); the VM pulls origin/main with a systemd timer "
               "(about a minute to detect, rebuild time not measured) and rolls back if the app is not healthy; it deploys main whatever the CI result; "
               "set AUTO_UPDATE=off in deploy/.env on the VM during the assessment. "
-              "PLACEHOLDER FOR THE USER (H1): the three screenshots on the left are local, from 1 November. Paste 2 or 3 real screenshots of https://13-204-3-14.sslip.io/ "
-              "(the login prompt, a finished claim report, the evaluation tab) over them before presenting; they cannot be generated here and none are faked. "
-              "Image 911 MB; memory 339 MiB idle and 383 MiB peak were measured in Docker Desktop on the laptop, not on the VM. "
-              "The three screenshots on the left are local, from 1 November; replace them with screenshots of the deployed URL before presenting.")
-caps = [("1_claim_investigation_start.png", "Claim intake"),
-        ("2_report_normal_claim.png", "Report: normal claim"),
-        ("3_report_prompt_injection_0412.png", "Report: prompt injection (0412)")]
-x = 0.5
-for fn, cap in caps:
-    p = SHOTS / fn
-    if p.exists():
-        from PIL import Image
-        with Image.open(p) as im:
-            iw, ih = im.size
-        mw, mh = 2.9, 3.4
-        sc = min(mw / iw, mh / ih)
-        s.shapes.add_picture(str(p), Inches(x), Inches(1.25), Inches(iw * sc), Inches(ih * sc))
-    text(s, x, 4.75, 3.0, 0.8, [cap, "(pre-simplification, 1 Nov)"], 14, False, DGREY, PP_ALIGN.CENTER)
-    x += 3.1
-# H1 PLACEHOLDER (user): replace the three local screenshots above with 2 or 3 screenshots of the live site
-# (login prompt, finished claim report, evaluation tab). Not generated here; do not fake them.
+              "AWS SCREENSHOT: the slot under the overview shows docs/screenshots/aws_deployment.png when that file exists (captured by "
+              "the team in a browser after logging in to https://13-204-3-14.sslip.io/, login not shown); until then it says pending. "
+              "It is never generated here. "
+              "Image 911 MB; memory 339 MiB idle and 383 MiB peak were measured in Docker Desktop on the laptop, not on the VM.")
+from PIL import Image
+
+
+def _fit_pic(slide, path, x, y, mw, mh):
+    """Place a real screenshot scaled to fit mw x mh inches; returns the placed height."""
+    with Image.open(path) as im:
+        iw, ih = im.size
+    sc = min(mw / iw, mh / ih)
+    slide.shapes.add_picture(str(path), Inches(x), Inches(y), Inches(iw * sc), Inches(ih * sc))
+    return ih * sc
+
+
+shot_agents = SHOTS / "8_agent_reports_0412_live_RUN-dash-bcdbabaf97.png"
+shot_overview = SHOTS / "9_overview_blackboard_0412_live_RUN-dash-bcdbabaf97.png"
+shot_aws = SHOTS / "aws_deployment.png"            # captured by the team; never generated here
+if shot_agents.exists():
+    ha = _fit_pic(s, shot_agents, 0.5, 1.2, 5.4, 3.65)
+    text(s, 0.5, 1.2 + ha + 0.02, 5.4, 0.3, "Agent reports, live run RUN-dash-bcdbabaf97 (Gemini)", 12, False, DGREY, PP_ALIGN.CENTER)
+if shot_overview.exists():
+    ho = _fit_pic(s, shot_overview, 6.1, 1.2, 3.6, 2.45)
+    text(s, 6.1, 1.2 + ho + 0.02, 3.6, 0.3, "Overview and blackboard, same run", 12, False, DGREY, PP_ALIGN.CENTER)
+if shot_aws.exists():
+    hw = _fit_pic(s, shot_aws, 6.1, 4.0, 3.6, 1.05)
+    text(s, 6.1, 4.0 + hw + 0.02, 3.6, 0.3, "Deployed site over HTTPS (AWS)", 12, False, DGREY, PP_ALIGN.CENTER)
+else:
+    WARNINGS.append("slide 12: docs/screenshots/aws_deployment.png not found; AWS screenshot shown as pending")
+    box(s, 6.1, 4.0, 3.6, 1.05, "AWS screenshot pending\ndocs/screenshots/aws_deployment.png", AMBER, DAMBER, 11, True, dash=True)
 box(s, 9.9, 1.25, 3.0, 0.5, "Deployed on AWS (2026-11-20)", NAVY, NAVY, 12, True, WHITE)
 box(s, 9.9, 1.8, 3.0, 0.55, "EC2 t4g.small, Elastic IP\nap-south-1, live mode", GREY, DGREY, 11)
 box(s, 9.9, 2.45, 3.0, 0.55, "Caddy: HTTPS (Let's Encrypt,\nsslip.io) + basic auth", LBLUE, BLUE, 11)
 box(s, 9.9, 3.1, 3.0, 0.7, "Docker: single image 911 MB\ndashboard, ADK, MCP, CrewAI A2A", GREEN, DGREEN, 11)
 box(s, 9.9, 3.9, 3.0, 0.6, "Volume: blackboard.sqlite3", PURPLE, RGBColor(0x6D, 0x28, 0xD9), 11)
 box(s, 9.9, 4.6, 3.0, 0.8, "CI/CD: GitHub Actions CI;\nVM pulls origin/main\n(timer, health check, rollback)", AMBER, DAMBER, 11)
-text(s, 0.5, 5.5, 12.3, 0.5, "Left: offline mode, test-double models, local screenshots from 1 Nov (not the deployed site).",
-     14, False, DGREY)
-text(s, 0.5, 5.95, 12.3, 0.9,
+text(s, 0.5, 5.45, 12.3, 0.35, "Current dashboard, stored run; ESCALATE comes from the adjudicator's security rule, not the agents.",
+     13, False, DGREY)
+text(s, 0.5, 5.85, 12.3, 1.1,
      ["Verified on AWS over HTTPS (2026-11-19, offline mode): 401 on wrong password; 4 of 4 sample claims (about 3 s each).",
-      "Live mode on the VM: one partial run (2 of 3 agents on Gemini, CrewAI hit HTTP 503), escalated to a human. Free tier: about 2 to 3 live claims a day."], 14, True, DGREEN)
+      "Live on the VM: one partial run RUN-dash-6d15294eca (CrewAI hit HTTP 503 after its retry): INCOMPLETE, APPROVE from the "
+      "adjudicator, human approval required. https://13-204-3-14.sslip.io/"], 13, True, DGREEN)
 
 # ================================================================ slide 13
 s = new_slide(13, "Conclusions",
@@ -611,7 +635,7 @@ text(s, 0.5, 1.65, 6.0, 4.9, [
     "- Hierarchical manager with sequential and parallel stages over two frameworks.",
     "- Blackboard, two MCP tools, A2A between ADK and CrewAI.",
     "- Deterministic adjudicator: agents recommend, rules decide every rupee.",
-    "- Layered security; 801 and 155 tests passed (6 Nov 2026); 40 of 40 offline cases correct.",
+    "- Layered security; 801 and 155 tests passed (Windows, 6 Nov 2026); 40 of 40 offline cases correct.",
     "- 4 complete live Gemini runs (6 to 9 requests each).",
     "- Deployed on AWS (EC2, Docker, Caddy HTTPS, Elastic IP) and verified 2026-11-19 offline: 4 of 4 claims, 401 on wrong password.",
     "- GitHub Actions CI plus pull-based update of the VM with rollback.",

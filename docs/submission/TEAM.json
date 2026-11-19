@@ -1,6 +1,6 @@
 {
   "course": "Agentic AI (CSE3101)",
-  "instructor": "Prof Pranshu Tiwar",
+  "instructor": "Prof Pranshu Tiwari",
   "title": "ClaimSleuth: Multi-Agent Warranty Claim Investigation",
   "members": [
     {"name": "Vaibhav Jain", "enrollment": "230697",
@@ -12,7 +12,8 @@
     {"name": "Sibi Surya", "enrollment": "230702",
      "responsibilities": ["MCP server and tools", "Guardrails, callbacks and prompt-injection security", "Observability and tracing"]}
   ],
-  "matrix_note": "PROPOSED split, to be confirmed by the team. Git history shows one committer (Astitva); the rest is assigned by area. L = lead, S = support, per activity.",
+  "matrix_note": "Split confirmed by the team (2026-11-20). Git history shows one committer (Astitva); the split is by area of work. L = lead, S = support, per activity.",
+  "matrix_confirmed": true,
   "matrix": {
     "Agent Design/ Multi-agent architecture":      {"L": "Astitva Saxena", "S": "Vaibhav Jain"},
     "Agent Orchestration":                         {"L": "Astitva Saxena", "S": "Pulkit Patel"},

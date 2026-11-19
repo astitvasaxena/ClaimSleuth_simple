@@ -45,6 +45,7 @@ BODY_PT = 11
 PAGE_PT = 681.0          # usable text height per page in points (letter, margins from the template)
 LINE_PT = 15.0
 CHARS_PER_LINE = 98
+LONG_TOKEN = 28          # a `code` token this long makes a justified paragraph left-aligned (no stretched gaps)
 
 
 # ----------------------------------------------------------------------------------------------------------------
@@ -197,6 +198,10 @@ class Builder:
         p = self.doc.add_paragraph()
         add_runs(p, text, size=size, bold=bold, italic=italic)
         set_spacing(p, 0, after, 1.15)
+        # A long unbreakable code token (a path, a test id) leaves wide gaps in a justified line: such paragraphs
+        # are left-aligned instead.
+        if align == "justify" and any(len(t) >= LONG_TOKEN for t in re.findall(r"`([^`]+)`", text)):
+            align = "left"
         if align == "justify":
             p.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
         elif align == "center":
@@ -209,6 +214,18 @@ class Builder:
     def paras(self, *texts):
         for t in texts:
             self.para(t, align="left")
+
+    def code_block(self, lines, size=8):
+        """Verbatim monospace lines (no markup parsing), kept together where possible."""
+        for i, line in enumerate(lines):
+            p = self.doc.add_paragraph()
+            p.paragraph_format.left_indent = Inches(0.25)
+            r = p.add_run(line.rstrip("\n") or " ")
+            set_run_font(r, size + 1, mono=True)          # set_run_font subtracts 1 point for mono
+            set_spacing(p, 0, 0 if i < len(lines) - 1 else 8, 1.0)
+            if i < len(lines) - 1 and len(lines) <= 40:
+                keep_next(p)
+            self._adv(size + 3)
 
     def numbered(self, items):
         for i, t in enumerate(items, 1):
@@ -376,7 +393,7 @@ def read_csv_rows(path, max_rows=30):
 # ----------------------------------------------------------------------------------------------------------------
 # the report content
 # ----------------------------------------------------------------------------------------------------------------
-from content_shared import REQ, LIT_ROWS, REFS  # noqa: E402  (shared with build_ppt.py)
+from content_shared import REQ, LIT_ROWS, REFS, cite  # noqa: E402  (shared with build_ppt.py)
 
 
 def build_content(b, team, summary):
@@ -407,7 +424,7 @@ def build_content(b, team, summary):
     b.para("The report follows the course format. Section 2 states the problem, Section 3 reviews existing products and "
            "research and lists the gaps, Section 4 turns the gaps into numbered requirements (R1 to R11), Section 5 describes "
            "the design and how the agents are run, secured and validated, Section 6 lists the technology, Section 7 gives "
-           "the results, and Section 8 is the contribution matrix.", "justify")
+           "the results, Section 8 is the contribution matrix and Section 9 concludes.", "justify")
 
     # ===================================================================== 2 PROBLEM STATEMENT
     b.h1("Problem Statement")
@@ -448,9 +465,9 @@ def build_content(b, team, summary):
 
     # ===================================================================== 3 LITERATURE REVIEW
     b.h1("Literature Review")
-    b.para("We looked at three kinds of existing work: commercial products that automate claims or warranty handling, "
-           "agent frameworks and protocols that a team like ours would build on, and recent research on blackboard-style "
-           "coordination of language-model agents. Everything below was checked against the vendor's or publisher's own "
+    b.para("We looked at commercial products that automate claims or warranty handling, agent frameworks and protocols "
+           "that a team like ours would build on, and research on blackboard-style coordination of language-model agents, "
+           "on claim fraud detection, on multi-agent LLM systems and on indirect prompt injection. Everything below was checked against the vendor's or publisher's own "
            "page while writing this report (November 2026). For the commercial products we only know what their public pages "
            "say. A gap listed for a product therefore means that we did not find the feature described there, not that the "
            "feature is certainly absent.", "justify")
@@ -460,14 +477,33 @@ def build_content(b, team, summary):
             "Requirement IDs refer to Table " + "{REQTAB}".replace("{REQTAB}", ref("t_req").replace("Table ", "")) + ".",
             ["Product or source", "What it does (from its own page or abstract)", "Gap for our problem", "Req."],
             lit_rows, widths=[1.5, 3.2, 3.6, 0.8], size=8.5)
+    b.h2("Research on claim fraud, multi-agent LLMs and indirect prompt injection")
+    b.para("Three further lines of research shaped the design. Fraud detection on insurance claims has long been studied as a "
+           f"classification problem: Viaene et al. {cite('viaene')} compare classification techniques for expert fraud detection "
+           "on automobile insurance claims. A classifier of that kind scores a claim from prepared features. It does not read a "
+           "claim form, an invoice and a repair report side by side, and it returns a score rather than a reason that points "
+           "to a line. ClaimSleuth takes the other route for first-level review: explicit rules and cited facts, nothing "
+           "learned from data. For the same reason our synthetic benchmark says nothing about statistical fraud detection.",
+           "justify")
+    b.para(f"Guo et al. {cite('guo')} survey multi-agent systems built on large language models and organise them by the "
+           "environments the agents act in, how the agents are profiled and how they communicate, and how their capabilities "
+           "grow. Along those lines ClaimSleuth is deliberately narrow: three fixed profiles with one job each, communication "
+           "through one shared store plus a single A2A request, and no learning between runs. The narrowness is what lets "
+           "every agent output be checked against a document line or a tool record.", "justify")
+    b.para(f"Greshake et al. {cite('greshake')} show that an application built on a language model can be attacked through the "
+           "data it reads rather than through the user's prompt (indirect prompt injection). A warranty claim is exactly such "
+           "data, because the customer writes the PDF. The samples WC-2026-0412 and WC-2026-0413 are built on this threat "
+           "model, and it is the reason the injection screen of Section 5.8 is one layer among several rather than the defence.",
+           "justify")
     b.h2("What the review told us")
     b.para("Commercial tools in this area are mostly closed, so a team that wants to understand or audit the decision logic "
            "cannot. The open frameworks are flexible but say little about trust: nothing in ADK, CrewAI, MCP or A2A "
            "stops a model from being fooled by a line of text in a PDF. The blackboard papers suggest that a shared "
-           "store is a sensible way to let several agents build on each other's work, and the Terrarium paper in particular "
-           "treats the blackboard as a place to study attacks. Nii's survey of blackboard systems at the architecture level "
-           "(1994) explains the older idea: independent knowledge sources read and write one shared structure under the "
-           "control of a separate scheduler. In our system the scheduler is the investigation manager.", "justify")
+           "store is a sensible way to let several agents build on each other's work, and the Terrarium paper "
+           f"{cite('terrarium')} in particular treats the blackboard as a place to study attacks. Nii's survey of blackboard "
+           f"systems at the architecture level {cite('nii')} explains the older idea: independent knowledge sources read and "
+           "write one shared structure under the control of a separate scheduler. In our system the scheduler is the "
+           "investigation manager.", "justify")
     b.para("Putting this together, the gaps we decided to fill are the ones in the last column of the table. In short: "
            "a fully inspectable pipeline in which agents from two frameworks cooperate, every claim made by an agent can be "
            "checked against the document line or tool record it cites, and the final money decision never rests on the "
@@ -570,7 +606,8 @@ def build_content(b, team, summary):
            "(database triggers refuse updates and deletes). Read permissions are fixed in `blackboard/models.py`: the Forensic "
            "Agent may not read the Investigator's report, so the two opinions stay independent. The adjudicator reads only "
            "reports that verify on the sealed run. If anything fails to verify, no agent report of that run is adjudicated "
-           "and a human reviews the claim.", "justify")
+           f"and a human reviews the claim. {ref('f_shot_overview')} (Section 7.6) shows this record for one live run: the "
+           "seal, the authenticated entries and who read each report with a signed receipt.", "justify")
     b.figure("f_seq", FIGS / "fig_a2a_blackboard_sequence.png",
              "Sequence of one investigation: blackboard, A2A and the manager's control steps.", width=6.0)
     b.para("Because SQLite allows one machine only, all writers must run on the same host. This is why our deployment design "
@@ -614,7 +651,9 @@ def build_content(b, team, summary):
     b.para("Because a free-tier key allows only 20 requests per day per model, live mode shares one request ledger "
            "(`runtime/gemini_requests.sqlite3`) between both agent processes. A request waits for a free per-minute slot "
            "(default 5) and is refused when the daily budget is used. After an HTTP 503 each agent gets exactly one retry, "
-           "after 15 seconds, which takes its own ledger slot; nothing else is retried. A complete live run has cost 6 to 9 "
+           "after 15 seconds, which takes its own ledger slot; no other provider error is retried. (The CrewAI task guardrail "
+           "in Table 6 is a separate mechanism: it asks the agent again when its output fails validation.) A complete live "
+           "run has cost 6 to 9 "
            "requests, and every run records its exact request count by agent. Provider failures are classified (503, 429, "
            "authentication, network, timeout, invalid output) and stored without the response body.", "justify")
     b.para("The ADK agents run inside the dashboard process. The dashboard starts the MCP server and the CrewAI service when it "
@@ -644,14 +683,14 @@ def build_content(b, team, summary):
     b.table("t_sec", "Threats and safeguards.",
             ["Threat", "Safeguard", "Where"],
             [
-                ("Instructions hidden in a document or claim text (prompt injection)",
+                ("Instructions hidden in a document or claim text (indirect prompt injection " + cite("greshake") + ")",
                  "A pattern screen on a normalised copy of the text (invisible characters, look-alike letters, spaced-out words, wrapped lines); a hit creates a guardrail event with PDF page and line and escalates the claim.",
                  "`security.py`"),
                 ("Text that tries to be obeyed by an agent",
                  "Claim text and the Evidence report reach the agents inside `<untrusted>` blocks that text cannot close; the instructions say to report, never follow, instructions found there.",
                  "`security.wrap_untrusted`, `claim_text.py`"),
                 ("Unsafe or invalid model output",
-                 "Pydantic models with `extra=\"forbid\"`; a report carrying credentials, key material or an agent's own instructions is refused before it is published; a CrewAI task guardrail checks JSON, claim ID, citations and history references and allows up to 2 retries.",
+                 "Pydantic models with `extra=\"forbid\"`; a report carrying credentials, key material or an agent's own instructions is refused before it is published; a CrewAI task guardrail checks JSON, claim ID, citations and history references and allows 2 retries in offline mode and, by default, 1 in live mode (`CLAIMSLEUTH_GEMINI_GUARDRAIL_RETRIES`, 0 to 2).",
                  "`schemas.py`, ADK runner, `crew_service/crew.py`"),
                 ("Invented evidence", "Quotes must appear on the cited line; MCP references must match what the tool returned and what the server logged.",
                  "ADK runner, guardrail, adjudicator"),
@@ -717,8 +756,8 @@ def build_content(b, team, summary):
     b.para("**CI/CD.** The repository has a GitHub Actions workflow (`.github/workflows/ci.yml`) that runs on every pull request and "
            "every push to main: it compiles `src/` and `tests/`, parses the deploy shell scripts with `bash -n`, greps for committed "
            "secrets and builds `Dockerfile.single` with a layer cache (the image is not pushed). It does not run pytest, because the "
-           "full suites take about 45 minutes; they are run locally and the quoted test counts are the ones in Section 7. Both runs so "
-           "far passed (the pull request and the merge commit `186f279`). Deployment is pull-based: a systemd timer on the VM "
+           "full suites take about 45 minutes; they are run locally and the quoted test counts are the ones in Section 7. The two runs "
+           "recorded in docs/EVIDENCE.md, on pull request #2 and its merge commit `186f279`, passed. Deployment is pull-based: a systemd timer on the VM "
            "(`claimsleuth-update.timer`) runs `deploy/auto_update.sh` every minute. The script fetches `origin/main` of the public "
            "repository, copies the files (never `deploy/.env` or the runtime volume), runs `boot.sh` (`docker compose up -d --build`), waits "
            "for the application container's health check and rolls back to the previous commit if it does not become healthy. A new "
@@ -886,16 +925,31 @@ def build_content(b, team, summary):
            "`scripts\\stop_services.ps1` stopped all three. A selection of 160 tests passed there (133 in `.venv`, 27 in "
            "`.venv-crew`). The install took about 20 minutes with a filled pip cache.", "justify")
     b.h2("Screenshots")
-    b.para("The screenshots below are from 1 November 2026, in offline mode, before the dashboard was simplified. The findings are "
-           "the same; `docs/DASHBOARD_GUIDE.md` describes the current layout.", "justify")
-    shot2 = SHOTS / "2_report_normal_claim.png"
-    shot3 = SHOTS / "3_report_prompt_injection_0412.png"
-    for key, f, cap, w in (
-        ("f_shot_ok", shot2, "Report for the complete smartphone claim WC-2026-0411 (offline mode).", 3.0),
-        ("f_shot_inj", shot3, "Report for WC-2026-0412: the hidden instruction is flagged with its page and line and is not followed.", 3.0),
-    ):
-        if f.exists():
-            b.figure(key, f, cap, width=w)
+    b.para("The figures below are panels of the current dashboard (the layout described in docs/DASHBOARD_GUIDE.md), "
+           "captured on 20 November 2026 from stored runs. No investigation was run for them and no model was called: the "
+           "dashboard was opened in offline viewing mode on a copy of the stored runs, and the script that made the images is "
+           "docs/submission/capture_screenshots.py. Each caption names the run and the mode it ran in. The full-page "
+           "screenshots of 1 November show an older layout and are no longer used in this report.", "justify")
+    shots = (
+        ("f_shot_ok", "6_result_0411_offline_RUN-dash-e2a854a818.png",
+         "WC-2026-0411, stored run RUN-dash-e2a854a818 (offline test doubles, 1 November 2026): all five stages completed, "
+         "APPROVE decided by the deterministic rules, payout ₹16,400.00, and the human review recorded for it.", 6.3),
+        ("f_shot_inj", "7_injection_0412_live_RUN-dash-bcdbabaf97.png",
+         "WC-2026-0412 in the live reference run RUN-dash-bcdbabaf97 (Gemini, 6 November 2026): the hidden instruction "
+         "is located at PDF page 3, lines 12 to 14, is not followed, and the adjudicator escalates the claim.", 3.9),
+        ("f_shot_agents", "8_agent_reports_0412_live_RUN-dash-bcdbabaf97.png",
+         "The three agent reports of RUN-dash-bcdbabaf97 (live, Gemini), side by side and never merged: framework, model, status, MCP "
+         "tools and recommendation of each agent. The Forensic Agent recovered after an HTTP 503.", 5.9),
+        ("f_shot_overview", "9_overview_blackboard_0412_live_RUN-dash-bcdbabaf97.png",
+         "Execution Overview and Blackboard & Agent Coordination for RUN-dash-bcdbabaf97: live mode, request accounting, "
+         "the Investigator and Forensic overlap, the manager's tasks, the sealed blackboard and the signed read receipts.", 5.9),
+    )
+    for key, name, cap, w in shots:
+        if (SHOTS / name).exists():
+            b.figure(key, SHOTS / name, cap, width=w)
+    b.para(f"The agents' recommendations in {ref('f_shot_agents')} are advice only. The decision in "
+           f"{ref('f_shot_inj')} comes from the adjudicator's security rule, which would have escalated the claim even if "
+           "every agent had recommended APPROVE.", "justify")
     # ---- final experiments
     b.h2("Final experiments for the course criteria")
     if not summary or "e3_architecture" not in summary:
@@ -1063,21 +1117,23 @@ def build_content(b, team, summary):
         # --- cost
         C = S["cost"]
         b.para("**Cost.** In offline mode the cost is INR 0: no model is billed and the ledger shows 0 Gemini requests. A live cost "
-               "over 40 runs was not measured. `observability/pricing.py` ships no prices, so a live rupee figure would need a "
-               "verified price table and token counts, and none were recorded for the live runs. What exists is the request count: "
+               "over 40 runs was not measured, and no rupee figure exists for any live run. The run records of the four complete "
+               "live runs and of the partial VM run keep the token counts the provider reported, but `observability/pricing.py` "
+               "ships no prices, so no cost was computed (where a record has a cost field it is empty; the two most recent "
+               "complete runs also store the note that no verified pricing is configured). "
+               "What exists is the request count: "
                "the four complete live runs used 9, 6, 7 and 7 requests (29 in total); the partial run on the VM added 7 requests more. Forty live runs would therefore need about "
                "240 to 360 requests (about 400 at the code's estimate of 10 per claim), against a free tier of 20 requests per day "
                "per model.", "justify")
-        b.table("t_cost", "Cost and request counts (source: results/summary.json, docs/EVIDENCE.md).",
+        b.table("t_cost", "Cost and request counts (source: results/summary.json, docs/EVIDENCE.md; token counts: the "
+                "stored live run records and results/aws_live_run_RUN-dash-6d15294eca.json).",
                 ["Item", "Value"],
                 [("Offline cost, 236 runs plus the 40-case baseline", "INR 0 (0 Gemini requests)"),
                  ("Live requests in the 4 complete live runs", "9, 6, 7, 7 (total 29)"),
                  ("Live requests needed for 40 live runs", "about 240 to 360 (400 at the code's estimate)"),
                  ("Free tier", "20 requests per day per model"),
-                 ("Live token counts or rupee cost", "not measured")], widths=[5, 5], size=9)
-    b.para("One limit applies to all offline experiments: the test doubles are rule-based and do not react to wording, so a change "
-           "of prompt wording cannot change their output. Only variants that really change the packet or the control flow can be "
-           "reported as variance. No live accuracy exists.", "justify")
+                 ("Live rupee cost", "not measured: token counts are in the run records, but no verified price table exists")],
+                widths=[5, 5], size=9)
     b.h2("Known limitations")
     b.para("From `docs/EVIDENCE.md` and our own testing:", "justify")
     b.table("t_limits", "Known limitations.", ["Limitation", "Detail"],
@@ -1096,7 +1152,9 @@ def build_content(b, team, summary):
            "13.204.3.14). The checks in the table below were made on 2026-11-19 over HTTPS in OFFLINE mode; live mode was enabled on the "
            "VM afterwards (2026-11-19) and one partial live claim was run there (Section 7.4). This is a smoke test of the deployment, not a "
            "new benchmark. The record is `docs/submission/DEPLOYED.txt`.", "justify")
-    b.table("t_deploy", "Deployment verification on AWS, offline mode, before the Elastic IP (source: DEPLOYED.txt, 2026-11-19).",
+    b.table("t_deploy", "Deployment checks on AWS, 2026-11-19 (source: DEPLOYED.txt). Login, sample claims and stop/start: "
+            "offline mode, before the Elastic IP was attached. Live claim: afterwards, in live mode. Image and memory: "
+            "laptop measurement.",
             ["Check", "Result"],
             [
                 ("Login", "A wrong password was rejected with HTTP 401; the correct login opened the dashboard over HTTPS."),
@@ -1106,19 +1164,22 @@ def build_content(b, team, summary):
                 ("Image and memory (laptop measurement)", "Image 911 MB; memory 339 MiB idle and 383 MiB peak in Docker Desktop. Not measured on the instance."),
             ], widths=[3.0, 7.2], size=8.5)
     b.para("Not verified: a complete live run on the VM (the one live claim was partial), live accuracy, load from several users, or a "
-           "stop/start with the Elastic IP attached. The about 3 seconds per claim is the offline test doubles running on the VM "
-           "(offline mode, 2026-11-19); it is not the latency of the live system. On the macOS laptop (Docker or native) a claim takes about 24 s, with about 12 s per ADK agent; "
-           "the cause was not isolated. On the VM the run record `RUN-dash-6ac716c9bd` (`results/aws_run_RUN-dash-6ac716c9bd.json`) shows "
-           "agent latencies of 445 and 266 ms for the ADK agents and 1,142 ms for the CrewAI agent, so these are the offline VM measurements. "
+           "stop/start with the Elastic IP attached. The about 3 seconds per claim is the offline test doubles running on the VM, "
+           "not the latency of the live system; \"Which latencies to trust\" in Section 7.7 compares it with the laptop figures. "
            "Running cost is about 0.0112 USD per hour for the instance plus about 0.005 USD per hour for the public IPv4 address, which is the same for the Elastic IP and is charged while the instance is stopped; "
            "the disk is billed separately, on an account with free credits.", "justify")
+    aws_shot = SHOTS / "aws_deployment.png"          # captured by the team in a browser; the login is never shown
+    if aws_shot.exists():
+        b.figure("f_shot_aws", aws_shot, "The deployed system opened over HTTPS at https://13-204-3-14.sslip.io/ (AWS EC2, "
+                 "Elastic IP 13.204.3.14), captured by the team in a browser after logging in; the login is not shown.", width=6.3)
 
     # ===================================================================== 8 TEAM
     b.h1("Team Responsibility/Self-contribution Matrix")
     b.para("Each activity has one lead and one supporting member, shown in the matrix below. The split follows the areas "
-           "each member worked on; the repository was committed from one account, so commits do not show it.", "justify")
+           "each member worked on and was confirmed by the team; the repository was committed from one account, so commits "
+           "do not show it.", "justify")
     b.matrix_anchor = b.doc.add_paragraph()   # the template table is moved right after this paragraph
-    b.para("Lead = main owner of the activity; Support = second member who helped. This split is PROPOSED and is to be confirmed by the team.", "justify")
+    b.para("Lead = main owner of the activity; Support = second member who helped.", "justify")
     b.para("The table below maps each matrix activity to where it lives in the repository.",
            "justify")
     b.table("t_map", "Where each matrix activity is in the repository.",
@@ -1139,7 +1200,7 @@ def build_content(b, team, summary):
             ], widths=[3.4, 6.8], size=8.5)
 
     # ===================================================================== CONCLUSIONS ...
-    b.h1("Conclusions", numbered=False)
+    b.h1("Conclusions")                       # "9. Conclusions" in the format's body
     b.para("We built a warranty-claim investigator in which three agents from two frameworks cooperate over MCP, A2A and a "
            "shared blackboard, and in which a deterministic adjudicator, not a model, decides and pays. The design choice we "
            "would defend hardest is the last one. In every test and every stored run an agent could at most make the outcome "
@@ -1208,6 +1269,50 @@ def build_content(b, team, summary):
            "from the code, `README.md` and `docs/ARCHITECTURE_GUIDE.md`. Anything in Section 7.7 (final experiments) comes from "
            "`docs/submission/results/` and is regenerated each time `docs/submission/build_report.py` is run.", "justify")
 
+    # --- D: genuine code excerpt, copied from the source file at build time
+    adj = REPO / "src" / "claimsleuth" / "integration" / "adjudicator.py"
+    src = adj.read_text(encoding="utf-8").splitlines()
+    start = next(i for i, ln in enumerate(src) if ln.strip().startswith("elif d in (Decision.ESCALATE, Decision.REJECT):"))
+    end = next(i for i in range(start, len(src)) if 'Decision.APPROVE, "DETERMINISTIC_RULES"' in src[i])
+    hum = next(i for i in range(end, len(src)) if src[i].strip().startswith("needs_human ="))
+    indent = min(len(ln) - len(ln.lstrip()) for ln in src[start:end + 1] if ln.strip())
+    excerpt = [ln[indent:] for ln in src[start:end + 1]] + ["..."] + [ln[indent:] for ln in src[hum:hum + 2]]
+    b.para("**D. Code excerpt: how the adjudicator uses the agents' opinions**", keep=True)
+    b.para(f"Lines {start + 1} to {end + 1} and {hum + 1} to {hum + 2} of `src/claimsleuth/integration/adjudicator.py`, "
+           "copied from the source each time the report is built. `d` is the decision the deterministic rules computed "
+           "from the claim; `reviews` holds only completed agent reviews, and `concerns` only HIGH findings whose evidence "
+           "the adjudicator verified (Section 5.7).", "justify", keep=True)
+    b.code_block(excerpt)
+    b.para("What it shows: an agent can turn an APPROVE or a REQUEST_EVIDENCE into ESCALATE, but no branch lets an agent turn "
+           "ESCALATE or REJECT into APPROVE, and an APPROVE without any completed review is escalated too. The last two "
+           "lines are the human-approval rule: every REJECT or ESCALATE, every incomplete run and every payout of ₹15,000 or "
+           "more needs a person.", "justify")
+
+    # --- E: genuine output excerpt from a stored result file
+    live_rec = RESULTS / "aws_live_run_RUN-dash-6d15294eca.json"
+    if live_rec.exists():
+        rec = json.loads(live_rec.read_text(encoding="utf-8"))
+        out = rec.get("outcome", {})
+        keep_keys = ("run_status", "requires_human_approval", "final_decision", "review_status", "failed_tasks",
+                     "preserved_reports", "adjudicated_reports")
+        fail_keys = ("agent", "http_status", "provider_status", "error_code", "retried")
+        shown = {"run_id": rec.get("run_id"), "claim_id": rec.get("claim_id"),
+                 "outcome": {k: out[k] for k in keep_keys if k in out}}
+        if out.get("failures"):
+            shown["outcome"]["failures"] = [{k: f[k] for k in fail_keys if k in f} for f in out["failures"]]
+        b.para("**E. Output excerpt: the partial live run on the deployed VM**", keep=True)
+        b.para("Selected fields of `docs/submission/results/aws_live_run_RUN-dash-6d15294eca.json` (the run of Section 7.4). "
+               "The values are unchanged; the other fields of the record and of each failure entry are left out.",
+               "justify", keep=True)
+        text = json.dumps(shown, indent=2, ensure_ascii=False)
+        # short lists of plain values on one line, as in the record's meaning (no value is changed)
+        text = re.sub(r"\[\s*((?:\"[^\"]*\"|true|false|null|-?\d+)(?:,\s*(?:\"[^\"]*\"|true|false|null|-?\d+))*)\s*\]",
+                      lambda m: "[" + re.sub(r",\s+", ", ", m.group(1)) + "]", text)
+        b.code_block(text.splitlines())
+        b.para("What it shows: on the deployed system the Forensic Agent failed with HTTP 503 after its one retry, the two "
+               "ADK reports were kept and adjudicated, the run was stored as INCOMPLETE with a PARTIAL review, and the "
+               "adjudicator's APPROVE still requires a person. Nothing was invented for the missing agent.", "justify")
+
 
 # ----------------------------------------------------------------------------------------------------------------
 # front matter, contents, section break
@@ -1238,6 +1343,18 @@ def fill_front(doc, team):
     decl = P[21]
     decl.runs[1].text = '"'
     decl.runs[2].text = title
+    # instructor from TEAM.json, and the template's missing space after the full stop ("Tiwar.Due")
+    instr = team.get("instructor", "").strip()
+    if instr and decl.runs[25].text.strip() == "Prof":
+        decl.runs[25].text = instr
+        decl.runs[26].text = ""
+        decl.runs[27].text = ""
+        decl.runs[28].text = ". "
+    # The two-line title adds one 20 pt line; take that space from the gaps above "By", the logo and the
+    # department block so "November 2026" stays on the cover page.
+    if len(title) > 30:
+        for idx, before in ((6, 12), (15, 14), (16, 14)):
+            P[idx].paragraph_format.space_before = Pt(before)
 
 
 def contents_entries(doc, headings, pages):
@@ -1353,6 +1470,18 @@ def set_update_fields(doc):
     settings.append(uf)
 
 
+def widen_heading2_number(doc):
+    """The template's Heading 2 list level hangs 576 twips (0.4 in); "5.10" is wider than that, so Word put no
+    space after it ("5.10Deployment"). 720 twips fits every subsection number."""
+    numbering = doc.part.numbering_part.element
+    for lvl in numbering.iter(qn("w:lvl")):
+        ps = lvl.find(qn("w:pStyle"))
+        if ps is not None and ps.get(qn("w:val")) == "Heading2":
+            ind = lvl.find(qn("w:pPr")).find(qn("w:ind"))
+            ind.set(qn("w:left"), "720")
+            ind.set(qn("w:hanging"), "720")
+
+
 def fill_matrix(table, team):
     for i, m in enumerate(team["members"]):
         cell = table.rows[0].cells[1 + i]
@@ -1361,7 +1490,11 @@ def fill_matrix(table, team):
             replace_text(paras[1], m["name"])
             for r in paras[1].runs:
                 set_run_font(r, 10, bold=True)
-    # Lead / Support cells from TEAM.json["matrix"]; the 13th (free) row is left empty
+    # The template's instruction row "Add other relevant points as found suitable." is removed (no extra activity).
+    for row in list(table.rows[1:]):
+        if row.cells[0].text.strip().lower().startswith("add other relevant points"):
+            row._tr.getparent().remove(row._tr)
+    # Lead / Support cells from TEAM.json["matrix"]
     norm = lambda t: re.sub(r"[^a-z0-9]", "", t.lower())
     mx = {norm(k): v for k, v in team.get("matrix", {}).items()}
     names = [m["name"] for m in team["members"]]
@@ -1404,6 +1537,7 @@ def one_pass(team, summary, reg, pages_hint):
     fill_matrix(tbl, team)
 
     strip_highlights(doc)
+    widen_heading2_number(doc)
     # estimated pages for the contents
     pages = {k: int(y // PAGE_PT) + 1 for k, y in b.head_y.items()}
     contents_entries(doc, b.headings, pages_hint if pages_hint else pages)
