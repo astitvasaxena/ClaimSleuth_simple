@@ -1,0 +1,36 @@
+
+## 2026-11-19 pass (partial: team + deployment facts; experiments still running)
+- build_report.py: cover and declaration signature lines from TEAM.json; 12-activity Lead/Support matrix filled (13th free row empty), note "split as agreed by the team" under the table; Section 5.10 gains "Verified local container tests" paragraph (images, compose bug fixed, 4/4 offline, results/deploy_test.md, no-card Hugging Face vs card for GCP/AWS, still no cloud deployment); Section 7 deployment status reworded.
+- build_ppt.py: slide 11 matrix from TEAM.json (Lead/Support); slide 12 notes and a visible line carry the verified local container tests, still no cloud deployment. Slide 0 already used TEAM.json.
+- Rebuilt docx and pptx. LibreOffice not installed: NO render/visual check done; structural check via python-docx/python-pptx only (no template placeholders, notes on all 15 slides). Known build warning: slide 12 caption "Report: prompt injection (0412)" estimated 0.86in vs 0.80in; check visually once LibreOffice exists.
+- CHANGES_PENDING.md deliberately not truncated.
+
+## 2026-11-19 17:3x pass (queue: tests/test_experiments.py)
+- New test file for the E3/E4/E5 harness (8 tests). Re-ran in .venv on this Mac: 8 passed. No documented claim changed: docs quote only the dated Windows suite totals (801/155, 2026-11-06), which this does not alter. No build script, EVIDENCE, CHECKLIST or generated file touched; no rebuild needed. Queue entry cleared.
+
+## 2026-11-19 pass (AWS deployment now live and verified; experiments agent still running)
+- Facts moved: deployed on AWS EC2 t4g.small (ap-south-1), Docker Compose + Caddy + Let's Encrypt on sslip.io, single image 911 MB, offline mode; verified over HTTPS (401 on wrong password, 4 of 4 claims, recovery after stop/start). Source: DEPLOYED.txt, results/deploy_test.md. No password anywhere.
+- report_figures.py: fig_deployment redrawn (EC2 + Docker Compose + Caddy + single image + blackboard volume, greyscale). build_report.py: Section 5.10 rewritten (single image, why, no stale "no cloud"), Technology Stack +4 rows (EC2, Docker, Caddy, Let's Encrypt/sslip.io), Platform limitation updated, R11 row, Section 7.9 now a verification table (t_deploy) plus caveats (about 3 s per claim on VM vs 24-27 s local runs, not compared; memory measured on laptop only), Appendix gets the URL once with "changes after stop/start". DEPLOYED.txt is no longer pasted verbatim.
+- build_ppt.py: slide 12 notes + right-hand deployment diagram boxes + verified-results line; slide 13 achieved/limits; slide 6 notes. 15 slides kept.
+- docs/CHECKLIST.md (C-11 and Phase 9 done), docs/EVIDENCE.md (Deployment limitation), docs/DEPLOYMENT_GUIDE.md (AWS result, multi-IP SSH lesson). Backups: *.bak-20261119.
+- Rebuilt docx and pptx. LibreOffice NOT installed: no PDF/PNG render of the pages; only fig_deployment.png viewed, plus structural check (15 slides, no stale phrases). Existing FIT WARNING on slide 12 caption (0412) remains.
+- CHANGES_PENDING.md not truncated (experiments agent still running).
+
+## 2026-11-19 final pass (experiment results integrated)
+- Facts moved: experiments E3/E4/E5 done (236 runs, 0 failed, macOS laptop, offline, 0 Gemini requests); baseline rerun EV-20261119-141842-e46c4a 40/40; macOS test rerun 795 passed / 1 failed (existing test, not edited) / CrewAI 155; Windows 801/155 (2026-11-06) kept as dated record. Source: results/summary.json, README.md, test_run.txt.
+- build_report.py: Section 7.7 rewritten from summary.json and the baseline report (baseline tables, E3, E4, E5, per-agent/system latency table, boxplot and heat map figures, cost table, "which latencies to trust", honest interpretation: accuracy identical by construction, E5 unbalanced, 0 of 58 changes); 7.2 gains the macOS rerun paragraph; 5.2/5.3 stale "not yet measured" sentences replaced; 7.9 "unexplained difference" sentence replaced with the CONTRACT explanation; limitations Platform row updated.
+- build_ppt.py: slides 5, 7 (tables from summary.json), 9 (design table, boxplot PNG, cost), 10 (validation table, no LLM-as-judge box).
+- docs/CHECKLIST.md (criteria table C-1/C-4/C-8/C-10, Phase 5 and Phase 8 lines) and docs/EVIDENCE.md (macOS test rerun, Final experiments section, limitations) updated. Backups *.bak-20261119b.
+- Rebuilt docx and pptx. LibreOffice still NOT installed: no PDF/PNG render, no visual check of pages or slides; only the two experiment PNGs were viewed. Report page numbers in the contents are estimated by the builder. Existing FIT WARNING on slide 12 caption remains.
+- Open inconsistency: the CONTRACT explains the 24 to 27 s figure by test-suite load, but the unloaded laptop experiments also show about 12 s per ADK agent (cause not investigated); the report says so.
+
+## 2026-11-19 supervisor-audit fixes (D1 to D5, D7, D12 to D15, D17 to D19, D22)
+- New `content_shared.py`: one source for the literature table (7 rows), R1..R11 and the 13 references; imported by `build_report.py` (full wording) and `build_ppt.py` (short wording `LIT_SHORT`, `REQ_SHORT`, `SHORT_REFS`, same rows, IDs, sources). Slides 2, 3, 14 rebuilt from it; Hayes-Roth, Nii 1986, ReAct, MetaGPT, Greshake, Zheng dropped (not verifiable in the report); the "confirm bibliographic details" notes removed; G/P codes removed from slide 3.
+- D2: report Section 8 note, slide 11 caption and notes now say the split is PROPOSED, to be confirmed by the team (TEAM.json matrix_note).
+- D4: test-suite-load explanation removed (report 5.x/7.7/7.9, slide 10 notes, CONTRACT.md, EVIDENCE.md). Now: laptop about 24 s, about 12 s per ADK agent, cause not isolated; VM about 3 s, agents 445, 266, 1,142 ms, evidence `results/aws_run_RUN-dash-6ac716c9bd.json` (checked: evidence 445.492, investigator 265.705, forensic 1141.504 ms).
+- D7: vague-persona mean explained as one non-reproducible run (EVAL-25 standard 6.1 s vs 24.1 s evidence-first); short-run sentence reworded (EVAL-24 consistent).
+- D12 24.11 s; D13 Figure 1 legend names "the MCP tools figure" (report_figures.py, figures need regenerating by report_figures.py if it is not run by the build); D14 Deployment row names Dockerfile.single, docker-compose.yml, deploy/; D15 run accounting sentence (236 = 120 + 40 + 76); D17 IPv4 cost wording; D18 Table 6 binding sentence; D22 Appendix A durations labelled Windows; heat map caption says standard structure only; D19 pointer added to results/deploy_test.md.
+- D1: README.md (backup README.md.bak-20261119): Limitations "Not built" replaced by built-but-limited comparisons and offline-only deployment; new section "Architecture, messaging and persona experiments"; new section "Deployment (AWS)" pointing to docs/AWS_DEPLOYMENT_PLAN.md and docs/submission/DEPLOYED.txt.
+- CONTRACT.md: C-1, C-4, C-10, C-11 statuses updated; timing note and matrix wording corrected; shared-content rule added. Backups: *.bak-20261119c.
+- Rebuilt docx (headings/page estimates unchanged) and pptx (15 slides). LibreOffice still absent: structural check only (no stale phrases found; docx colour 000000 only). FIT WARNING on slide 12 caption remains.
+- Not done: D20 (table font below 14 pt on slides 5, 7, 9 to 12, risks overflow without a render), D16 colour map (make_plots.py, code lane), D10, D5/D6/D8/D9/D11/D21 (user).

@@ -3,7 +3,8 @@ r"""Start the ClaimSleuth dashboard (and, unless told not to, the MCP server and
     .venv\Scripts\python -m claimsleuth.dashboard [--mode live|offline] [--port 8110] [--no-services]
                                                 [--no-blackboard] [--crew-mode ollama-local]
 
-Binds to 127.0.0.1 only. Services it starts use the dashboard workspace (runtime/dashboard/data) and are stopped
+Binds to 127.0.0.1 unless --host (or CLAIMSLEUTH_HOST) is given, e.g. 0.0.0.0 inside a container behind an
+authenticating reverse proxy (the dashboard has no login of its own). Services it starts use the dashboard workspace (runtime/dashboard/data) and are stopped
 again when the dashboard exits; services that were already running are used as they are and left running.
 
 --mode (default: EXECUTION_MODE from the environment or .env, else offline):
@@ -43,6 +44,8 @@ def blackboard_setting(no_blackboard: bool, env: dict[str, str] | None = None) -
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="ClaimSleuth demonstration dashboard")
     parser.add_argument("--port", type=int, default=8110)
+    parser.add_argument("--host", default=os.environ.get("CLAIMSLEUTH_HOST", "127.0.0.1"),
+                        help="address the dashboard binds to (default 127.0.0.1; opt-in, e.g. 0.0.0.0 in a container)")
     parser.add_argument("--mcp-port", type=int, default=8102)
     parser.add_argument("--crew-port", type=int, default=8103)
     parser.add_argument("--mode", choices=[execution_mode.LIVE, execution_mode.OFFLINE], default=None,
@@ -95,8 +98,8 @@ def main(argv: list[str] | None = None) -> int:
     if not args.no_services:
         launcher.start(log=lambda m: print(m, flush=True))
     try:
-        print(f"ClaimSleuth dashboard: http://127.0.0.1:{args.port}/  (workspace {workspace.data_dir})", flush=True)
-        uvicorn.run(create_app(workspace, cfg, live=live), host="127.0.0.1", port=args.port, log_level="warning")
+        print(f"ClaimSleuth dashboard: http://{args.host}:{args.port}/  (workspace {workspace.data_dir})", flush=True)
+        uvicorn.run(create_app(workspace, cfg, live=live), host=args.host, port=args.port, log_level="warning")
     finally:
         launcher.stop()
     return 0

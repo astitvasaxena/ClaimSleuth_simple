@@ -1,0 +1,68 @@
+# LEGACY two-image variant (Dockerfile + Dockerfile.crew). Superseded by docker-compose.yml (single image); kept for
+# comparison, see docs/submission/results/deploy_test.md.  Run: docker compose -f docker-compose.two-image.yml ...
+# One-VM stack. SQLite (WAL) blackboard => every writer must share ONE machine and the `runtime` volume.
+# The dashboard code reaches MCP and the CrewAI service on 127.0.0.1, so `crew` joins the `app` container's network
+# namespace (network_mode) instead of needing code changes. Only Caddy publishes ports (80/443).
+# Run from the repo root:  docker compose --env-file deploy/.env up -d --build
+x-logging: &logging
+  driver: json-file
+  options: {max-size: "10m", max-file: "5"}
+
+services:
+  app:
+    build: {context: ., dockerfile: Dockerfile}
+    image: claimsleuth-app:latest
+    restart: unless-stopped
+    environment:
+      EXECUTION_MODE: ${MODE:-offline}          # offline (default) | live
+      GOOGLE_API_KEY: ${GOOGLE_API_KEY:-}       # only needed for MODE=live; comes from deploy/.env on the VM
+      CLAIMSLEUTH_BLACKBOARD_DB: /app/runtime/blackboard.sqlite3
+    volumes: [runtime:/app/runtime]
+    expose: ["8110"]
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request as u; u.urlopen('http://127.0.0.1:8110/', timeout=5)"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 90s
+    logging: *logging
+
+  crew:
+    build: {context: ., dockerfile: Dockerfile.crew}
+    image: claimsleuth-crew:latest
+    restart: unless-stopped
+    network_mode: "service:app"
+    depends_on: {app: {condition: service_healthy}}
+    environment:
+      EXECUTION_MODE: ${MODE:-offline}
+      GOOGLE_API_KEY: ${GOOGLE_API_KEY:-}
+      # Must be the same file the dashboard uses (its default), otherwise the Forensic Agent cannot read the blackboard.
+      CLAIMSLEUTH_BLACKBOARD_DB: /app/runtime/blackboard.sqlite3
+    volumes: [runtime:/app/runtime]
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request as u; u.urlopen('http://127.0.0.1:8103/health', timeout=15)"]
+      interval: 30s
+      timeout: 20s
+      retries: 5
+      start_period: 60s
+    logging: *logging
+
+  caddy:
+    image: caddy:2
+    restart: unless-stopped
+    depends_on: [app]
+    ports: ["80:80", "443:443"]
+    environment:
+      SITE_ADDRESS: ${SITE_ADDRESS:-:80}
+      BASIC_AUTH_USER: ${BASIC_AUTH_USER:-claimsleuth}
+      BASIC_AUTH_HASH: ${BASIC_AUTH_HASH:?set BASIC_AUTH_HASH in deploy/.env (see docs/DEPLOYMENT_GUIDE.md)}
+    volumes:
+      - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    logging: *logging
+
+volumes:
+  runtime:
+  caddy_data:
+  caddy_config:

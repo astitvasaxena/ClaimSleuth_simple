@@ -1,0 +1,30 @@
+{
+  "course": "Agentic AI (CSE3101)",
+  "instructor": "Prof Pranshu Tiwar",
+  "title": "ClaimSleuth: Multi-Agent Warranty Claim Investigation",
+  "members": [
+    {"name": "Vaibhav Jain", "enrollment": "230697",
+     "responsibilities": ["Cloud deployment (Docker, GCP/AWS, proxy, secrets)", "End-to-end evaluation: time and cost", "Architecture and messaging-style comparison experiments", "Integration testing of the new work", "Report and presentation pipeline"]},
+    {"name": "Pulkit Patel", "enrollment": "230718",
+     "responsibilities": ["State management: blackboard", "A2A communication (ADK to CrewAI)", "Dashboard and interface"]},
+    {"name": "Astitva Saxena", "enrollment": "230690",
+     "responsibilities": ["Agent design and multi-agent architecture", "Agent orchestration: investigation manager", "Deterministic adjudicator", "Repository owner, all commits to date"]},
+    {"name": "Sibi Surya", "enrollment": "230702",
+     "responsibilities": ["MCP server and tools", "Guardrails, callbacks and prompt-injection security", "Observability and tracing"]}
+  ],
+  "matrix_note": "PROPOSED split, to be confirmed by the team. Git history shows one committer (Astitva); the rest is assigned by area. L = lead, S = support, per activity.",
+  "matrix": {
+    "Agent Design/ Multi-agent architecture":      {"L": "Astitva Saxena", "S": "Vaibhav Jain"},
+    "Agent Orchestration":                         {"L": "Astitva Saxena", "S": "Pulkit Patel"},
+    "State Management":                            {"L": "Pulkit Patel",   "S": "Astitva Saxena"},
+    "MCP Design":                                  {"L": "Sibi Surya",     "S": "Pulkit Patel"},
+    "A2A Communication":                           {"L": "Pulkit Patel",   "S": "Sibi Surya"},
+    "Guardrails/Callbacks":                        {"L": "Sibi Surya",     "S": "Astitva Saxena"},
+    "Observability":                               {"L": "Sibi Surya",     "S": "Vaibhav Jain"},
+    "Integration & Testing":                       {"L": "Vaibhav Jain",   "S": "Astitva Saxena"},
+    "Evaluation & Documentation":                  {"L": "Vaibhav Jain",   "S": "Sibi Surya"},
+    "Presentation/Interface UI":                   {"L": "Pulkit Patel",   "S": "Vaibhav Jain"},
+    "Deployment":                                  {"L": "Vaibhav Jain",   "S": "Pulkit Patel"},
+    "End-to-End Evaluation / (time & cost)":       {"L": "Vaibhav Jain",   "S": "Sibi Surya"}
+  }
+}

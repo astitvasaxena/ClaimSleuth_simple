@@ -1,0 +1,15 @@
+# HTTPS (automatic Let's Encrypt when SITE_ADDRESS is a hostname) + basic auth in front of the dashboard.
+# SITE_ADDRESS=:80 serves plain HTTP (local test only). The dashboard itself has no login.
+{$SITE_ADDRESS} {
+	basic_auth {
+		{$BASIC_AUTH_USER} {$BASIC_AUTH_HASH}
+	}
+	encode gzip
+	reverse_proxy app:7860 {
+		health_uri /
+		health_interval 30s
+	}
+	log {
+		output stdout
+	}
+}

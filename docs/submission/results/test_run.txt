@@ -1,0 +1,53 @@
+Test runs, macOS (Darwin), Python 3.12.2, fresh venvs, 2026-11-19. Offline; no Gemini request sent.
+
+.venv  (pytest tests --ignore=tests/crew): 795 passed, 1 failed, 5 skipped, 1 deselected in 4537 s (1:15:37)
+  FAILED tests/test_provider_reliability.py::test_the_managers_deadline_keeps_the_agents_record (StopIteration at line 564: no model.call error event in the trace); reproduces when run alone; existing test, not edited; cause not investigated.
+  (795+1+5 = 801 collected, the count EVIDENCE.md reports as 801 passed on Windows)
+.venv-crew (pytest tests/crew): 155 passed, 2 deselected in 79 s
+New tests/test_experiments.py (added after the full .venv run): 8 passed in 1.6 s. The full suite was not re-run after adding it (75 min); expected .venv total 803 collected.
+
+Full pytest output of the .venv run follows.
+
+........................................................................ [  8%]
+........................................................................ [ 17%]
+........................................................................ [ 26%]
+......ssss..s........................................................... [ 35%]
+........................................................................ [ 44%]
+........................................................................ [ 53%]
+........................................................................ [ 62%]
+........................................................................ [ 71%]
+.......................................................F................ [ 80%]
+........................................................................ [ 89%]
+........................................................................ [ 98%]
+.........                                                                [100%]
+=================================== FAILURES ===================================
+______________ test_the_managers_deadline_keeps_the_agents_record ______________
+env = namespace(db=PosixPath('/private/var/folders/w8/qshkq40d06z0759lsy409cm40000gn/T/pytest-of-vaibhav/pytest-0/hier2/blac...=PosixPath('/private/var/folders/w8/qshkq40d06z0759lsy409cm40000gn/T/pytest-of-vaibhav/pytest-0/data0/claimsleuth.db'))
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x11fd73800>
+>       call_ = next(e for e in events(bundle, event_type="model.call") if e.status == "error")
+E       StopIteration
+tests/test_provider_reliability.py:564: StopIteration
+=============================== warnings summary ===============================
+tests/test_adk_investigation.py: 6 warnings
+tests/test_blackboard_context.py: 50 warnings
+tests/test_blackboard_e2e.py: 7 warnings
+tests/test_dashboard_e2e.py: 8 warnings
+tests/test_evidence_integrity.py: 6 warnings
+tests/test_hierarchical_orchestration.py: 8 warnings
+tests/test_integration_e2e.py: 2 warnings
+tests/test_observability.py: 11 warnings
+tests/test_prompt_injection.py: 37 warnings
+tests/test_provider_reliability.py: 26 warnings
+tests/test_reliability.py: 30 warnings
+tests/test_request_census.py: 1 warning
+tests/test_service_faults.py: 6 warnings
+tests/test_blackboard_context.py::test_forensic_gets_a_context_ref_over_a2a_and_consumes_it_with_its_own_key
+tests/test_blackboard_context.py::test_forensic_gets_a_context_ref_over_a2a_and_consumes_it_with_its_own_key
+tests/test_blackboard_context.py::test_forensic_gets_a_context_ref_over_a2a_and_consumes_it_with_its_own_key
+tests/test_blackboard_context.py::test_forensic_gets_a_context_ref_over_a2a_and_consumes_it_with_its_own_key
+tests/test_blackboard_context.py::test_a_forensic_failure_keeps_the_investigator_and_needs_a_human
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+FAILED tests/test_provider_reliability.py::test_the_managers_deadline_keeps_the_agents_record
+1 failed, 795 passed, 5 skipped, 1 deselected, 203 warnings in 4537.47s (1:15:37)
+finished
