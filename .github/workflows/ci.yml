@@ -1,6 +1,6 @@
 name: CI
 # Fast gate on every PR and push to main (a few minutes). The VM deploys whatever lands on main
-# (deploy/auto_update.sh), so merge only green PRs. The full pytest suites (about 45 min, they start real
+# (deploy/auto_update.sh), so merge only green PRs (not enforced by the repo: turn on branch protection on main to require this check). The full pytest suites (about 45 min, they start real
 # services) are not run here: run them locally before a release.
 on:
   pull_request:
